@@ -6,16 +6,17 @@ Everything lives in a single `index.html`: plain HTML/JS, no build step, no fram
 
 ## How to play
 
-- Pick a source. The left one makes **2 water** a turn, the right one **3**.
-- Tap a glowing tile to extend the river. The number is its water cost. Out of water? **End turn** to collect more.
+- **Water** is what you have, in gallons. **Flow** is how many gallons you get each turn.
+- Pick a source. The left one has a flow of **2 gal** a turn, the right one **3 gal**.
+- Tap a glowing tile to extend the river. The number is its cost in gallons. Out of water? **End turn** and your flow refills it.
 - Water only runs **downhill (1)** or **flat (2)**, never uphill.
 - **Sand** costs +1 but blooms every land tile around it.
 - **Rock** can be crossed, but tiles touching it only bloom when you have **speed**. A waterfall (a 2-level drop) gives speed; flat tiles drain it.
-- **Boulders** block the river. **Springs** are free and add +1 water a turn.
-- **Lakes** (blue rings) cost 2 water per tile to fill. Once full the water rises over the rim, adds +1 a turn and blooms the shore.
+- **Boulders** block the river. **Springs** are free and add **+1 flow**.
+- **Lakes** (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore.
 - Reach the sea. Stars for arriving, for blooming **10**+ tiles, and for arriving by turn **6**.
 
-Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) collects income.
+Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water.
 
 ## Install on your phone
 

@@ -48,6 +48,8 @@ details{background:var(--panel);border-radius:12px;padding:10px 12px;color:var(-
 details summary{color:var(--ink);font-weight:700;cursor:pointer}
 details ul{margin:8px 0 0;padding-left:18px;display:grid;gap:4px}
 details b{color:var(--ink)}
+#hWater::after{content:" gal";font-size:.5em;font-weight:700;color:var(--muted)}
+#hIncome::after{content:"/turn";font-size:.5em;font-weight:700;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -56,7 +58,7 @@ details b{color:var(--ink)}
   <header><h1>Flow <span>Tiles</span></h1><div class="lvl">Test map · Spring Hill</div></header>
   <div class="hud">
     <div class="chip water"><span>Water</span><b id="hWater">0</b></div>
-    <div class="chip"><span>Income</span><b id="hIncome">+0</b></div>
+    <div class="chip"><span>Flow</span><b id="hIncome">+0</b></div>
     <div class="chip" id="cSpeed"><span>Speed</span><b id="hSpeed">0</b></div>
     <div class="chip"><span>Turn</span><b id="hTurn">0</b></div>
     <div class="chip"><span>Bloom</span><b id="hBloom">0</b></div>
@@ -71,13 +73,14 @@ details b{color:var(--ink)}
   <details>
     <summary>How to play</summary>
     <ul>
-      <li>Pick a source. The left one makes <b>2 water</b> a turn, the right one <b>3</b>.</li>
-      <li>Tap a glowing tile to extend the river. The number is its water cost. Out of water? <b>End turn</b> to collect more.</li>
+      <li><b>Water</b> is what you have, in gallons. <b>Flow</b> is how many gallons you get each turn.</li>
+      <li>Pick a source. The left one has a flow of <b>2 gal</b> a turn, the right one <b>3 gal</b>.</li>
+      <li>Tap a glowing tile to extend the river. The number is its cost in gallons. Out of water? <b>End turn</b> and your flow refills it.</li>
       <li>Water only runs <b>downhill (1)</b> or <b>flat (2)</b>, never uphill.</li>
       <li><b>Sand</b> costs +1 but blooms every land tile around it.</li>
       <li><b>Rock</b> can be crossed, but tiles touching it only bloom when you have <b>speed</b>. A waterfall (a 2-level drop) gives speed; flat tiles drain it.</li>
-      <li><b>Boulders</b> block the river. <b>Springs</b> are free and add +1 water a turn.</li>
-      <li><b>Lakes</b> (blue rings) cost 2 water per tile to fill. Once full the water rises over the rim, adds +1 a turn and blooms the shore.</li>
+      <li><b>Boulders</b> block the river. <b>Springs</b> are free and add <b>+1 flow</b>.</li>
+      <li><b>Lakes</b> (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore.</li>
       <li>Reach the sea. Stars for arriving, for blooming <b id="gBloom">10</b>+ tiles, and for arriving by turn <b id="gTurn">6</b>.</li>
     </ul>
   </details>
@@ -162,7 +165,7 @@ const bloomCount=()=>S.tiles.flat().filter(c=>c.bloom).length;
 
 function snapshot(){history.push(JSON.stringify(S))}
 function build(mv){
-  if(S.water<mv.cost){say(`That tile costs ${mv.cost} and you have ${S.water}. End the turn to collect ${S.income} more.`);flash();return}
+  if(S.water<mv.cost){say(`That tile costs ${mv.cost} gal and you have ${S.water} gal. End the turn to collect your flow of ${S.income} gal.`);flash();return}
   snapshot();
   S.water-=mv.cost;
   const b=at(mv.p),drop=level(mv.from)-b.e;
@@ -171,9 +174,9 @@ function build(mv){
   if(b.t==="lake"){const L=S.lakes[b.lake];L.filled=true;
     for(const p of L.tiles){const c=at(p);c.river=true;c.bloom=false;c.from=mv.from}
     S.income+=1;for(const p of L.tiles)for(const n of nbrs(p))bl+=tryBloom(n);
-    notes.push("Lake filled: +1 water a turn")}
+    notes.push("Lake filled: flow +1 gal a turn")}
   else{b.river=true;b.bloom=false;b.from=mv.from;
-    if(b.t==="spring"){S.income+=1;notes.push("Spring joined: +1 water a turn")}
+    if(b.t==="spring"){S.income+=1;notes.push("Spring joined: flow +1 gal a turn")}
     if(b.t==="sand"){for(const n of nbrs(mv.p))bl+=tryBloom(n);notes.push("Sand spread the water")}}
   if(bl)notes.push(`${bl} tile${bl>1?"s":""} bloomed`);
   if(drop>=2)notes.push("Waterfall! Speed up");
@@ -183,7 +186,7 @@ function build(mv){
   else say(notes.length?notes.join(". ")+".":"Keep building, or end the turn.");
   sync();
 }
-function endTurn(){if(S.phase!=="play")return;snapshot();S.turn++;S.water+=S.income;say(`Turn ${S.turn}: +${S.income} water.`);sync()}
+function endTurn(){if(S.phase!=="play")return;snapshot();S.turn++;S.water+=S.income;say(`Turn ${S.turn}: +${S.income} gal of water.`);sync()}
 function win(){
   S.phase="won";const bl=bloomCount();
   let stars=1+(bl>=BLOOM_GOAL)+(S.turn<=TURN_GOAL);
@@ -193,7 +196,7 @@ function win(){
 function pick(p){
   const c=at(p);if(c.t!=="source"){say("Tap one of the two springs at the top.");return}
   snapshot();c.river=true;S.head=p;S.income=c.yield;S.turn=1;S.water=c.yield;S.phase="play";
-  say(`Your source makes ${c.yield} water a turn. Tap a glowing tile to build.`);sync();
+  say(`Your source has a flow of ${c.yield} gal a turn. Tap a glowing tile to build.`);sync();
 }
 function undo(){if(!history.length)return;S=JSON.parse(history.pop());say("Stepped back.");sync()}
 function restart(){S=fresh();history=[];say("Tap a spring at the top to choose your source.");sync()}
