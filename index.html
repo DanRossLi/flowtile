@@ -105,7 +105,7 @@ const ELEV=[
   "2221211",
   "1111111",
   "0000000"];
-const BLOOM_GOAL=10, TURN_GOAL=6;
+const MAP_ID="spring-hill", BLOOM_GOAL=10, TURN_GOAL=6;
 const W=TYPES[0].length, H=TYPES.length, TW=96, TH=48, ZH=14;
 const COL={meadow:"#8fce5a",sand:"#f0d48a",rock:"#a9a49b",boulder:"#86b852",spring:"#8fce5a",lake:"#c9b98f",ocean:"#2f7fc4",source:"#7a8f9e",river:"#4aa3e8",bloom:"#45b043"};
 const $=id=>document.getElementById(id);
@@ -211,7 +211,7 @@ function sync(){
 }
 
 // ---------- persistence: keep the current run across app close/reopen
-const SAVE_KEY="flowtile.run.v1";
+const SAVE_KEY="flowtile.run.v1."+MAP_ID;
 function save(){
   try{localStorage.setItem(SAVE_KEY,JSON.stringify({S,history,msg:$("msg").textContent,win:$("msg").classList.contains("win")}))}catch(_){}
 }

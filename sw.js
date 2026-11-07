@@ -1,9 +1,9 @@
 // Flow Tile service worker: lets the game load offline after the first visit.
 // Bump VERSION whenever cached files change so old caches are dropped.
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `flowtile-${VERSION}`;
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap";
-const LOCAL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+const LOCAL = ["./", "./1/", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil((async () => {
@@ -35,16 +35,16 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // The page itself: network first so new deploys show up, cache when offline.
+  // Pages (each map has its own): network first so new deploys show up, cache when offline.
   if (req.mode === "navigate") {
     e.respondWith((async () => {
       const cache = await caches.open(CACHE);
       try {
         const res = await fetch(req);
-        if (res.ok) cache.put("./index.html", res.clone());
+        if (res.ok) cache.put(req, res.clone());
         return res;
       } catch (_) {
-        return (await cache.match("./index.html")) || (await cache.match("./")) || Response.error();
+        return (await cache.match(req, { ignoreSearch: true })) || (await cache.match("./")) || Response.error();
       }
     })());
     return;
