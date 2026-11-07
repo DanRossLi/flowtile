@@ -17,6 +17,12 @@ Everything lives in a single `index.html`: plain HTML/JS, no build step, no fram
 
 Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) collects income.
 
+## Install on your phone
+
+Open https://danrossli.github.io/flowtile/ and add it to your home screen: **Share → Add to Home Screen** in Safari on iPhone, or **⋮ → Add to Home screen / Install app** in Chrome on Android. It opens full-screen, works offline after the first visit, and remembers a run in progress.
+
+To ship changes to installed copies, bump `VERSION` in `sw.js` when you change cached files.
+
 ## Run it
 
 Open `index.html` in a browser. To test on a phone over your local network, serve the folder:

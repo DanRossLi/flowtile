@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Flow Tiles Mobile</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
 <style>
 /* Layout: one-screen game. HUD chips on top, isometric board in the middle, message + big action buttons at the thumb. */
@@ -199,7 +206,21 @@ function sync(){
   $("hSpeed").textContent=S.speed;$("cSpeed").classList.toggle("fast",S.speed>=1);
   $("hTurn").textContent=S.turn;$("hBloom").textContent=`${bloomCount()}/${BLOOM_GOAL}`;
   $("end").disabled=S.phase!=="play";$("undo").disabled=!history.length;
+  save();
   draw();
+}
+
+// ---------- persistence: keep the current run across app close/reopen
+const SAVE_KEY="flowtile.run.v1";
+function save(){
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({S,history,msg:$("msg").textContent,win:$("msg").classList.contains("win")}))}catch(_){}
+}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");
+    if(!d||!d.S||!Array.isArray(d.S.tiles)||d.S.tiles.length!==H||!Array.isArray(d.history))return false;
+    S=d.S;history=d.history;say(d.msg||"Welcome back.",!!d.win);sync();return true;
+  }catch(_){return false}
 }
 $("gBloom").textContent=BLOOM_GOAL;$("gTurn").textContent=TURN_GOAL;
 
@@ -283,7 +304,8 @@ $("end").onclick=endTurn;$("undo").onclick=undo;$("restart").onclick=restart;
 addEventListener("keydown",e=>{if(e.key===" "){e.preventDefault();endTurn()}});
 addEventListener("resize",resize);
 function loop(){draw();if(!reduce)requestAnimationFrame(loop)}
-restart();resize();document.fonts&&document.fonts.ready.then(draw);loop();
+if(!load())restart();resize();document.fonts&&document.fonts.ready.then(draw);loop();
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
 </body>
 </html>
