@@ -83,7 +83,7 @@ dialog form button{width:100%}
 <body>
 
 <div class="app">
-  <header><h1>Flow <span>Tiles</span></h1><div class="right"><div class="lvl">Map 2 · Flat</div><button class="help-btn" id="helpBtn" aria-label="How to play">?</button></div></header>
+  <header><h1>Flow <span>Tiles</span></h1><div class="right"><div class="lvl">Map 2 · Slope</div><button class="help-btn" id="helpBtn" aria-label="How to play">?</button></div></header>
   <div class="hud">
     <div class="chip water"><span>Flow</span><b id="hWater">0</b></div>
     <div class="chip"><span>Income</span><b id="hIncome">+0</b></div>
@@ -105,7 +105,8 @@ dialog form button{width:100%}
   <ul>
     <li>Tap the spring on the left. It makes <b>2 flow</b> a turn.</li>
     <li>Tap a glowing tile to extend the stream. Every tile costs <b>1 flow</b>. Out of flow? <b>End turn</b> to collect more.</li>
-    <li>The map is flat. Run the stream <b>left to right</b> to the sea.</li>
+    <li>The land slopes down from left to right. Run the stream <b>left to right</b> to the sea.</li>
+    <li>Every level downhill adds <b>+1 speed</b>. Each flat (sideways) tile takes <b>1 speed</b> away.</li>
     <li>Reach the sea. Bloom goal: <b id="gBloom">0</b> tiles. Turn goal: arrive by turn <b id="gTurn">4</b>.</li>
   </ul>
   <form method="dialog"><button class="end">Got it</button></form>
@@ -113,7 +114,7 @@ dialog form button{width:100%}
 
 <script>
 // ---------- map: . meadow s sand r rock B boulder o spring L lake ~ ocean  S source(2) T source(3)
-// Map 2 · Flat (same map as Map 1, fit-to-screen UI): all meadow at one level. Source on the left, sea on the right.
+// Map 2 · Slope (fit-to-screen UI): all meadow, one level lower per column. Source on the left, sea on the right.
 const TYPES=[
   "........~",
   "........~",
@@ -121,12 +122,12 @@ const TYPES=[
   "........~",
   "........~"];
 const ELEV=[
-  "111111110",
-  "111111110",
-  "111111110",
-  "111111110",
-  "111111110"];
-const MAP_ID="map-2-flat", BLOOM_GOAL=0, TURN_GOAL=4;
+  "876543210",
+  "876543210",
+  "876543210",
+  "876543210",
+  "876543210"];
+const MAP_ID="map-2-slope", BLOOM_GOAL=0, TURN_GOAL=4;
 const W=TYPES[0].length, H=TYPES.length, TW=96, TH=48, ZH=14;
 const COL={meadow:"#8fce5a",sand:"#f0d48a",rock:"#a9a49b",boulder:"#86b852",spring:"#8fce5a",lake:"#c9b98f",ocean:"#2f7fc4",source:"#7a8f9e",river:"#4aa3e8",bloom:"#45b043"};
 const $=id=>document.getElementById(id);
@@ -187,7 +188,8 @@ function build(mv){
   snapshot();
   S.water-=mv.cost;
   const b=at(mv.p),drop=level(mv.from)-b.e;
-  S.speed=Math.max(0,S.speed+drop-1);
+  // Map 2 speed rule: +1 speed per level dropped; a flat tile takes 1 away (never below 0).
+  S.speed=drop>0?S.speed+drop:Math.max(0,S.speed-1);
   let notes=[],bl=0;
   if(b.t==="lake"){const L=S.lakes[b.lake];L.filled=true;
     for(const p of L.tiles){const c=at(p);c.river=true;c.bloom=false;c.from=mv.from}
@@ -197,7 +199,8 @@ function build(mv){
     if(b.t==="spring"){S.income+=1;notes.push("Spring joined: +1 flow a turn")}
     if(b.t==="sand"){for(const n of nbrs(mv.p))bl+=tryBloom(n);notes.push("Sand spread the water")}}
   if(bl)notes.push(`${bl} tile${bl>1?"s":""} bloomed`);
-  if(drop>=2)notes.push("Waterfall! Speed up");
+  if(drop>=1)notes.push(`Downhill: speed ${S.speed}`);
+  else notes.push(S.speed?`Flat: speed down to ${S.speed}`:"Flat: no speed");
   S.head=mv.p;
   if(b.t==="ocean"){win();return}
   if(!moves().size){S.phase="stuck";say("Dead end: nowhere downhill left. Undo or restart.")}
