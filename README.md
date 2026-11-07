@@ -18,6 +18,18 @@ Everything lives in a single `index.html`: plain HTML/JS, no build step, no fram
 
 Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water.
 
+## Maps
+
+| Map | URL | Teaches |
+|---|---|---|
+| Spring Hill | https://danrossli.github.io/flowtile/ | The full v0.1 rules |
+| 1 · Flat | https://danrossli.github.io/flowtile/1/ | Running a stream: 1 gal a tile, left to right |
+| 1a · Sand | https://danrossli.github.io/flowtile/1a/ | Sand: +1 gal, blooms the tiles around it |
+| 2 · Slope | https://danrossli.github.io/flowtile/2/ | Downhill: +1 speed per level, flat tiles take 1 away |
+| 3 · Lake | https://danrossli.github.io/flowtile/3/ | Lakes: save up to fill, +1 flow, blooms the shore |
+
+Spring Hill is the standalone `index.html`. The numbered maps share `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of those folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
+
 ## Install on your phone
 
 Open https://danrossli.github.io/flowtile/ and add it to your home screen: **Share → Add to Home Screen** in Safari on iPhone, or **⋮ → Add to Home screen / Install app** in Chrome on Android. It opens full-screen, works offline after the first visit, and remembers a run in progress.
