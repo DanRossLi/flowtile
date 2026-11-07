@@ -1,4 +1,4 @@
-/* Flow Tile lesson maps (1, 1a, 2, 3): shared layout.
+/* Flow Tile: shared layout for every map (Spring Hill, 1, 1a, 2, 3).
    Everything lives inside the game window: title bar and stats float over the top of the board,
    the message floats at the bottom, and the action buttons sit under the board at the thumb. */
 :root{

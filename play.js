@@ -1,12 +1,14 @@
-// Flow Tile lesson maps (1, 1a, 2, 3): shared engine and UI.
+// Flow Tile: shared engine and UI for every map (Spring Hill, 1, 1a, 2, 3).
 // Each map page sets window.MAP before loading this file:
 //   id, label, types[], elev[], bloomGoal, turnGoal, startHint, help[] (HTML strings), next (URL or null)
+//   pickHint: message when the player taps a non-source tile before starting (default: startHint)
 //   tileCost: every tile costs this many gal before modifiers (omit for downhill 1 / flat 2)
 //   lakeTileCost: gal per lake tile (default 2)
 //   speedRule: "perLevel" (+1 per level dropped, flat -1) or "waterfall" (default: drop-1, so 2+ level drops)
 //   showSpeed / showBloom: show those chips (default: shown when the map uses them)
 (() => {
 const M = window.MAP;
+const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits next to play.js
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = M.bloomGoal, TURN_GOAL = M.turnGoal;
 const LAKE_TILE_COST = M.lakeTileCost ?? 2;
 const SHOW_SPEED = M.showSpeed ?? M.speedRule === "perLevel";
@@ -141,7 +143,7 @@ function build(mv) {
 function endTurn() { if (S.phase !== "play") return; snapshot(); S.turn++; S.water += S.income; bump("cWater");
   say(`Turn ${S.turn}: +${S.income} gal of water.`) }
 function pick(p) {
-  const c = at(p); if (c.t !== "source") { say(M.startHint, true); return }
+  const c = at(p); if (c.t !== "source") { say(M.pickHint ?? M.startHint, true); return }
   snapshot(); c.river = true; S.head = p; S.income = c.yield; S.turn = 1; S.water = c.yield; S.phase = "play";
   say(`Your source has a flow of ${c.yield} gal a turn. Tap a glowing tile to build.`);
 }
@@ -270,7 +272,7 @@ if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($
 function loop() { draw(); if (!reduce) requestAnimationFrame(loop) }
 if (!load()) S = fresh();
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
-if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("../sw.js").catch(() => {}));
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
 window.FT = {get S() { return S }, get history() { return history }, moves, diamond, endTurn, restart, bloomCount,

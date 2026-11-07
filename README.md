@@ -2,7 +2,7 @@
 
 A small, mobile-first, turn-based river puzzle in the style of Polytopia. Pick a source, earn water each turn, and build your river tile by tile down to the sea. It's a spin-off of Flow, used to prove out ideas on a phone before they go back into the main game.
 
-Everything lives in a single `index.html`: plain HTML/JS, no build step, no framework.
+Plain HTML/JS, no build step, no framework.
 
 ## How to play
 
@@ -28,13 +28,13 @@ Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets
 | 2 · Slope | https://danrossli.github.io/flowtile/2/ | Downhill: +1 speed per level, flat tiles take 1 away |
 | 3 · Lake | https://danrossli.github.io/flowtile/3/ | Lakes: save up to fill, +1 flow, blooms the shore |
 
-Spring Hill is the standalone `index.html`. The numbered maps share `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of those folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
+Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
 
 ## Install on your phone
 
 Open https://danrossli.github.io/flowtile/ and add it to your home screen: **Share → Add to Home Screen** in Safari on iPhone, or **⋮ → Add to Home screen / Install app** in Chrome on Android. It opens full-screen, works offline after the first visit, and remembers a run in progress.
 
-To ship changes to installed copies, bump `VERSION` in `sw.js` when you change cached files.
+To ship changes to installed copies, bump `VERSION` in `sw.js` whenever you change `play.js`, `play.css` or the icons. Pages are fetched fresh when online, but those files are served from the cache.
 
 ## Run it
 
