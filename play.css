@@ -1,4 +1,4 @@
-/* Flow Tile: shared layout for every map (Spring Hill, 1, 1a, 2, 3).
+/* Flow Tile: shared layout for every map.
    Everything lives inside the game window: title bar and stats float over the top of the board,
    the message floats at the bottom, and the action buttons sit under the board at the thumb. */
 :root{
@@ -31,7 +31,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .brand span{color:var(--water)}
 .lvl{flex:1;min-width:0;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
-.icon{width:34px;height:34px;padding:0;border-radius:50%;font-size:17px;flex:none;background:var(--glass);
+.icon{width:40px;height:40px;padding:0;border-radius:50%;font-size:17px;flex:none;background:var(--glass);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
 
 .hud{display:flex;gap:6px}
@@ -43,6 +43,33 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .chip i{font-style:normal}
 .chip small{font-size:.55em;font-weight:700;color:var(--muted);margin-left:2px}
 .chip.water b{color:var(--water)}
+/* water tank: amount, storage cells, flow per turn */
+.chip.tank{text-align:left;padding:7px 10px}
+.tline{display:flex;align-items:baseline;gap:6px;min-width:0}
+.tank .tline span{display:inline;flex:none}
+.tank .tline b{display:inline;color:var(--water);font-size:20px}
+.tank .tline small{font-size:12px;margin:0;white-space:nowrap}
+.tank .tline em{margin-left:auto;font-style:normal;font-weight:800;font-size:12px;color:#8fce5a;white-space:nowrap}
+.cells{display:flex;gap:3px;margin-top:5px}
+.cells i{flex:1;height:8px;border-radius:3px;background:#2b4a5e}
+.cells i.f{background:var(--water)}
+.chip.mini{flex:none;width:68px}
+.chip.mini.over b{color:var(--warn)}
+/* goals stay on screen */
+.goals{display:flex;flex-wrap:wrap;gap:5px}
+.goal{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;background:var(--glass);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);font-weight:800;font-size:12px;white-space:nowrap}
+.goal svg{width:13px;height:13px;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linejoin:round}
+.goal.got{color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,209,102,.4)}
+.goal.got svg{fill:var(--gold);stroke:var(--gold)}
+.goal.live{color:var(--gold)}
+.goal.live svg{stroke:var(--gold)}
+.goal.miss{color:var(--warn)}
+.goal.miss svg{stroke:var(--warn)}
+.goal.bump{animation:bump .35s ease-out}
+/* zoom button floats under the top bar */
+.zoom{position:absolute;right:10px;z-index:1;display:grid;place-items:center;border-radius:12px;color:var(--ink)}
+.sq svg,.zoom svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block;margin:auto}
 .chip.fast b{color:var(--gold)}
 .chip.bump{animation:bump .35s ease-out}
 @keyframes bump{40%{transform:scale(1.08)}}
@@ -70,13 +97,17 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .card a.btn{text-decoration:none;text-align:center}
 
 /* ---------- buttons */
-.actions{grid-area:actions;display:grid;grid-template-columns:1fr 1fr 2fr;gap:var(--gap)}
+.actions{grid-area:actions;display:grid;grid-template-columns:64px 64px minmax(0,1fr);gap:var(--gap)}
 button,a.btn{font:inherit;font-family:var(--display);font-weight:600;font-size:17px;border:0;border-radius:14px;padding:var(--btn-pad) 10px;
   color:var(--ink);background:var(--panel-2);cursor:pointer;touch-action:manipulation;display:block}
 .end{background:var(--water) !important;color:#06233a !important;box-shadow:0 4px 0 #2a6fa3}
 .end:active{transform:translateY(2px);box-shadow:0 2px 0 #2a6fa3}
 button:disabled{opacity:.4}
 button:focus-visible,a.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.end{display:flex;align-items:center;justify-content:center;gap:8px}
+.gain{font-size:14px;padding:2px 8px;border-radius:999px;background:rgba(6,35,58,.16)}
+.gain[hidden]{display:none}
+.gain.spill{background:var(--warn);color:#2a1608}
 .end.ready{animation:ready 1.6s ease-in-out infinite}
 @keyframes ready{50%{box-shadow:0 4px 0 #2a6fa3,0 0 0 6px rgba(74,163,232,.25)}}
 
@@ -89,7 +120,7 @@ dialog ul{margin:0 0 14px;padding-left:18px;display:grid;gap:6px}
 dialog b{color:var(--ink)}
 dialog form button{width:100%}
 
-@media (prefers-reduced-motion:reduce){.chip.bump,.end.ready{animation:none}}
+@media (prefers-reduced-motion:reduce){.chip.bump,.goal.bump,.end.ready{animation:none}}
 /* short phones: tighten */
 @media (max-height:680px){
   :root{--gap:6px;--btn-pad:11px}
@@ -99,12 +130,20 @@ dialog form button{width:100%}
   .chip{padding:3px 4px}
   .chip b{font-size:16px}
   .chip span{font-size:9px}
+  .tank .tline b{font-size:17px}
+  .cells{margin-top:3px}
+  .cells i{height:6px}
+  .goal{padding:3px 8px;font-size:11px}
   button,a.btn{font-size:16px}
 }
 /* phone on its side: buttons in a column beside the game window */
 @media (orientation:landscape) and (max-height:540px){
   .app{max-width:none;grid-template-columns:minmax(0,1fr) 150px;grid-template-rows:minmax(0,1fr);grid-template-areas:"board actions"}
-  .actions{grid-template-columns:1fr;align-content:end}
+  .actions{grid-template-columns:1fr 1fr;align-content:end}
+  .actions .end{grid-column:1/-1;flex-wrap:wrap}
+  .top{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+  .bar,.rivers{grid-column:1/-1}
+  .goals{flex-wrap:nowrap}
   .actions .end{padding-block:22px}
 }
 

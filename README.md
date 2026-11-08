@@ -15,10 +15,10 @@ Plain HTML/JS, no build step, no framework.
 - **Boulders** block the river. **Springs** are free and add **+1 flow**.
 - **Lakes** (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore.
 - **Bare ground** (maps 4 and 4a): you start with a flow of 3 gal and can **store 3 gal**; water over that spills when you end the turn. Tap bare ground next to the stream to plant **grass** (1 gal, +1 storage), then tap it again for **trees** (1 gal, +1 more). If the stream runs over grass or trees it washes them away, and you lose that storage.
-- **Tributaries** (map 6): tap a second source to start a separate river with its own water, flow and storage. Tap a river (or its pill at the top) to choose which one you build. Run it into another river and it merges, adding its flow there.
+- **Tributaries** (map 6): tap a second source to start a separate river with its own water, flow and storage. Tap a river (or its pill at the top) to choose which one you build. Run it into another river and it merges: its flow is added there and its saved water pours in (anything over storage spills).
 - Reach the sea. Stars for arriving, for blooming **10**+ tiles, and for arriving by turn **7** (all three are possible, but only just).
 
-Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water.
+Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water; its badge shows what you will get, and warns when some would spill. The board starts zoomed in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
 
 ## Maps
 

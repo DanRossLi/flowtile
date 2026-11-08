@@ -1,4 +1,4 @@
-// Flow Tile: shared engine and UI for every map (Spring Hill, 1, 1a, 2, 3, 4, 4a).
+// Flow Tile: shared engine and UI for every map (Spring Hill, 1, 1a, 2, 3, 4, 4a, 5, 6, big).
 // Each map page sets window.MAP before loading this file:
 //   id, label, types[], elev[], bloomGoal, turnGoal, startHint, help[] (HTML strings), next (URL or null)
 //   pickHint: message when the player taps a non-source tile before starting (default: startHint)
@@ -37,13 +37,16 @@ document.body.innerHTML = `
       </div>
       <div class="rivers" id="rivers" hidden></div>
       <div class="hud">
-        <div class="chip water" id="cWater"><span>Water</span><b><i id="hWater">0</i><small id="hCap">gal</small></b></div>
-        <div class="chip" id="cFlow"><span>Flow</span><b><i id="hFlow">+0</i><small>/turn</small></b></div>
-        ${SHOW_SPEED ? `<div class="chip" id="cSpeed"><span>Speed</span><b id="hSpeed">0</b></div>` : ""}
-        <div class="chip"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
-        ${SHOW_BLOOM ? `<div class="chip" id="cBloom"><span>${BLOOM_LABEL}</span><b><i id="hBloom">0</i><small>/${BLOOM_GOAL}</small></b></div>` : ""}
+        <div class="chip tank" id="cWater">
+          <div class="tline"><span>Water</span><b id="hWater">0</b><small id="hCap">gal</small><em id="cFlow">+0 a turn</em></div>
+          ${STORE ? `<div class="cells" id="cells" aria-hidden="true"></div>` : ""}
+        </div>
+        ${SHOW_SPEED ? `<div class="chip mini" id="cSpeed"><span>Speed</span><b id="hSpeed">0</b></div>` : ""}
+        <div class="chip mini" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
       </div>
+      <div class="goals" id="goals"></div>
     </div>
+    <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
     <div class="overlay bottom" id="bottom"><div class="msg" id="msg" role="status"></div></div>
     <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
       <div class="stars" id="wStars"></div>
@@ -56,9 +59,9 @@ document.body.innerHTML = `
     </div></div>
   </div>
   <div class="actions">
-    <button id="undo">Undo</button>
-    <button id="restart">Restart</button>
-    <button id="end" class="end">End turn</button>
+    <button id="undo" class="sq" aria-label="Undo" title="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
+    <button id="restart" class="sq" aria-label="Restart" title="Restart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5"/></svg></button>
+    <button id="end" class="end">End turn <span class="gain" id="gain" hidden></span></button>
   </div>
 </div>
 <dialog id="help" aria-labelledby="helpTitle">
@@ -162,9 +165,10 @@ function build(mv) {
   snapshot();
   S.water -= mv.cost;
   if (at(mv.p).river) { // ran into another river: merge into it
-    const t = at(mv.p).rid, me = S.active, gave = S.income; at(mv.from).to = mv.p;
-    S.rivers[t].income += gave; stash(); S.rivers[me].joined = true; S.active = t; Object.assign(S, take(S.rivers[t])); bump("cFlow");
-    say(`${riverName(me)} joined the ${riverName(t).toLowerCase()}: its flow is now +${S.income} gal a turn.`); return }
+    const t = at(mv.p).rid, me = S.active, gave = S.income, poured = S.water; at(mv.from).to = mv.p;
+    S.rivers[t].income += gave; stash(); S.rivers[me].joined = true; S.active = t; Object.assign(S, take(S.rivers[t]));
+    S.water += poured; const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; bump("cFlow"); bump("cWater");
+    say(`${riverName(me)} joined the ${riverName(t).toLowerCase()}: flow now +${S.income} gal a turn${poured ? `, and ${poured - sp} gal poured in${sp ? ` (${sp} spilled)` : ""}` : ""}.`); return }
   const b = at(mv.p), drop = level(mv.from) - b.e;
   S.speed = M.speedRule === "perLevel" ? (drop > 0 ? S.speed + drop : Math.max(0, S.speed - 1)) : Math.max(0, S.speed + drop - 1);
   const notes = []; let bl = 0;
@@ -210,7 +214,15 @@ function sync() {
   const rv = $("rivers"), multi = TRIB && S.rivers && S.rivers.length > 1; rv.hidden = !multi;
   if (multi) rv.innerHTML = S.rivers.map((r, i) => { const on = i === S.active, d = on ? S : r;
     return `<button data-r="${i}" class="${on ? "on" : ""}" ${r.joined ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : `${d.water}${STORE ? "/" + d.cap : ""} gal · +${d.income}`}</small></button>` }).join("");
-  tx("hWater", S.water); if (STORE) tx("hCap", `/${S.cap} gal`); tx("hFlow", "+" + S.income); tx("hSpeed", S.speed); tx("hTurn", S.turn); tx("hBloom", bloomCount());
+  tx("hWater", S.water); tx("hCap", STORE ? `of ${S.cap} gal` : "gal"); tx("cFlow", `+${S.income} a turn`); tx("hSpeed", S.speed); tx("hTurn", S.turn);
+  if (STORE) { const cells = $("cells"); let h = ""; for (let i = 0; i < S.cap; i++) h += `<i class="${i < S.water ? "f" : ""}"></i>`; cells.innerHTML = h }
+  $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons, flow +${S.income} a turn`);
+  $("cTurn").classList.toggle("over", S.turn > TURN_GOAL);
+  goals();
+  const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
+  if (play) { const g = STORE ? Math.min(S.income, Math.max(0, S.cap - S.water)) : S.income, sp = S.income - g;
+    gain.textContent = sp ? `+${g} · ${sp} spill` : `+${S.income} gal`; gain.classList.toggle("spill", sp > 0) }
+  if ((S.head || "") + "|" + S.active !== lastHead) { lastHead = (S.head || "") + "|" + S.active; follow() }
   $("cSpeed")?.classList.toggle("fast", S.speed >= 1);
   $("msg").textContent = S.msg || ""; $("msg").classList.toggle("warn", !!S.warn);
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length;
@@ -226,6 +238,17 @@ function sync() {
   save(); resize(); draw();
 }
 
+// The three star goals stay on screen while you play.
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
+function goals() {
+  const won = S.phase === "won", bl = bloomCount(), left = TURN_GOAL - S.turn, over = left < 0;
+  const list = [[won ? "got" : "", "To the sea"]];
+  if (BLOOM_GOAL) list.push([bl >= BLOOM_GOAL ? "got" : "", `${BLOOM_LABEL} ${bl}/${BLOOM_GOAL}`, "cBloom"]);
+  list.push([over ? "miss" : won ? "got" : "live",
+    S.phase === "pick" || won ? `By turn ${TURN_GOAL}` : over ? `Missed turn ${TURN_GOAL}` : left === 0 ? `Turn ${TURN_GOAL} · last turn` : `Turn ${TURN_GOAL} · ${left} left`]);
+  $("goals").innerHTML = list.map(([k, t, id]) => `<span class="goal ${k}"${id ? ` id="${id}"` : ""}>${STAR}${t}</span>`).join("");
+}
+
 // ---------- persistence: keep the current run across app close/reopen
 const SAVE_KEY = "flowtile.run.v2." + M.id;
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({S, history})) } catch (_) {} }
@@ -239,7 +262,10 @@ function load() {
 
 // ---------- drawing (isometric prisms)
 const cv = $("cv"), ctx = cv.getContext("2d");
-let scale = 1, off = {x:0, y:0}, t0 = performance.now(), lastSize = "";
+let scale = 1, off = {x:0, y:0}, t0 = performance.now(), lastSize = "", lastHead = null;
+// view.z is zoom relative to "whole map fits"; cx/cy is the world point at the middle of the free area
+const view = {z:null, cx:0, cy:0}, lay = {w:0, h:0, topH:0, availH:0, dpr:1, fit:1, zAuto:1};
+let tgt = null;
 const ORDER = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) ORDER.push([x, y]); ORDER.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
 const iso = (x, y, e) => ({x:(x - y) * TW / 2, y:(x + y) * TH / 2 - e * ZH});
 function drawLevel(p) { const c = at(p); if (c.t === "ocean") return 0; if (c.t === "lake") return c.e + (S.lakes[c.lake].filled ? .7 : 0); return c.e }
@@ -250,17 +276,47 @@ function bounds() { let a = 1e9, b = 1e9, c = -1e9, d = -1e9;
   return {x:a - 8, y:b, w:c - a + 16, h:d - b + 8} }
 const B = bounds();
 // Fit the map into the part of the game window not covered by the top bar and the message.
+// Zoom in so tiles are at least 72px wide and the board fills most of the free height; keep the end of the stream in view.
 function resize() {
   const box = $("board"), w = box.clientWidth, h = box.clientHeight, dpr = Math.min(devicePixelRatio || 1, 3);
   if (!w || !h) return;
   const topH = $("top").offsetHeight, botH = $("bottom").hidden ? 0 : $("bottom").offsetHeight;
   const key = [w, h, topH, botH, dpr].join(); if (key === lastSize) return; lastSize = key;
-  const availH = Math.max(40, h - topH - botH), s = Math.min(w / B.w, availH / B.h);
+  const availH = Math.max(40, h - topH - botH), fit = Math.min(w / B.w, availH / B.h);
+  Object.assign(lay, {w, h, topH, availH, dpr, fit, zAuto:Math.min(4, Math.max(1, 72 / (TW * fit), Math.min(2, .85 * availH / B.h / fit)))});
+  if (view.z === null) { view.z = lay.zAuto; const f = focusPoint(); view.cx = f.x; view.cy = f.y }
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  scale = s * dpr;
-  off = {x:(cv.width - B.w * scale) / 2 - B.x * scale, y:topH * dpr + (availH * dpr - B.h * scale) / 2 - B.y * scale};
+  $("fitBtn").style.top = topH + 6 + "px";
+  applyView();
+}
+function clampView() {
+  const s = lay.fit * view.z, vw = lay.w / s, vh = lay.availH / s;
+  view.cx = vw >= B.w ? B.x + B.w / 2 : Math.min(B.x + B.w - vw / 2, Math.max(B.x + vw / 2, view.cx));
+  view.cy = vh >= B.h ? B.y + B.h / 2 : Math.min(B.y + B.h - vh / 2, Math.max(B.y + vh / 2, view.cy));
+}
+function applyView() {
+  view.z = Math.min(5, Math.max(1, view.z)); clampView();
+  scale = lay.fit * view.z * lay.dpr;
+  off = {x:lay.w / 2 * lay.dpr - view.cx * scale, y:(lay.topH + lay.availH / 2) * lay.dpr - view.cy * scale};
+  const zoomed = view.z > 1.02, fb = $("fitBtn");
+  fb.innerHTML = zoomed ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M10.5 7.5v6M7.5 10.5h6"/></svg>';
+  fb.setAttribute("aria-label", zoomed ? "Show the whole map" : "Zoom in");
   draw();
 }
+// Where to look: the end of the active stream, else the source you can start on, else the middle.
+function focusPoint() {
+  const p = S && S.head ? S.head : M.mainSource || (() => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (TYPES[y][x] === "S" || TYPES[y][x] === "T") return [x, y] })();
+  if (!p) return {x:B.x + B.w / 2, y:B.y + B.h / 2};
+  const o = iso(p[0], p[1], +ELEV[p[1]][p[0]]); return {x:o.x, y:o.y};
+}
+function follow(force) {
+  if (view.z === null || !lay.w) return;
+  const f = focusPoint(), s = lay.fit * view.z, hw = lay.w / s / 2, hh = lay.availH / s / 2;
+  if (force || Math.abs(f.x - view.cx) > hw * .55 || Math.abs(f.y - view.cy) > hh * .55) {
+    tgt = {x:f.x, y:f.y}; if (reduce) { view.cx = f.x; view.cy = f.y; tgt = null; applyView() } }
+}
+function glide() { if (!tgt) return; view.cx += (tgt.x - view.cx) * .18; view.cy += (tgt.y - view.cy) * .18;
+  if (Math.hypot(tgt.x - view.cx, tgt.y - view.cy) < 1) { view.cx = tgt.x; view.cy = tgt.y; tgt = null } applyView() }
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
   return `rgb(${Math.round(r * (1 - k))},${Math.round(g * (1 - k))},${Math.round(b * (1 - k))})` }
 function poly(pts, fill) { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill() }
@@ -353,7 +409,29 @@ function tileAt(cx, cy) {
   return null }
 function inPoly(x, y, pts) { let ins = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j];
   if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins } return ins }
+// Drag to pan, pinch or wheel to zoom; a touch that barely moves is a tap.
+const ptrs = new Map(); let drag = null, dragged = false;
+cv.addEventListener("pointerdown", e => {
+  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); try { cv.setPointerCapture(e.pointerId) } catch (_) {}
+  const pts = [...ptrs.values()];
+  if (pts.length === 1) { drag = {x:e.clientX, y:e.clientY, cx:view.cx, cy:view.cy}; dragged = false }
+  else if (pts.length === 2) { drag = {pinch:Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), z:view.z}; dragged = true }
+});
+cv.addEventListener("pointermove", e => {
+  if (!ptrs.has(e.pointerId) || !drag) return; ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  const pts = [...ptrs.values()];
+  if (drag.pinch && pts.length >= 2) { view.z = drag.z * Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) / drag.pinch; tgt = null; applyView(); return }
+  if (drag.pinch) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!dragged && Math.hypot(dx, dy) < 9) return;
+  dragged = true; tgt = null; const s = lay.fit * view.z; view.cx = drag.cx - dx / s; view.cy = drag.cy - dy / s; applyView();
+});
+const lift = e => { ptrs.delete(e.pointerId); if (!ptrs.size) drag = null };
+cv.addEventListener("pointercancel", e => { lift(e); dragged = false });
+cv.addEventListener("wheel", e => { e.preventDefault(); view.z *= Math.exp(-e.deltaY * .0015); tgt = null; applyView() }, {passive:false});
+$("fitBtn").onclick = () => { if (view.z > 1.02) view.z = 1; else { view.z = Math.max(lay.zAuto, 1.8); follow(true) } applyView() };
 cv.addEventListener("pointerup", e => {
+  const wasDrag = dragged; lift(e); if (wasDrag) { if (!ptrs.size) dragged = false; return }
   const p = tileAt(e.clientX, e.clientY); if (!p) return;
   if (S.phase === "pick") return pick(p);
   if (S.phase !== "play") return;
@@ -372,13 +450,13 @@ $("helpBtn").onclick = () => $("help").showModal();
 $("help").addEventListener("click", e => { if (e.target === $("help")) $("help").close() }); // tap backdrop to close
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
-function loop() { draw(); if (!reduce) requestAnimationFrame(loop) }
+function loop() { if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
 if (!load()) S = fresh();
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get S() { return S }, get history() { return history }, moves, plantable, diamond, endTurn, restart, bloomCount,
+window.FT = {get S() { return S }, get history() { return history }, get view() { return view }, moves, plantable, diamond, endTurn, restart, bloomCount,
   tap(p) { const d = diamond(p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;
     cv.dispatchEvent(new PointerEvent("pointerup", {clientX:r.left + (cx * scale + off.x) / dpr, clientY:r.top + (cy * scale + off.y) / dpr, bubbles:true})) }};
 })();
