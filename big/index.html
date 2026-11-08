@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Big test map</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Big test map (18x18): every tile type on one slope, with bare ground, grass, trees and storage.
+// Map key: _ bare ground  . meadow  s sand  r rock  B boulder  o spring  L lake  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  id: "big-18",
+  label: "Test · Big 18×18",
+  types: [
+    "_________________~",
+    "_T______T_B______~",
+    "__________B______~",
+    "___B_r_____o_____~",
+    "___B________LL_B_~",
+    "____________LL_B_~",
+    "____o____s_______~",
+    "______________s__~",
+    "______B_____r____~",
+    "______LLL________~",
+    "___s__LLL____o___~",
+    "_______r____...._~",
+    "_B__________...._~",
+    "______o___s_...._~",
+    "__r____________s_~",
+    "___________BB____~",
+    "_________________~",
+    "~~~~~~~~~~~~~~~~~~"],
+  elev: [
+    "888877776666555540",
+    "888777766665555440",
+    "887777666655554440",
+    "877776666555544440",
+    "777766665555334430",
+    "777666655554334330",
+    "776666555544443330",
+    "766665555444433330",
+    "666655554444333320",
+    "666555333443333220",
+    "665555333433332220",
+    "655554444333322220",
+    "555544443333222210",
+    "555444433332222110",
+    "554444333322221110",
+    "544443333222211110",
+    "444433332222111110",
+    "000000000000000000"],
+  storage: 3,
+  bloomGoal: 12,
+  bloomLabel: "Green",
+  turnGoal: 15,
+  tileCost: 1,
+  lakeTileCost: 1,
+  startHint: "Tap one of the two springs at the top to start.",
+  pickHint: "Tap one of the two springs at the top-left.",
+  next: null,
+  help: [
+    "A big test map: pick either spring. Each has a <b>flow</b> of <b>3 gal</b> a turn, and you can <b>store 3 gal</b>. Water over that spills when you end the turn.",
+    "Every stream tile costs <b>1 gal</b>. Water only runs <b>downhill or flat</b>: the land falls toward the sea at the bottom right.",
+    "Tap <b>bare ground</b> next to the stream to plant <b>grass</b> (1 gal, +1 storage), then tap it again for <b>trees</b> (+1 more). The stream washes away any grass it runs over.",
+    "<b>Springs</b> are free and add <b>+1 flow</b>. <b>Sand</b> greens the land around it but cuts your flow by 1. <b>Boulders</b> block the stream.",
+    "<b>Lakes</b> cost 1 gal per tile and fill all at once: they add <b>+1 flow</b> and green the shore. You may need to plant first to store enough."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>
