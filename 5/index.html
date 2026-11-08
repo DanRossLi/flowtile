@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 5</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 5 · Desert: mostly sand. Every sand tile cuts flow by 1, springs (oases) add it back, bare ground is safe.
+// Map key: _ bare ground  s sand  o spring  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  id: "map-5-desert",
+  label: "Map 5 · Desert",
+  types: [
+    "ssssosss~",
+    "s__sssss~",
+    "T_ssos__~",
+    "s__sssss~",
+    "sssosss_~"],
+  elev: [
+    "111111110",
+    "111111110",
+    "111111110",
+    "111111110",
+    "111111110"],
+  storage: 3,
+  bloomGoal: 6,
+  turnGoal: 5,
+  tileCost: 1,
+  startHint: "Tap the spring on the left to start.",
+  next: "../6/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>.",
+    "Every tile costs <b>1 gal</b>. Most of this map is <b>sand</b>: each sand tile <b>cuts your flow by 1</b> for the rest of the run, but it blooms the sand around it.",
+    "<b>Springs</b> are oases: free, and <b>+1 flow</b>. <b>Bare ground</b> costs 1 gal and takes nothing away.",
+    "If your flow hits 0 you can't refill. Plan a route from oasis to oasis to the sea."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>
