@@ -14,7 +14,7 @@ Plain HTML/JS, no build step, no framework.
 - **Rock** can be crossed, but tiles touching it only bloom when you have **speed**. A waterfall (a 2-level drop) gives speed; flat tiles drain it.
 - **Boulders** block the river. **Springs** are free and add **+1 flow**.
 - **Lakes** (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore.
-- Reach the sea. Stars for arriving, for blooming **10**+ tiles, and for arriving by turn **6**.
+- Reach the sea. Stars for arriving, for blooming **10**+ tiles, and for arriving by turn **7** (all three are possible, but only just).
 
 Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water.
 
