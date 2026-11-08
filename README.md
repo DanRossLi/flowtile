@@ -14,6 +14,7 @@ Plain HTML/JS, no build step, no framework.
 - **Rock** can be crossed, but tiles touching it only bloom when you have **speed**. A waterfall (a 2-level drop) gives speed; flat tiles drain it.
 - **Boulders** block the river. **Springs** are free and add **+1 flow**.
 - **Lakes** (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore.
+- **Bare ground** (maps 4 and 4a): you start with a flow of 3 gal and can **store 3 gal**; water over that spills when you end the turn. Tap bare ground next to the stream to plant **grass** (1 gal, +1 storage), then tap it again for **trees** (1 gal, +1 more). If the stream runs over grass or trees it washes them away, and you lose that storage.
 - Reach the sea. Stars for arriving, for blooming **10**+ tiles, and for arriving by turn **7** (all three are possible, but only just).
 
 Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water.
@@ -27,6 +28,8 @@ Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets
 | 1a · Sand | https://danrossli.github.io/flowtile/1a/ | Sand: blooms the tiles around it, but costs 1 flow |
 | 2 · Slope | https://danrossli.github.io/flowtile/2/ | Downhill: +1 speed per level, flat tiles take 1 away |
 | 3 · Lake | https://danrossli.github.io/flowtile/3/ | Lakes: save up to fill, +1 flow, blooms the shore |
+| 4 · Grass | https://danrossli.github.io/flowtile/4/ | Storage: plant grass by the stream to store enough for a lake |
+| 4a · Trees | https://danrossli.github.io/flowtile/4a/ | Trees: grow grass into trees when there's no room for more grass |
 
 Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
 

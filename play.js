@@ -1,4 +1,4 @@
-// Flow Tile: shared engine and UI for every map (Spring Hill, 1, 1a, 2, 3).
+// Flow Tile: shared engine and UI for every map (Spring Hill, 1, 1a, 2, 3, 4, 4a).
 // Each map page sets window.MAP before loading this file:
 //   id, label, types[], elev[], bloomGoal, turnGoal, startHint, help[] (HTML strings), next (URL or null)
 //   pickHint: message when the player taps a non-source tile before starting (default: startHint)
@@ -6,6 +6,8 @@
 //   lakeTileCost: gal per lake tile (default 2)
 //   speedRule: "perLevel" (+1 per level dropped, flat -1) or "waterfall" (default: drop-1, so 2+ level drops)
 //   showSpeed / showBloom: show those chips (default: shown when the map uses them)
+//   storage: water cap at the start (turns on bare ground: tap ground by the river for grass, then trees, +1 cap each)
+//   plantCost: gal to plant grass or trees (default 1); bloomLabel: name of the bloom chip (default "Bloom")
 (() => {
 const M = window.MAP;
 const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits next to play.js
@@ -13,8 +15,9 @@ const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = M.bloomGoal, TURN_GOAL = M.tu
 const LAKE_TILE_COST = M.lakeTileCost ?? 2;
 const SHOW_SPEED = M.showSpeed ?? M.speedRule === "perLevel";
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
+const STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 14;
-const COL = {meadow:"#8fce5a",sand:"#f0d48a",rock:"#a9a49b",boulder:"#86b852",spring:"#8fce5a",lake:"#c9b98f",ocean:"#2f7fc4",source:"#7a8f9e",river:"#4aa3e8",bloom:"#45b043"};
+const COL = {bare:"#b8916a",grass:"#8fce5a",meadow:"#8fce5a",sand:"#f0d48a",rock:"#a9a49b",boulder:"#86b852",spring:"#8fce5a",lake:"#c9b98f",ocean:"#2f7fc4",source:"#7a8f9e",river:"#4aa3e8",bloom:"#45b043"};
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- DOM
@@ -29,11 +32,11 @@ document.body.innerHTML = `
         <button class="icon" id="helpBtn" aria-label="How to play">?</button>
       </div>
       <div class="hud">
-        <div class="chip water" id="cWater"><span>Water</span><b><i id="hWater">0</i><small>gal</small></b></div>
+        <div class="chip water" id="cWater"><span>Water</span><b><i id="hWater">0</i><small id="hCap">gal</small></b></div>
         <div class="chip" id="cFlow"><span>Flow</span><b><i id="hFlow">+0</i><small>/turn</small></b></div>
         ${SHOW_SPEED ? `<div class="chip" id="cSpeed"><span>Speed</span><b id="hSpeed">0</b></div>` : ""}
         <div class="chip"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
-        ${SHOW_BLOOM ? `<div class="chip"><span>Bloom</span><b><i id="hBloom">0</i><small>/${BLOOM_GOAL}</small></b></div>` : ""}
+        ${SHOW_BLOOM ? `<div class="chip" id="cBloom"><span>${BLOOM_LABEL}</span><b><i id="hBloom">0</i><small>/${BLOOM_GOAL}</small></b></div>` : ""}
       </div>
     </div>
     <div class="overlay bottom" id="bottom"><div class="msg" id="msg" role="status"></div></div>
@@ -72,8 +75,8 @@ function fresh() {
   const tiles = [];
   for (let y = 0; y < H; y++) { tiles.push([]); for (let x = 0; x < W; x++) {
     const ch = TYPES[y][x];
-    const t = {".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
-    tiles[y].push({t, e:+ELEV[y][x], river:false, bloom:false, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
+    const t = {"_":"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
+    tiles[y].push({t, e:+ELEV[y][x], river:false, bloom:false, g:0, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
   }}
   const lakes = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -83,7 +86,7 @@ function fresh() {
       for (const n of nbrs(p)) { const nc = tiles[n[1]][n[0]]; if (nc.t === "lake" && nc.lake < 0) { nc.lake = id; st.push(n) } } }
     lakes.push({tiles:members, filled:false});
   }
-  return {tiles, lakes, phase:"pick", water:0, income:0, speed:0, turn:0, head:null, msg:M.startHint, warn:false};
+  return {tiles, lakes, phase:"pick", cap:STORE, water:0, income:0, speed:0, turn:0, head:null, msg:M.startHint, warn:false};
 }
 const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
 function nbrs([x, y]) { return [[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy]) => [x+dx, y+dy]).filter(([a,b]) => inside(a, b)) }
@@ -100,6 +103,18 @@ function cost(from, to) {
   if (b.t === "spring") c = 0;
   return c;
 }
+// Bare ground touching the river (but not a tile the stream can move into) can be planted: grass, then trees.
+function plantable(p) {
+  if (!STORE || S.phase !== "play") return false;
+  const c = at(p); if (c.t !== "bare" || c.river || c.g >= 2 || moves().has(p + "")) return false;
+  return nbrs(p).some(n => at(n).river);
+}
+function plant(p) {
+  const c = at(p), what = c.g ? "Trees" : "Grass";
+  if (S.water < PLANT_COST) { say(`${what} costs ${PLANT_COST} gal and you have ${S.water} gal. End the turn to collect your flow.`, true); return }
+  snapshot(); S.water -= PLANT_COST; c.g++; c.bloom = true; S.cap++; bump("cWater"); bump("cBloom");
+  const sh = storageHint(); say(`${what} planted: you can now store ${S.cap} gal.${sh ? " " + sh + "." : ""}`);
+}
 function ends() { const h = at(S.head); return h.t === "lake" ? S.lakes[h.lake].tiles : [S.head] }
 function moves() {
   const m = new Map(); if (S.phase !== "play") return m;
@@ -114,6 +129,11 @@ function tryBloom(p) { const c = at(p);
   c.bloom = true; return 1 }
 const bloomCount = () => S.tiles.flat().filter(c => c.bloom).length;
 const affordable = () => [...moves().values()].some(m => m.cost <= S.water);
+const canPlant = () => STORE && S.water >= PLANT_COST && S.tiles.some((r, y) => r.some((_, x) => plantable([x, y])));
+// When every next tile costs more than you can store, say so: ending turns won't help, planting will.
+function storageHint() { if (!STORE || S.phase !== "play") return "";
+  const c = Math.min(...[...moves().values()].map(m => m.cost)); if (!(c > S.cap)) return "";
+  return `The next tile costs ${c} gal but you can only store ${S.cap}. Plant by the stream to store more` }
 
 function snapshot() { history.push(JSON.stringify(S)) }
 function build(mv) {
@@ -128,6 +148,8 @@ function build(mv) {
     S.income += 1; for (const p of L.tiles) for (const n of nbrs(p)) bl += tryBloom(n);
     notes.push("Lake filled: flow +1 gal a turn"); bump("cFlow") }
   else { b.river = true; b.bloom = false; b.from = mv.from;
+    if (b.g) { S.cap -= b.g; const sp = Math.max(0, S.water - S.cap); S.water -= sp;
+      notes.push(`The river washed away the ${b.g > 1 ? "trees" : "grass"}: storage down to ${S.cap} gal${sp ? `, ${sp} gal spilled` : ""}`); b.g = 0; bump("cWater") }
     if (b.t === "spring") { S.income += 1; notes.push("Spring joined: flow +1 gal a turn"); bump("cFlow") }
     if (b.t === "sand") { for (const n of nbrs(mv.p)) bl += tryBloom(n);
       const was = S.income; S.income = Math.max(0, S.income - 1);
@@ -139,14 +161,16 @@ function build(mv) {
   if (b.t === "ocean") { S.phase = "won"; say(`You reached the sea on turn ${S.turn}.`); return }
   if (!moves().size) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
   if (S.income === 0 && !affordable()) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
-  if (!affordable()) notes.push(`Out of water. End the turn for +${S.income} gal`);
+  const sh = storageHint();
+  if (sh) notes.push(sh); else if (!affordable() && !canPlant()) notes.push(`Out of water. End the turn for +${S.income} gal`);
   say(notes.length ? notes.join(". ") + "." : "Keep building, or end the turn.");
 }
 function endTurn() { if (S.phase !== "play") return; snapshot(); S.turn++; S.water += S.income; bump("cWater");
-  say(`Turn ${S.turn}: +${S.income} gal of water.`) }
+  const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp;
+  say(sp ? `Turn ${S.turn}: +${S.income - sp} gal. Storage is full at ${S.cap} gal, so ${sp} gal spilled.` : `Turn ${S.turn}: +${S.income} gal of water.`) }
 function pick(p) {
   const c = at(p); if (c.t !== "source") { say(M.pickHint ?? M.startHint, true); return }
-  snapshot(); c.river = true; S.head = p; S.income = c.yield; S.turn = 1; S.water = c.yield; S.phase = "play";
+  snapshot(); c.river = true; S.head = p; S.income = c.yield; S.turn = 1; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield; S.phase = "play";
   say(`Your source has a flow of ${c.yield} gal a turn. Tap a glowing tile to build.`);
 }
 function undo() { if (!history.length) return; S = JSON.parse(history.pop()); say("Stepped back.") }
@@ -156,14 +180,14 @@ function restart() { S = fresh(); history = []; say(M.startHint) }
 function say(t, warn = false) { S.msg = t; S.warn = warn; sync() }
 function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump") }
 function sync() {
-  tx("hWater", S.water); tx("hFlow", "+" + S.income); tx("hSpeed", S.speed); tx("hTurn", S.turn); tx("hBloom", bloomCount());
+  tx("hWater", S.water); if (STORE) tx("hCap", `/${S.cap} gal`); tx("hFlow", "+" + S.income); tx("hSpeed", S.speed); tx("hTurn", S.turn); tx("hBloom", bloomCount());
   $("cSpeed")?.classList.toggle("fast", S.speed >= 1);
   $("msg").textContent = S.msg || ""; $("msg").classList.toggle("warn", !!S.warn);
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length;
-  $("end").classList.toggle("ready", S.phase === "play" && !affordable());
+  $("end").classList.toggle("ready", S.phase === "play" && !affordable() && !canPlant());
   const won = S.phase === "won"; $("win").hidden = !won; $("bottom").hidden = won;
   if (won) {
-    const bl = bloomCount(), goals = [[true, "Reached the sea"], [bl >= BLOOM_GOAL, BLOOM_GOAL ? `Bloomed ${bl}/${BLOOM_GOAL} tiles` : "Bloom goal (none on this map)"], [S.turn <= TURN_GOAL, `Turn ${S.turn} (goal: by turn ${TURN_GOAL})`]];
+    const bl = bloomCount(), goals = [[true, "Reached the sea"], [bl >= BLOOM_GOAL, BLOOM_GOAL ? (M.bloomLabel ? `${M.bloomLabel} on ${bl}/${BLOOM_GOAL} tiles` : `Bloomed ${bl}/${BLOOM_GOAL} tiles`) : "Bloom goal (none on this map)"], [S.turn <= TURN_GOAL, `Turn ${S.turn} (goal: by turn ${TURN_GOAL})`]];
     const n = goals.filter(g => g[0]).length;
     $("wStars").innerHTML = "★".repeat(n) + `<span class="off">${"★".repeat(3 - n)}</span>`;
     $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
@@ -210,7 +234,7 @@ function resize() {
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
   return `rgb(${Math.round(r * (1 - k))},${Math.round(g * (1 - k))},${Math.round(b * (1 - k))})` }
 function poly(pts, fill) { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill() }
-function topColor(c) { if (c.t === "ocean") return COL.ocean; if (c.river) return COL.river; if (c.bloom) return COL.bloom; return COL[c.t] }
+function topColor(c) { if (c.t === "ocean") return COL.ocean; if (c.river) return COL.river; if (c.g) return COL.grass; if (c.bloom) return COL.bloom; return COL[c.t] }
 function draw() {
   if (!S) return;
   const t = (performance.now() - t0) / 1000, mv = moves();
@@ -233,10 +257,15 @@ function draw() {
       poly(d, ok ? `rgba(255,255,255,${.12 + .1 * pulse})` : "rgba(255,159,90,.12)");
       ctx.strokeStyle = ok ? `rgba(255,255,255,${pulse})` : "rgba(255,159,90,.9)"; ctx.lineWidth = 3.5; ctx.stroke();
       badges.push({o, pk, text: pk ? `+${c.yield}` : m.cost, sand: !!m && c.t === "sand"});
+    } else if (plantable(p)) { // plant here: green dashed outline and a small green price
+      ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = S.water >= PLANT_COST ? "rgba(214,255,170,.95)" : "rgba(255,159,90,.8)"; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+      badges.push({o, plant:true, text:PLANT_COST, ok:S.water >= PLANT_COST});
     }
   }
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  for (const {o, pk, text, sand} of badges) {
+  for (const {o, pk, text, sand, plant, ok} of badges) {
+    if (plant) { ctx.fillStyle = ok ? "rgba(31,110,40,.92)" : "rgba(8,24,38,.75)"; ctx.beginPath(); ctx.arc(o.x, o.y + 2, 12, 0, 7); ctx.fill();
+      ctx.fillStyle = "#e9ffd6"; ctx.font = "700 15px Fredoka, Nunito, sans-serif"; ctx.fillText(text, o.x, o.y + 3); continue }
     ctx.fillStyle = "rgba(8,24,38,.88)"; ctx.beginPath(); ctx.arc(o.x, o.y - 2, pk ? 20 : 15, 0, 7); ctx.fill();
     ctx.fillStyle = "#fff"; ctx.font = `700 ${pk ? 15 : 19}px Fredoka, Nunito, sans-serif`; ctx.fillText(text, o.x, o.y - 1);
     if (sand) { // sand also costs 1 flow: show it under the price
@@ -246,6 +275,9 @@ function draw() {
   }
 }
 function deco(p, c, o, t) {
+  if (c.t === "bare" && !c.river && !c.g) { ctx.fillStyle = "rgba(110,75,45,.4)"; for (const [dx, dy] of [[-12,-3],[-1,6],[10,-5],[3,-10]]) ctx.fillRect(o.x + dx - 3, o.y + dy - 1, 6, 2) }
+  if (c.g === 1 && !c.river) { ctx.strokeStyle = "#3f9a3f"; ctx.lineWidth = 2; ctx.lineCap = "round";
+    for (const [dx, dy] of [[-14,-2],[-4,7],[8,-6],[14,4],[0,-10]]) { const x = o.x + dx, y = o.y + dy; ctx.beginPath(); ctx.moveTo(x - 3, y - 6); ctx.lineTo(x, y); ctx.lineTo(x + 3, y - 6); ctx.stroke() } return }
   if (c.bloom && !c.river) for (const [dx, dy] of [[-14,-2],[10,-8],[6,8]]) { const x = o.x + dx, y = o.y + dy;
     ctx.fillStyle = "#6b4a2b"; ctx.fillRect(x - 1.5, y - 2, 3, 6);
     poly([[x, y - 18], [x + 7, y - 1], [x - 7, y - 1]], "#2e7d32"); poly([[x, y - 18], [x + 7, y - 1], [x, y - 1]], "#3f9a3f") }
@@ -271,7 +303,7 @@ cv.addEventListener("pointerup", e => {
   if (S.phase === "pick") return pick(p);
   if (S.phase !== "play") return;
   const m = moves().get(p + "");
-  if (m) build(m); else say("Tap a glowing tile next to your stream.", true);
+  if (m) build(m); else if (plantable(p)) plant(p); else say("Tap a glowing tile next to your stream.", true);
 });
 $("end").onclick = endTurn; $("undo").onclick = undo; $("restart").onclick = restart; $("again").onclick = restart;
 addEventListener("keydown", e => { if (e.key === " " && !$("help").open) { e.preventDefault(); endTurn() } });
@@ -285,7 +317,7 @@ sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resiz
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get S() { return S }, get history() { return history }, moves, diamond, endTurn, restart, bloomCount,
+window.FT = {get S() { return S }, get history() { return history }, moves, plantable, diamond, endTurn, restart, bloomCount,
   tap(p) { const d = diamond(p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;
     cv.dispatchEvent(new PointerEvent("pointerup", {clientX:r.left + (cx * scale + off.x) / dpr, clientY:r.top + (cy * scale + off.y) / dpr, bubbles:true})) }};
 })();

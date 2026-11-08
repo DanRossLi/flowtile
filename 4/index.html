@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 4</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 4 · Grass: bare ground. Plant grass by the stream to store enough water for the lake.
+// Map key: _ bare ground  L lake  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  id: "map-4-grass",
+  label: "Map 4 · Grass",
+  types: [
+    "_____L__~",
+    "_____L__~",
+    "T____L__~",
+    "_____L__~",
+    "_____L__~"],
+  elev: [
+    "111110110",
+    "111110110",
+    "111110110",
+    "111110110",
+    "111110110"],
+  storage: 3,
+  bloomGoal: 4,
+  bloomLabel: "Grass",
+  turnGoal: 5,
+  tileCost: 1,
+  lakeTileCost: 1,
+  showBloom: true,
+  startHint: "Tap the spring on the left to start.",
+  next: "../4a/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>. Water over that spills when you end the turn.",
+    "Tap a glowing tile to extend the stream. Every tile costs <b>1 gal</b>. Run it <b>left to right</b> to the sea.",
+    "<b>Bare ground</b> next to the stream shows a green <b>1</b>: tap it to plant <b>grass</b> for 1 gal. Each grass lets you <b>store +1 gal</b>.",
+    "The <b>lake</b> fills all at once for <b>5 gal</b>, more than you can store at the start. Plant grass first. A full lake adds <b>+1 flow</b>.",
+    "If the stream runs over grass it washes it away, and you lose that storage."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>
