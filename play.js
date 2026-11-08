@@ -18,6 +18,7 @@ const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
 const STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 14;
 const COL = {bare:"#b8916a",grass:"#8fce5a",meadow:"#8fce5a",sand:"#f0d48a",rock:"#a9a49b",boulder:"#86b852",spring:"#8fce5a",lake:"#c9b98f",ocean:"#2f7fc4",source:"#7a8f9e",river:"#4aa3e8",bloom:"#45b043"};
+const BANKS = true; // river drawn as a channel with banks; lakes get a shore
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- DOM
@@ -234,7 +235,30 @@ function resize() {
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
   return `rgb(${Math.round(r * (1 - k))},${Math.round(g * (1 - k))},${Math.round(b * (1 - k))})` }
 function poly(pts, fill) { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill() }
-function topColor(c) { if (c.t === "ocean") return COL.ocean; if (c.river) return COL.river; if (c.g) return COL.grass; if (c.bloom) return COL.bloom; return COL[c.t] }
+function topColor(c) { if (c.t === "ocean") return COL.ocean; if (c.river && (c.t === "lake" || !BANKS)) return COL.river; if (c.river) return COL[c.t]; if (c.g) return COL.grass; if (c.bloom) return COL.bloom; return COL[c.t] }
+// ---------- banks: the river is a channel cut into the land, lakes get a shoreline
+const gp = (x, y, u, v, lv) => { const o = iso(x + u, y + v, lv); return [o.x, o.y] };
+const linked = (a, b) => { const A = at(a), B = at(b); return A.river && B.river && ((B.from && B.from + "" === a + "") || (A.from && A.from + "" === b + "")) };
+function channel(p, lv) {
+  const dirs = nbrs(p).filter(n => linked(p, n)).map(n => [n[0] - p[0], n[1] - p[1]]);
+  const [x, y] = p;
+  const shape = (w, fill) => {
+    poly([gp(x, y, -w, -w, lv), gp(x, y, w, -w, lv), gp(x, y, w, w, lv), gp(x, y, -w, w, lv)], fill);
+    for (const [dx, dy] of dirs) { const px = -dy, py = dx;
+      poly([gp(x, y, px * w, py * w, lv), gp(x, y, dx * .5 + px * w, dy * .5 + py * w, lv), gp(x, y, dx * .5 - px * w, dy * .5 - py * w, lv), gp(x, y, -px * w, -py * w, lv)], fill) }
+  };
+  shape(.33, "#8a6a45"); shape(.27, "#a9865c"); shape(.2, COL.river);
+  ctx.strokeStyle = "rgba(220,240,255,.75)"; ctx.lineWidth = 2; ctx.lineCap = "round";
+  for (const [dx, dy] of dirs) { ctx.beginPath(); ctx.moveTo(...gp(x, y, 0, 0, lv)); ctx.lineTo(...gp(x, y, dx * .5, dy * .5, lv)); ctx.stroke() }
+}
+function shore(p, lv) {
+  const [x, y] = p, me = at(p);
+  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const n = [x + dx, y + dy];
+    if (inside(...n) && (at(n).lake === me.lake && me.lake >= 0 || linked(p, n))) continue;
+    const px = -dy, py = dx, a = .5, b = .37;
+    poly([gp(x, y, dx * a + px * .5, dy * a + py * .5, lv), gp(x, y, dx * a - px * .5, dy * a - py * .5, lv), gp(x, y, dx * b - px * .5, dy * b - py * .5, lv), gp(x, y, dx * b + px * .5, dy * b + py * .5, lv)], "#e6d29c");
+    ctx.strokeStyle = "#7d5f3c"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(...gp(x, y, dx * b + px * .5, dy * b + py * .5, lv)); ctx.lineTo(...gp(x, y, dx * b - px * .5, dy * b - py * .5, lv)); ctx.stroke() }
+}
 function draw() {
   if (!S) return;
   const t = (performance.now() - t0) / 1000, mv = moves();
@@ -249,8 +273,9 @@ function draw() {
     ctx.strokeStyle = shade(base, .12); ctx.lineWidth = 1; ctx.stroke();
     const o = iso(p[0], p[1], lv);
     deco(p, c, o, t);
-    if (c.river && c.from) { const f = iso(c.from[0], c.from[1], drawLevel(c.from));
-      ctx.strokeStyle = "#bfe4ff"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo((f.x + o.x) / 2, (f.y + o.y) / 2); ctx.lineTo(o.x, o.y); ctx.stroke() }
+    if (c.river && c.t === "lake") shore(p, lv);
+    else if (c.river && c.t !== "ocean" && c.t !== "source") channel(p, lv);
+    else if (c.t === "source" && c.river) channel(p, lv), deco(p, c, o, t);
     const m = mv.get(p + ""), pk = S.phase === "pick" && c.t === "source";
     if (m || pk) {
       const ok = pk || S.water >= m.cost, pulse = reduce ? 1 : .6 + .4 * Math.sin(t * 4);
