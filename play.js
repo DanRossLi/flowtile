@@ -96,8 +96,7 @@ function cost(from, to) {
   if (b.river || b.t === "boulder" || b.t === "source") return -1;
   if (b.e > level(from)) return -1;
   if (b.t === "lake") return LAKE_TILE_COST * S.lakes[b.lake].tiles.length;
-  let c = M.tileCost ?? (b.e < level(from) ? 1 : 2);
-  if (b.t === "sand") c += 1;
+  let c = M.tileCost ?? (b.e < level(from) ? 1 : 2); // sand costs the normal price; it cuts flow instead (see build)
   if (b.t === "spring") c = 0;
   return c;
 }
@@ -130,13 +129,16 @@ function build(mv) {
     notes.push("Lake filled: flow +1 gal a turn"); bump("cFlow") }
   else { b.river = true; b.bloom = false; b.from = mv.from;
     if (b.t === "spring") { S.income += 1; notes.push("Spring joined: flow +1 gal a turn"); bump("cFlow") }
-    if (b.t === "sand") { for (const n of nbrs(mv.p)) bl += tryBloom(n); notes.push("Sand soaked up the water") } }
+    if (b.t === "sand") { for (const n of nbrs(mv.p)) bl += tryBloom(n);
+      const was = S.income; S.income = Math.max(0, S.income - 1);
+      notes.push(was > S.income ? `Sand soaked up 1 flow: now +${S.income} gal a turn` : "Sand soaked the ground"); bump("cFlow") } }
   if (bl) notes.push(`${bl} tile${bl > 1 ? "s" : ""} bloomed`);
   if (M.speedRule === "perLevel") notes.push(drop >= 1 ? `Downhill: speed ${S.speed}` : S.speed ? `Flat: speed down to ${S.speed}` : "Flat: no speed");
   else if (drop >= 2) notes.push("Waterfall! Speed up");
   S.head = mv.p;
   if (b.t === "ocean") { S.phase = "won"; say(`You reached the sea on turn ${S.turn}.`); return }
   if (!moves().size) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
+  if (S.income === 0 && !affordable()) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
   if (!affordable()) notes.push(`Out of water. End the turn for +${S.income} gal`);
   say(notes.length ? notes.join(". ") + "." : "Keep building, or end the turn.");
 }
@@ -214,6 +216,7 @@ function draw() {
   const t = (performance.now() - t0) / 1000, mv = moves();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
   ctx.setTransform(scale, 0, 0, scale, off.x, off.y);
+  const badges = []; // drawn after all tiles so tiles in front can't cover them
   for (const p of ORDER) {
     const c = at(p), lv = drawLevel(p), d = diamond(p), base = topColor(c), dn = lv * ZH + 12;
     poly([d[3], d[2], [d[2][0], d[2][1] + dn], [d[3][0], d[3][1] + dn]], shade(base, .38));
@@ -229,9 +232,16 @@ function draw() {
       const ok = pk || S.water >= m.cost, pulse = reduce ? 1 : .6 + .4 * Math.sin(t * 4);
       poly(d, ok ? `rgba(255,255,255,${.12 + .1 * pulse})` : "rgba(255,159,90,.12)");
       ctx.strokeStyle = ok ? `rgba(255,255,255,${pulse})` : "rgba(255,159,90,.9)"; ctx.lineWidth = 3.5; ctx.stroke();
-      ctx.fillStyle = "rgba(8,24,38,.88)"; ctx.beginPath(); ctx.arc(o.x, o.y - 2, pk ? 20 : 15, 0, 7); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = `700 ${pk ? 15 : 19}px Fredoka, Nunito, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(pk ? `+${c.yield}` : m.cost, o.x, o.y - 1);
+      badges.push({o, pk, text: pk ? `+${c.yield}` : m.cost, sand: !!m && c.t === "sand"});
+    }
+  }
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (const {o, pk, text, sand} of badges) {
+    ctx.fillStyle = "rgba(8,24,38,.88)"; ctx.beginPath(); ctx.arc(o.x, o.y - 2, pk ? 20 : 15, 0, 7); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = `700 ${pk ? 15 : 19}px Fredoka, Nunito, sans-serif`; ctx.fillText(text, o.x, o.y - 1);
+    if (sand) { // sand also costs 1 flow: show it under the price
+      ctx.fillStyle = "rgba(8,24,38,.92)"; ctx.beginPath(); ctx.arc(o.x - 16, o.y + 21, 9, 0, 7); ctx.arc(o.x + 16, o.y + 21, 9, 0, 7); ctx.fill(); ctx.fillRect(o.x - 16, o.y + 12, 32, 18);
+      ctx.fillStyle = "#ff9f5a"; ctx.font = "700 12px Fredoka, Nunito, sans-serif"; ctx.fillText("−1 flow", o.x, o.y + 21);
     }
   }
 }

@@ -10,7 +10,7 @@ Plain HTML/JS, no build step, no framework.
 - Pick a source. The left one has a flow of **2 gal** a turn, the right one **3 gal**.
 - Tap a glowing tile to extend the river. The number is its cost in gallons. Out of water? **End turn** and your flow refills it.
 - Water only runs **downhill (1)** or **flat (2)**, never uphill.
-- **Sand** costs +1 but blooms every land tile around it.
+- **Sand** costs the normal price and blooms every land tile around it, but it cuts your **flow by 1** for the rest of the run.
 - **Rock** can be crossed, but tiles touching it only bloom when you have **speed**. A waterfall (a 2-level drop) gives speed; flat tiles drain it.
 - **Boulders** block the river. **Springs** are free and add **+1 flow**.
 - **Lakes** (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore.
@@ -24,7 +24,7 @@ Controls: tap tiles to build, **Undo** steps back one action, **Restart** resets
 |---|---|---|
 | Spring Hill | https://danrossli.github.io/flowtile/ | The full v0.1 rules |
 | 1 · Flat | https://danrossli.github.io/flowtile/1/ | Running a stream: 1 gal a tile, left to right |
-| 1a · Sand | https://danrossli.github.io/flowtile/1a/ | Sand: +1 gal, blooms the tiles around it |
+| 1a · Sand | https://danrossli.github.io/flowtile/1a/ | Sand: blooms the tiles around it, but costs 1 flow |
 | 2 · Slope | https://danrossli.github.io/flowtile/2/ | Downhill: +1 speed per level, flat tiles take 1 away |
 | 3 · Lake | https://danrossli.github.io/flowtile/3/ | Lakes: save up to fill, +1 flow, blooms the shore |
 
