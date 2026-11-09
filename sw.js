@@ -1,6 +1,6 @@
 // Flow Tile service worker: lets the game load offline after the first visit.
 // Bump VERSION whenever cached files change so old caches are dropped.
-const VERSION = "v12";
+const VERSION = "v13";
 const CACHE = `flowtile-${VERSION}`;
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap";
 const LOCAL = ["./", "./1/", "./1a/", "./2/", "./3/", "./4/", "./4a/", "./5/", "./6/", "./big/", "./play.js", "./play.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];

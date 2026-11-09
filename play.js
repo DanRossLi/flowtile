@@ -48,6 +48,7 @@ document.body.innerHTML = `
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
     <div class="overlay bottom" id="bottom"><div class="msg" id="msg" role="status"></div></div>
+    <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
     <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
       <div class="stars" id="wStars"></div>
       <h2 id="winTitle">You reached the sea!</h2>
@@ -68,6 +69,7 @@ document.body.innerHTML = `
   <h2 id="helpTitle">How to play</h2>
   <ul>
     <li><b>Water</b> is what you have, in gallons. <b>Flow</b> is how many gallons you get each turn.</li>
+    <li>Tap a tile to see what it does and what it costs, then choose. <b>Tap the same tile again</b> to do the first action.</li>
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
     <li>Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.</li>
   </ul>
@@ -113,10 +115,10 @@ function cost(from, to) {
   if (b.t === "spring") c = 0;
   return c;
 }
-// Bare ground touching the river (but not a tile the stream can move into) can be planted: grass, then trees.
+// Bare ground touching the river can be planted: grass, then trees.
 function plantable(p) {
   if (!STORE || S.phase !== "play") return false;
-  const c = at(p); if (c.t !== "bare" || c.river || c.g >= 2 || moves().has(p + "")) return false;
+  const c = at(p); if (c.t !== "bare" || c.river || c.g >= 2) return false;
   return nbrs(p).some(n => at(n).river && (!TRIB || at(n).rid === S.active));
 }
 // ---------- rivers: the active river's numbers live on S; the others wait in S.rivers
@@ -235,7 +237,65 @@ function sync() {
     $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
     $("wGoals").innerHTML = goals.map(([ok, t]) => `<li class="${ok ? "got" : ""}">${t}</li>`).join("");
   }
-  save(); resize(); draw();
+  save(); resize();
+  if (sel) { if (S.phase === "play") renderCard(); else closeCard() }
+  draw();
+}
+
+// ---------- tile card: tap a tile to see what it does and choose an action
+let sel = null, cardActs = [];
+function tileName(c) {
+  if (c.river) return {lake:"Full lake", ocean:"The sea", source:"Source"}[c.t] || (c.rid >= 0 && c.rid !== S.active ? riverName(c.rid) : "Your stream");
+  if (c.g) return c.g > 1 ? "Trees" : "Grass";
+  return {bare:"Bare ground", meadow:"Meadow", sand:"Sand", rock:"Rock", boulder:"Boulder", spring:"Spring", lake:"Empty lake", ocean:"The sea", source:"Source"}[c.t];
+}
+function tileText(p) {
+  const c = at(p);
+  if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
+  if (c.g) return `Stores ${c.g} extra gal. A stream running over it washes that away.`;
+  const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
+  return {bare:"Plant here once your stream is next to it.", meadow:"Open ground the stream can cross.",
+    sand:"Cuts flow by 1 when a stream crosses it, and blooms the land around it.", rock:"A stream can cross it. Tiles touching rock only bloom with speed.",
+    boulder:"Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal. Adds +1 flow and blooms the shore.`,
+    ocean:"Bring a stream here to finish the map.", source:"Where a river starts."}[c.t];
+}
+function actions(p) {
+  const c = at(p), out = [], m = moves().get(p + "");
+  if (m) { let name = "Extend the stream", sub = "", warn = "";
+    if (c.river) { name = `Join the ${riverName(c.rid).toLowerCase()}`; sub = "Adds this river's flow and pours in its water" }
+    else if (c.t === "ocean") { name = "Reach the sea"; sub = "Finishes the map" }
+    else if (c.t === "lake") { name = "Fill the lake"; sub = `Flow ${S.income} → ${S.income + 1}, and blooms the shore` }
+    else if (c.t === "spring") { name = "Join the spring"; sub = `Flow ${S.income} → ${S.income + 1}` }
+    else if (c.t === "sand") { sub = "Blooms the land around it"; warn = `Cuts flow: ${S.income} → ${Math.max(0, S.income - 1)}` }
+    if (c.g) warn = `Washes away the ${c.g > 1 ? "trees" : "grass"}: you lose ${c.g} storage`;
+    out.push({k:"stream", name, cost:m.cost, sub, warn, run:() => build(m)}) }
+  if (plantable(p)) out.push({k:"plant", name:c.g ? "Grow trees" : "Plant grass", cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + 1} gal`,
+    warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)});
+  if (TRIB && c.t === "source" && !c.river) out.push({k:"trib", name:"Start a tributary", cost:0, sub:`Its own water and storage, +${c.yield} gal a turn`, warn:"", run:() => startTributary(p)});
+  return out;
+}
+const canDo = a => S.water >= a.cost;
+function shortBy(a) { return STORE && a.cost > S.cap ? `You can only store ${S.cap} gal. Plant to store more` : `You have ${S.water} gal. End the turn for +${S.income}` }
+function renderCard() {
+  const c = at(sel), el = $("tcard"); cardActs = actions(sel);
+  el.innerHTML = `<div class="thead"><i class="swatch" style="background:${topColor(c)}"></i><div class="tname"><b>${tileName(c)}</b>${cardActs.length ? "" : `<small>${tileText(sel)}</small>`}</div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>` +
+    cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.cost ? a.cost + " gal" : "Free"}</span></button>`).join("");
+  el.hidden = false; placeCard();
+}
+function placeCard() {
+  if (!sel) return;
+  const el = $("tcard"), d = diamond(sel), sx = ((d[0][0] + d[2][0]) / 2 * scale + off.x) / lay.dpr, sy = ((d[0][1] + d[2][1]) / 2 * scale + off.y) / lay.dpr;
+  const side = lay.h < 540 && lay.w > lay.h * 1.3, up = sy > lay.topH + (lay.h - lay.topH) / 2;
+  el.className = "tcard " + (side ? (sx > lay.w / 2 ? "left" : "right") : up ? "up" : "");
+  el.style.top = !side && up ? lay.topH + 6 + "px" : "";
+}
+function closeCard() { if (!sel) return; sel = null; cardActs = []; $("tcard").hidden = true; draw() }
+function runAct(a) { closeCard(); a.run() }
+function tapTile(p) {
+  const c = at(p), m = moves().get(p + "");
+  if (TRIB && c.river && c.rid >= 0 && c.rid !== S.active && !S.rivers[c.rid].joined && !m) { closeCard(); activate(c.rid); say(`Now building the ${riverName(c.rid).toLowerCase()}.`); return }
+  if (sel && sel + "" === p + "") { const a = cardActs.find(canDo); if (a) runAct(a); else closeCard(); return }
+  sel = p; renderCard(); draw();
 }
 
 // The three star goals stay on screen while you play.
@@ -301,7 +361,7 @@ function applyView() {
   const zoomed = view.z > 1.02, fb = $("fitBtn");
   fb.innerHTML = zoomed ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M10.5 7.5v6M7.5 10.5h6"/></svg>';
   fb.setAttribute("aria-label", zoomed ? "Show the whole map" : "Zoom in");
-  draw();
+  placeCard(); draw();
 }
 // Where to look: the end of the active stream, else the source you can start on, else the middle.
 function focusPoint() {
@@ -369,14 +429,15 @@ function draw() {
       ctx.strokeStyle = ok ? `rgba(255,255,255,${pulse})` : "rgba(255,159,90,.9)"; ctx.lineWidth = 3.5; ctx.stroke();
       badges.push({o, pk, text: pk ? `+${c.yield}` : m.cost, sand: !!m && c.t === "sand"});
     } else if (plantable(p)) { // plant here: green dashed outline and a small green price
-      ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = S.water >= PLANT_COST ? "rgba(214,255,170,.95)" : "rgba(255,159,90,.8)"; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.setLineDash([5, 6]); ctx.strokeStyle = S.water >= PLANT_COST ? "rgba(214,255,170,.5)" : "rgba(255,255,255,.2)"; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
       badges.push({o, plant:true, text:PLANT_COST, ok:S.water >= PLANT_COST});
     }
   }
+  if (sel) { const d = diamond(sel); poly(d, "rgba(255,255,255,.24)"); ctx.strokeStyle = "#fff"; ctx.lineWidth = 4; ctx.stroke() }
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (const {o, pk, text, sand, plant, ok} of badges) {
-    if (plant) { ctx.fillStyle = ok ? "rgba(31,110,40,.92)" : "rgba(8,24,38,.75)"; ctx.beginPath(); ctx.arc(o.x, o.y + 2, 12, 0, 7); ctx.fill();
-      ctx.fillStyle = "#e9ffd6"; ctx.font = "700 15px Fredoka, Nunito, sans-serif"; ctx.fillText(text, o.x, o.y + 3); continue }
+    if (plant) { const x = o.x, y = o.y + 1; ctx.fillStyle = ok ? "rgba(31,110,40,.85)" : "rgba(8,24,38,.55)"; ctx.beginPath(); ctx.arc(x, y, 11, 0, 7); ctx.fill();
+      ctx.fillStyle = ok ? "#d6ffaa" : "#9bb6c6"; ctx.beginPath(); ctx.moveTo(x - 5, y + 5); ctx.quadraticCurveTo(x - 6, y - 6, x + 6, y - 6); ctx.quadraticCurveTo(x + 6, y + 5, x - 5, y + 5); ctx.fill(); continue }
     ctx.fillStyle = "rgba(8,24,38,.88)"; ctx.beginPath(); ctx.arc(o.x, o.y - 2, pk ? 20 : 15, 0, 7); ctx.fill();
     ctx.fillStyle = "#fff"; ctx.font = `700 ${pk ? 15 : 19}px Fredoka, Nunito, sans-serif`; ctx.fillText(text, o.x, o.y - 1);
     if (sand) { // sand also costs 1 flow: show it under the price
@@ -432,17 +493,18 @@ cv.addEventListener("wheel", e => { e.preventDefault(); view.z *= Math.exp(-e.de
 $("fitBtn").onclick = () => { if (view.z > 1.02) view.z = 1; else { view.z = Math.max(lay.zAuto, 1.8); follow(true) } applyView() };
 cv.addEventListener("pointerup", e => {
   const wasDrag = dragged; lift(e); if (wasDrag) { if (!ptrs.size) dragged = false; return }
-  const p = tileAt(e.clientX, e.clientY); if (!p) return;
+  const p = tileAt(e.clientX, e.clientY);
+  if (!p) { closeCard(); return }
   if (S.phase === "pick") return pick(p);
   if (S.phase !== "play") return;
-  const m = moves().get(p + "");
-  const c = at(p);
-  if (m) build(m); else if (plantable(p)) plant(p);
-  else if (TRIB && c.t === "source" && !c.river) startTributary(p);
-  else if (TRIB && c.river && c.rid >= 0 && c.rid !== S.active && !S.rivers[c.rid].joined) { activate(c.rid); say(`Now building the ${riverName(c.rid).toLowerCase()}.`) }
-  else say("Tap a glowing tile next to your stream.", true);
+  tapTile(p);
+});
+$("tcard").addEventListener("click", e => {
+  if (e.target.closest("#tclose")) { closeCard(); return }
+  const b = e.target.closest("button[data-a]"); if (b && !b.disabled) runAct(cardActs[+b.dataset.a]);
 });
 $("end").onclick = endTurn; $("undo").onclick = undo; $("restart").onclick = restart; $("again").onclick = restart;
+addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
 addEventListener("keydown", e => { if (e.key === " " && !$("help").open) { e.preventDefault(); endTurn() } });
 $("rivers").addEventListener("click", e => { const b = e.target.closest("button[data-r]"); if (!b || S.phase !== "play") return; const i = +b.dataset.r;
   if (i !== S.active && !S.rivers[i].joined) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } });
@@ -456,7 +518,7 @@ sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resiz
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get S() { return S }, get history() { return history }, get view() { return view }, moves, plantable, diamond, endTurn, restart, bloomCount,
+window.FT = {get S() { return S }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount,
   tap(p) { const d = diamond(p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;
     cv.dispatchEvent(new PointerEvent("pointerup", {clientX:r.left + (cx * scale + off.x) / dpr, clientY:r.top + (cy * scale + off.y) / dpr, bubbles:true})) }};
 })();
