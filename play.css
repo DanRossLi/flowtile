@@ -58,8 +58,13 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .chip.mini{flex:none;width:70px}
 .chip.mini.over b{color:var(--warn)}
 .chip.wind{width:56px}
-.chip.sky{width:auto;min-width:70px;padding-left:8px;padding-right:8px}
-.chip.sky b{font-size:14px;white-space:nowrap}
+.chip.sky{width:72px;padding-left:4px;padding-right:4px}
+.chip.sky span{letter-spacing:.02em}
+.chip.sky b{font-size:17px;white-space:nowrap}
+.hud.many .chip.mini{width:56px}
+.hud.many .chip.sky{width:68px}
+.hud.many .chip.wind{width:48px}
+.tank .tline{flex-wrap:wrap;row-gap:2px}
 .chip.sky.rain b,.chip.sky.cloud b{color:#9fd4ff}
 .chip.sky.drought b{color:#ffbe5a}
 .chip.sky.fire b{color:#ff7a5a}
@@ -147,6 +152,12 @@ dialog h2{font-family:var(--display);color:var(--paper-ink);font-size:22px;margi
 dialog ul{margin:0 0 14px;padding-left:18px;display:grid;gap:7px}
 dialog b{color:var(--paper-ink)}
 dialog form button{width:100%}
+dialog a.btn{text-decoration:none;display:block}
+dialog .opts{display:grid;gap:10px;margin:0 0 14px;padding:12px;border-radius:14px;background:#ebe5d6}
+dialog .opts .hard{display:flex;align-items:center;gap:8px;font-weight:700}
+dialog .opts input{width:20px;height:20px;accent-color:#2f9be8}
+dialog .orow{display:flex;gap:8px}
+dialog .orow>*{flex:1;text-align:center;font-size:14px;padding:10px 8px}
 
 @media (prefers-reduced-motion:reduce){.chip.bump,.goal.bump,.end.ready,.cells i.new,.chip.spill,.msg.pop,.win,.card,.stars .st,.tcard,dialog[open]{animation:none}}
 /* short phones: tighten */

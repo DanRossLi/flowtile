@@ -19,7 +19,9 @@
 (() => {
 const M = window.MAP;
 const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits next to play.js
-const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = M.bloomGoal, TURN_GOAL = M.turnGoal;
+const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed number of turns
+const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal;
+const ROOT = new URL("./", document.currentScript.src).href; // the site root, where play.js lives
 const LAKE_TILE_COST = M.lakeTileCost ?? 2;
 const SHOW_SPEED = M.showSpeed ?? M.speedRule === "perLevel";
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
@@ -47,14 +49,14 @@ document.body.innerHTML = `
         <button class="icon" id="helpBtn" aria-label="How to play">?</button>
       </div>
       <div class="rivers" id="rivers" hidden></div>
-      <div class="hud">
+      <div class="hud${WIND && (CYCLE || WX) ? " many" : ""}">
         <div class="chip tank" id="cWater">
           <div class="tline"><span>Water</span><b id="hWater">0</b><small id="hCap">gal</small><em id="cFlow">+0 a turn</em></div>
           ${STORE ? `<div class="cells" id="cells" aria-hidden="true"></div>` : ""}
         </div>
         ${SHOW_SPEED ? `<div class="chip mini" id="cSpeed"><span>Speed</span><b id="hSpeed">0</b></div>` : ""}
         ${WIND ? `<div class="chip mini wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><span>Wind</span><b><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg></b></div>` : ""}
-        ${CYCLE || WX ? `<div class="chip mini sky" id="cSky"><span>Sky</span><b id="hSky">Clear</b></div>` : ""}
+        ${CYCLE || WX ? `<div class="chip mini sky" id="cSky"><span id="lSky">Sky</span><b id="hSky">Clear</b></div>` : ""}
         <div class="chip mini" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
       </div>
       <div class="goals" id="goals"></div>
@@ -69,7 +71,7 @@ document.body.innerHTML = `
       <ul id="wGoals"></ul>
       <div class="row" id="wRow">
         <button id="again">Play again</button>
-        ${M.next ? `<a class="btn end" id="next" href="${M.next}">Next map</a>` : ""}
+        ${M.share ? `<button class="end" id="share">Share score</button>` : M.next ? `<a class="btn end" id="next" href="${M.next}">Next map</a>` : ""}
       </div>
     </div></div>
   </div>
@@ -85,11 +87,15 @@ document.body.innerHTML = `
     <li><b>Water</b> is what you have, in gallons. <b>Flow</b> is how many gallons you get each turn.</li>
     <li>Tap a tile to see what it does and what it costs, then choose. <b>Tap the same tile again</b> to do the first action.</li>
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
-    <li>Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.</li>
+    <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, green tile and fish, 3 per grove or wildflower patch, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
   </ul>
+  <div class="opts">
+    <label class="hard"><input type="checkbox" id="hard"> Hard mode: <b>3 undos</b> per map</label>
+    <div class="orow"><a class="btn" href="${ROOT}world/">All islands</a><button type="button" id="codeBtn">Copy map code</button></div>
+  </div>
   <form method="dialog"><button class="end">Got it</button></form>
 </dialog>`;
-if (!M.next) document.getElementById("wRow").classList.add("one");
+if (!M.next && !M.share) document.getElementById("wRow").classList.add("one");
 const $ = id => document.getElementById(id);
 const tx = (id, v) => { const e = $(id); if (e) e.textContent = v };
 
@@ -273,6 +279,7 @@ function build(mv) {
   if (OXBOW && b.t !== "ocean" && b.t !== "lake") { const ox = oxbow(mv.p); if (ox) notes.push(ox) }
   if (b.t === "ocean") { S.phase = "won"; wave = now(); float(mv.p, "Splash!", "#ffffff"); say(`You reached the sea on turn ${S.turn}.`); return }
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.push(`This river can't go on. Tap your ${riverName(openRivers()[0]).toLowerCase()} to switch`); say(notes.join(". ") + ".", true); return }
+  if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on: the island is scored. Undo to try another way."); return }
   if (!moves().size) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
   if (S.income === 0 && !affordable()) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
   const sh = storageHint();
@@ -302,6 +309,7 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   if (sp && !reduce) { const e = $("cWater"); if (e) { e.classList.remove("spill"); void e.offsetWidth; e.classList.add("spill") } }
   for (const i of openRivers()) { const r = S.rivers[i]; r.water = STORE ? Math.min(r.cap, r.water + r.income) : r.water + r.income }
   for (const h of turnHooks) { const n = h(); if (n) notes.push(n) }
+  if (PERF && S.turn > TURN_GOAL) { S.turn = TURN_GOAL; S.phase = "won"; wave = now(); notes.push(`That's ${TURN_GOAL} turns: the island is scored`) }
   const head = sp ? (up ? `Turn ${S.turn}: +${f.gain - sp} gal. ${up} gal spilled and rose as a cloud: it rains back on turn ${S.turn + 2}` : `Turn ${S.turn}: +${f.gain - sp} gal. Storage is full at ${cap0} gal, so ${sp} gal spilled`) : `Turn ${S.turn}: +${f.gain} gal of water`;
   say([head, ...notes].join(". ") + ".") }
 // ---------- oxbow lakes: a tight U-bend (the new tile touches the river 3 tiles back) cuts off the bend into a free full lake
@@ -385,7 +393,10 @@ function pick(p) {
   say(`Your source has a flow of ${S.income} gal a turn${ro ? " (with mountain runoff)" : ""}. Tap a glowing tile to build.`);
   zoomTo(lay.zAuto);
 }
-function undo() { if (!history.length) return; closeCard(); S = JSON.parse(history.pop()); anim.clear(); fx.length = 0; say("Stepped back."); if (S.phase === "pick") zoomTo(1) }
+const HARD_KEY = "flowtile.hard", UNDOS = 3;
+const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
+function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
+  const used = (S.undos || 0) + (hard() ? 1 : 0); closeCard(); S = JSON.parse(history.pop()); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
 function restart() { closeCard(); S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); zoomTo(1) }
 
 // ---------- UI
@@ -404,17 +415,25 @@ function sync() {
   const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
   if (play) { const f = forecast(), g = STORE ? Math.min(f.gain, Math.max(0, S.cap - S.water)) : f.gain, sp = f.gain - g;
     gain.textContent = sp ? `+${g} · ${sp} ${CYCLE ? "to cloud" : "spill"}` : `+${f.gain} gal`; gain.classList.toggle("spill", sp > 0) }
-  if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); $("cSky").className = "chip mini sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
+  if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); tx("lSky", nx.turn > S.turn ? `Sky · T${nx.turn}` : "Sky"); $("cSky").className = "chip mini sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
   if ((S.head || "") + "|" + S.active !== lastHead) { lastHead = (S.head || "") + "|" + S.active; follow() }
   $("cSpeed")?.classList.toggle("fast", S.speed >= 1);
   const me = $("msg"); if (me.textContent !== (S.msg || "")) { me.textContent = S.msg || ""; if (!reduce) { me.classList.remove("pop"); void me.offsetWidth; me.classList.add("pop") } }
   me.classList.toggle("warn", !!S.warn);
-  $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length;
+  $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length || (hard() && (S.undos || 0) >= UNDOS);
   $("end").classList.toggle("ready", S.phase === "play" && !affordable() && !canPlant());
   const won = S.phase === "won"; $("win").hidden = !won; $("bottom").hidden = won; if (!won) $("wStars").dataset.n = "";
-  if (won) {
+  if (won && PERF) {
+    const sc = score(), n = perfStars(sc.total), prevBest = getNum(bestKey); if (sc.total > prevBest) setNum(bestKey, sc.total); if (n > getNum(starKey)) setNum(starKey, n);
+    const pts = `${sc.total} point${sc.total === 1 ? "" : "s"}`; $("winTitle").textContent = sc.sea ? `You reached the sea! ${pts}` : `Island scored: ${pts}`;
+    const BIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/><path class="glint" d="M12 2.5l2.9 6 6.6.8L12 12z"/></svg>';
+    if ($("wStars").dataset.n !== String(n)) { $("wStars").dataset.n = n; $("wStars").innerHTML = [0, 1, 2].map(i => `<span class="st ${i < n ? "on" : ""} s${i}">${BIG}</span>`).join("") }
+    $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
+    const rows = [["River tiles", sc.river], ["Green tiles", sc.green], ["Groves and patches", sc.combos], ["Fish", sc.fish], ["Full lakes", sc.lakes], ["Reached the sea", sc.sea]].filter(r => r[1]);
+    $("wGoals").innerHTML = rows.map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>+${v}</b></li>`).join("") + `<li class="g3 extra"><i></i><span>${sc.total > prevBest && prevBest ? "New best! Before" : "Best score"}</span><b>${sc.total > prevBest && prevBest ? prevBest : Math.max(prevBest, sc.total)}</b></li>`;
+  } else if (won) {
     const bl = bloomCount(), goals = [[true, `Reached the sea · turn ${S.turn}`], [bl >= BLOOM_GOAL, BLOOM_GOAL ? (M.bloomLabel ? `${M.bloomLabel} on ${bl}/${BLOOM_GOAL} tiles` : `Bloomed ${bl}/${BLOOM_GOAL} tiles`) : "Bloom goal (none on this map)"], [S.turn <= TURN_GOAL, `Turn ${S.turn} (goal: by turn ${TURN_GOAL})`]];
-    const n = goals.filter(g => g[0]).length;
+    const n = goals.filter(g => g[0]).length; if (n > getNum(starKey)) setNum(starKey, n);
     const BIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/><path class="glint" d="M12 2.5l2.9 6 6.6.8L12 12z"/></svg>';
     if (!$("wStars").dataset.n || $("wStars").dataset.n !== String(n)) { $("wStars").dataset.n = n; $("wStars").innerHTML = [0, 1, 2].map(i => `<span class="st ${i < n ? "on" : ""} s${i}">${BIG}</span>`).join("") }
     $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
@@ -513,11 +532,21 @@ function tapTile(p) {
   sel = p; renderCard(); draw();
 }
 
+// ---------- Perfection score
+function score() {
+  const c = combos(), lakes = S.lakes.filter(L => L.filled).length, sea = S.tiles.flat().some(k => k.t === "ocean" && k.river);
+  const part = {river:S.tiles.flat().filter(k => k.river && k.t !== "source" && k.t !== "ocean" && k.t !== "lake").length, green:bloomCount(), combos:3 * c.length, fish:fishCount(), lakes:2 * lakes, sea:sea ? 5 + Math.max(0, TURN_GOAL - S.turn) : 0};
+  part.total = Object.values(part).reduce((a, b) => a + b, 0); return part;
+}
+const bestKey = "flowtile.best." + M.id, starKey = "flowtile.stars." + M.id;
+const getNum = k => { try { return +localStorage.getItem(k) || 0 } catch (_) { return 0 } };
+const setNum = (k, v) => { try { localStorage.setItem(k, String(v)) } catch (_) {} };
+function perfStars(t) { const st = M.scoreStars || [20, 30, 40]; return st.filter(x => t >= x).length }
 // The sky chip: the next thing the weather or your clouds will do.
 function skyNext() {
   const ev = [];
-  for (const c of S.clouds || []) ev.push({turn:c.turn, kind:"cloud", text:`☁ +${c.gal} T${c.turn}`, long:`A cloud with ${c.gal} gal rains back on turn ${c.turn}`});
-  if (WX) for (const [k, v] of Object.entries(WX)) if (+k > S.turn) ev.push({turn:+k, kind:v, text:`${{rain:"Rain", drought:"Drought", fire:"Lightning"}[v] || v} T${k}`, long:`${{rain:"Rainstorm: +2 gal", drought:"Drought: −1 flow for 2 turns", fire:"Lightning: dry trees catch fire"}[v] || v} on turn ${k}`});
+  for (const c of S.clouds || []) ev.push({turn:c.turn, kind:"cloud", text:`☁ +${c.gal}`, long:`A cloud with ${c.gal} gal rains back on turn ${c.turn}`});
+  if (WX) for (const [k, v] of Object.entries(WX)) if (+k > S.turn) ev.push({turn:+k, kind:v, text:`${{rain:"Rain", drought:"Dry", fire:"Storm"}[v] || v}`, long:`${{rain:"Rainstorm: +2 gal", drought:"Drought: −1 flow for 2 turns", fire:"Lightning: dry trees catch fire"}[v] || v} on turn ${k}`});
   if (S.dry > 0) ev.push({turn:S.turn, kind:"drought", text:"Drought", long:"Drought: −1 flow next turn"});
   ev.sort((a, b) => a.turn - b.turn);
   return ev[0] || {kind:"", text:"Clear", long:"Clear skies ahead"};
@@ -525,6 +554,8 @@ function skyNext() {
 // The three star goals stay on screen while you play.
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
 function goals() {
+  if (PERF) { const sc = score().total, best = getNum(bestKey), st = M.scoreStars || [20, 30, 40], nx = st.find(x => sc < x);
+    $("goals").innerHTML = [`<span class="goal ${nx ? "live" : "got"}">${STAR}Score ${sc}${nx ? ` · next star at ${nx}` : ""}</span>`, best ? `<span class="goal">Best ${best}</span>` : ""].join(""); return }
   const won = S.phase === "won", bl = bloomCount(), left = TURN_GOAL - S.turn, over = left < 0;
   const list = [[won ? "got" : "", "To the sea"]];
   if (BLOOM_GOAL) list.push([bl >= BLOOM_GOAL ? "got" : "", `${BLOOM_LABEL} ${bl}/${BLOOM_GOAL}`, "cBloom"]);
@@ -932,7 +963,15 @@ addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
 addEventListener("keydown", e => { if (e.key === " " && !$("help").open) { e.preventDefault(); endTurn() } });
 $("rivers").addEventListener("click", e => { const b = e.target.closest("button[data-r]"); if (!b || S.phase !== "play") return; const i = +b.dataset.r;
   if (i !== S.active && !S.rivers[i].joined) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } });
-$("helpBtn").onclick = () => $("help").showModal();
+$("helpBtn").onclick = () => { $("hard").checked = hard(); $("help").showModal() };
+$("hard").onchange = e => { try { localStorage.setItem(HARD_KEY, e.target.checked ? "1" : "0") } catch (_) {} sync() };
+// Map codes: the map as a short text you can share; /custom/#<code> plays it.
+function mapCode() { const keep = {...M}; delete keep.help; delete keep.next; delete keep.share; delete keep.startHint;
+  const b = new TextEncoder().encode(JSON.stringify(keep)); let bin = ""; b.forEach(x => bin += String.fromCharCode(x)); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") }
+$("codeBtn").onclick = async () => { const url = new URL("custom/#" + mapCode(), ROOT).href; let ok = false; try { await navigator.clipboard.writeText(url); ok = true } catch (_) {}
+  $("codeBtn").textContent = ok ? "Link copied!" : "Copy failed"; if (!ok) prompt("Map code link:", url); setTimeout(() => $("codeBtn").textContent = "Copy map code", 1800) };
+if ($("share")) $("share").onclick = async () => { const sc = score(), n = perfStars(sc.total), txt = `Flow Tile · ${M.label}: ${sc.total} points ${"★".repeat(n)}${"☆".repeat(3 - n)}${sc.sea ? " · reached the sea" : ""}\n${location.href}`;
+  try { if (navigator.share) await navigator.share({text:txt}); else { await navigator.clipboard.writeText(txt); $("share").textContent = "Copied!" } } catch (_) {} };
 $("help").addEventListener("click", e => { if (e.target === $("help")) $("help").close() }); // tap backdrop to close
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
@@ -942,7 +981,7 @@ sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resiz
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick,
+window.FT = {get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, score,
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const d = diamond(p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;

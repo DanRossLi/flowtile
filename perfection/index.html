@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Perfection</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Perfection island: every rule at once. Score as much as you can in 20 turns.
+// Map key: _ bare  . meadow  F forest  p rain pool  v beavers  r rock  s sand  B mountain  L lake  o spring  ~ sea  T source (3)  S source (2)
+window.MAP = {
+  id: "perfection-island",
+  label: "Perfection island",
+  types: [
+    "____.__FFF___~",
+    "_p___B______.~",
+    "T___r___v____~",
+    "_____LL__s___~",
+    "__.__LL____p_~",
+    "_v_____r__.__~",
+    "S____.___B_o_~"],
+  elev: [
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111001111110",
+    "11111001111110",
+    "11111111111110",
+    "11111111111110"],
+  mode: "perfection",
+  turns: 20,
+  scoreStars: [30, 45, 60],
+  storage: 3,
+  wind: [-1, 0],
+  cycle: true,
+  weather: {"5": "rain", "9": "drought", "12": "fire", "16": "rain"},
+  spread: true,
+  oxbow: true,
+  floodplain: true,
+  snowmelt: true,
+  moss: true,
+  deer: true,
+  tileCost: 1,
+  lakeTileCost: 2,
+  showBloom: true,
+  startHint: "Pick a source: the top one gives 3 gal a turn, the bottom one 2.",
+  pickHint: "Tap one of the two sources on the left.",
+  next: "../daily/",
+  help: [
+    "Every rule from the lessons is on. Grow your river, green the land, make groves, collect pools and catch your clouds.",
+    "Watch the <b>Sky</b> chip: rain on turns 5 and 16, a drought on turn 9, lightning on turn 12."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>

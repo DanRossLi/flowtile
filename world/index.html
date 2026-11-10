@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Islands</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<style>
+  :root{--sea:#2b68b0;--deep:#1f4f8c;--paper:#f4f1e8;--ink:#13222e;--gold:#ffd166;--gold-d:#d9a93c;--green:#7cc94c;--muted:#6c7b83}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100dvh;background:radial-gradient(120% 80% at 50% 0%,#3a7cc4 0%,var(--sea) 45%,var(--deep) 100%);color:#fff;font-family:Nunito,system-ui,sans-serif}
+  main{max-width:760px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
+  h1{font-family:Fredoka,Nunito,sans-serif;font-size:30px;margin:6px 0 2px;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+  h1 span{color:#8fdcff}
+  .sub{margin:0 0 18px;opacity:.85;font-weight:700}
+  .total{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:#3a2600;border-radius:999px;padding:4px 12px;font-weight:800;box-shadow:inset 0 -3px 0 var(--gold-d)}
+  h2{font-family:Fredoka,Nunito,sans-serif;font-size:19px;margin:22px 0 4px;display:flex;align-items:center;gap:8px}
+  h2 i{font-style:normal;font-size:13px;font-family:Nunito,sans-serif;font-weight:800;opacity:.75}
+  .biome{margin:0 0 8px;font-size:14px;opacity:.8}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  a.isle{position:relative;display:block;text-decoration:none;color:var(--ink);background:var(--paper);border-radius:18px;padding:12px 12px 10px;box-shadow:0 5px 0 #b9b19c;transition:transform .12s}
+  a.isle:active{transform:translateY(3px);box-shadow:0 2px 0 #b9b19c}
+  a.isle:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+  .blob{height:46px;border-radius:14px;margin:0 0 8px;position:relative;overflow:hidden}
+  .blob::after{content:"";position:absolute;inset:auto 0 0 0;height:12px;background:#58b6e6}
+  .isle b{display:block;font-family:Fredoka,Nunito,sans-serif;font-size:16px;line-height:1.15}
+  .isle small{display:block;color:var(--muted);font-weight:700;font-size:12px;margin-top:2px}
+  .stars{display:flex;gap:2px;margin-top:6px}
+  .stars svg{width:20px;height:20px}
+  .stars .on path{fill:var(--gold);stroke:#b98a1c}
+  .stars path{fill:#e2ddd0;stroke:#c4bca7;stroke-width:1.5;stroke-linejoin:round}
+  .isle.locked{filter:saturate(.25);opacity:.75}
+  .lock{position:absolute;top:8px;right:8px;background:var(--ink);color:#fff;border-radius:999px;font-size:11px;font-weight:800;padding:2px 8px}
+  .isle.next{box-shadow:0 5px 0 #b9b19c,0 0 0 3px var(--gold)}
+  .best{position:absolute;top:8px;right:8px;background:#2f9be8;color:#fff;border-radius:999px;font-size:11px;font-weight:800;padding:2px 8px}
+  footer{margin-top:26px;font-size:13px;opacity:.8}
+  footer a{color:#fff}
+  @media (prefers-reduced-motion:reduce){a.isle{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Flow <span>Tile</span> islands</h1>
+  <p class="sub">Play each island to open the next. <span class="total" id="total">★ 0</span></p>
+  <div id="list"></div>
+  <footer>Hard mode, map codes and help are in the <b>?</b> menu on every island. Test maps: <a href="../">Spring Hill</a> · <a href="../big/">Big 18×18</a></footer>
+</main>
+<script>
+// The campaign: a world of islands, one biome each. An island opens when the one before it has a star.
+const WORLD = [
+  {name:"Green Valley", note:"First streams: flat ground, sand, slopes and lakes.", col:"#a3d977", isles:[
+    ["1", "map-1-flat", "Flat"], ["1a", "map-1a-sand-v2", "Sand"], ["2", "map-2-slope", "Slope"], ["3", "map-3-lake", "Lake"]]},
+  {name:"Grassland", note:"Plant grass and trees to store more water.", col:"#7cc94c", isles:[
+    ["4", "map-4-grass", "Grass"], ["4a", "map-4a-trees", "Trees"], ["5", "map-5-desert", "Desert"], ["6", "map-6-tributary", "Tributary"]]},
+  {name:"Highlands", note:"Rock, groves, wildflowers, mountains and forest.", col:"#b0aa9f", isles:[
+    ["7", "map-7-rock", "Rock"], ["8", "map-8-grove", "Grove"], ["9", "map-9-wildflowers", "Wildflowers"], ["10", "map-10-mountains", "Mountains"], ["11", "map-11-forest", "Forest"]]},
+  {name:"Wild Coast", note:"Weather, living land, wildlife and fire.", col:"#58b6e6", isles:[
+    ["12", "map-12-rain", "Rain"], ["13", "map-13-spread", "Spread"], ["14", "map-14-oxbow", "Oxbow"], ["15", "map-15-harvest", "Harvest"], ["16", "map-16-wildlife", "Wildlife"], ["17", "map-17-wildfire", "Wildfire"]]},
+  {name:"Challenge", note:"Score as much as you can in 20 turns.", col:"#ffd166", isles:[
+    ["perfection", "perfection-island", "Perfection island", "best"]]},
+];
+const get = k => { try { return +localStorage.getItem(k) || 0 } catch (_) { return 0 } };
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>';
+const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+let prevStars = 1, total = 0, nextMarked = false, html = "";
+WORLD.forEach((b, bi) => {
+  html += `<h2>${b.name} <i>${b.isles.length} island${b.isles.length > 1 ? "s" : ""}</i></h2><p class="biome">${b.note}</p><div class="grid">`;
+  for (const [dir, id, name, best] of b.isles) {
+    const st = get("flowtile.stars." + id), open = prevStars > 0; total += st;
+    const isNext = open && !st && !nextMarked; if (isNext) nextMarked = true;
+    html += `<a class="isle${open ? "" : " locked"}${isNext ? " next" : ""}" href="../${dir}/" data-locked="${open ? "" : "1"}">
+      ${open ? (best && get("flowtile.best." + id) ? `<span class="best">Best ${get("flowtile.best." + id)}</span>` : "") : `<span class="lock">Locked</span>`}
+      <div class="blob" style="background:linear-gradient(135deg,${b.col},${b.col}cc)"></div>
+      <b>${name}</b><small>${dir === "perfection" ? "Perfection · 20 turns" : "Island " + dir}</small>
+      <div class="stars" aria-label="${st} of 3 stars">${[0, 1, 2].map(i => `<span class="${i < st ? "on" : ""}">${STAR}</span>`).join("")}</div></a>`;
+    prevStars = st;
+  }
+  html += `</div>`;
+});
+const dst = get("flowtile.stars.daily-" + today), dbest = get("flowtile.best.daily-" + today);
+html += `<h2>Daily island <i>new every day</i></h2><p class="biome">The same island for everyone today. Share your score.</p><div class="grid">
+  <a class="isle" href="../daily/">${dbest ? `<span class="best">Best ${dbest}</span>` : ""}<div class="blob" style="background:linear-gradient(135deg,#ff9fb8,#ffd166)"></div><b>${today.slice(5)}</b><small>Today's island</small>
+  <div class="stars">${[0, 1, 2].map(i => `<span class="${i < dst ? "on" : ""}">${STAR}</span>`).join("")}</div></a></div>`;
+document.getElementById("list").innerHTML = html;
+document.getElementById("total").textContent = `★ ${total}`;
+document.getElementById("list").addEventListener("click", e => { const a = e.target.closest("a[data-locked='1']"); if (a && !confirm("This island opens once the one before it has a star. Play it anyway?")) e.preventDefault() });
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("../sw.js").catch(() => {}));
+</script>
+</body>
+</html>

@@ -47,9 +47,19 @@ Controls: tap a tile to open a card showing what it does and what it costs, then
 | 15 · Harvest | https://danrossli.github.io/flowtile/15/ | Rain pools, snowmelt and moss: make room in storage before you collect |
 | 16 · Wildlife | https://danrossli.github.io/flowtile/16/ | Grow trees by a beaver colony for a pond (+1 flow); trees keep deer off your grass |
 | 17 · Wildfire | https://danrossli.github.io/flowtile/17/ | Lightning sets dry forest alight; keep your trees away from it |
+| Perfection island | https://danrossli.github.io/flowtile/perfection/ | Every rule on: the best score in 20 turns |
+| Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
 
 Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
+
+## Modes
+
+- **Islands** (https://danrossli.github.io/flowtile/world/): the campaign. Islands are grouped by biome, show your best stars, and each one opens when the one before it has a star.
+- **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, green tile and fish, 3 per grove or wildflower patch, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
+- **Daily island** (`/daily/`): generated from the date, so everyone gets the same island. Add `?d=YYYY-MM-DD` to play another day's island. **Share score** copies your result.
+- **Hard mode**: tick it in the **?** menu to get 3 undos per map.
+- **Map codes**: **?** → **Copy map code** copies a link that plays the map at `/custom/#<code>`.
 
 ## Install on your phone
 

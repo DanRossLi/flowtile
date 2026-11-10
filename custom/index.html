@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Custom map</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Custom map: plays a map shared as a code (the part after # in the link). With no code, asks for one.
+(function () {
+  const raw = decodeURIComponent((location.hash || "").slice(1)).trim().replace(/^.*#/, "");
+  let map = null;
+  try { const bin = atob(raw.replace(/-/g, "+").replace(/_/g, "/")), bytes = Uint8Array.from(bin, c => c.charCodeAt(0)); map = JSON.parse(new TextDecoder().decode(bytes)) } catch (_) {}
+  const ok = map && Array.isArray(map.types) && map.types.length && map.types.every(r => typeof r === "string" && r.length === map.types[0].length) && map.types.length <= 30 && map.types[0].length <= 30;
+  if (ok) {
+    map.elev ||= map.types.map(r => [...r].map(c => "~L".includes(c) ? "0" : "1").join(""));
+    map.id = "custom-" + (map.id || "map"); map.label = "Custom · " + String(map.label || "Map").replace(/<[^>]*>/g, "").slice(0, 40);
+    map.next = null; map.startHint = "Tap a source to start."; map.help = ["A map someone shared with you as a code."]; map.turnGoal ||= 10;
+    window.MAP = map;
+  } else {
+    window.MAP = null;
+    document.body.innerHTML = `<dialog open style="position:static;margin:40px auto"><h2>Open a map code</h2>
+      <p>${raw ? "That code didn't work. " : ""}Paste a map code or a map link. You get one from <b>?</b> → <b>Copy map code</b> on any island.</p>
+      <form id="f"><textarea id="code" rows="4" style="width:100%;font:inherit;border-radius:12px;padding:8px" placeholder="Paste the code or link here"></textarea>
+      <button class="end" style="width:100%;margin-top:10px">Play this map</button></form>
+      <p style="margin-top:14px"><a href="../world/">Back to the islands</a></p></dialog>`;
+    document.getElementById("f").onsubmit = e => { e.preventDefault(); const v = document.getElementById("code").value.trim(); location.hash = v.includes("#") ? v.slice(v.indexOf("#") + 1) : v; location.reload() };
+  }
+})();
+if (window.MAP) document.write('<script src="../play.js"><\/script>');
+</script>
+</body>
+</html>
