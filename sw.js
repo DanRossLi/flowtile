@@ -1,6 +1,6 @@
 // Flow Tile service worker: lets the game load offline after the first visit.
 // Bump VERSION whenever cached files change so old caches are dropped.
-const VERSION = "v27";
+const VERSION = "v28";
 const CACHE = `flowtile-${VERSION}`;
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap";
 const LOCAL = ["./", "./1/", "./1a/", "./3/", "./4/", "./4a/", "./5/", "./6/", "./7/", "./8/", "./9/", "./10/", "./11/", "./12/", "./13/", "./14/", "./15/", "./16/", "./17/", "./perfection/", "./daily/", "./world/", "./custom/", "./big/", "./play.js", "./play.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
@@ -50,9 +50,25 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // Our own files and Google Fonts: cache first, fill the cache on a miss.
+  // Our own files (play.js, play.css, icons): network first, like pages, so a deploy never pairs a new page with
+  // an old play.js. The cache is only the offline fallback.
+  if (url.origin === location.origin) {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const res = await fetch(req, { cache: "no-cache" });
+        if (res.ok) cache.put(req, res.clone());
+        return res;
+      } catch (_) {
+        return (await cache.match(req, { ignoreSearch: true })) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // Google Fonts: cache first, fill the cache on a miss.
   const fonts = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
-  if (url.origin === location.origin || fonts) {
+  if (fonts) {
     e.respondWith((async () => {
       const cache = await caches.open(CACHE);
       const hit = await cache.match(req, { ignoreSearch: url.origin === location.origin });
