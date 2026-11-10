@@ -144,7 +144,7 @@ function activate(i) { stash(); S.active = i; Object.assign(S, take(S.rivers[i])
 const root = i => { while (i >= 0 && S.rivers[i] && S.rivers[i].into != null) i = S.rivers[i].into; return i };
 // ---------- combos: groves (3+ trees in a row along the river) and wildflower patches (4+ meadows in a row)
 const GROVE = 3, PATCH = 4;
-const groveTile = c => !c.river && !c.wild && c.g >= 2 && c.t === "bare";
+const groveTile = c => !c.river && c.g >= 2 && c.t === "bare";
 const patchTile = c => !c.river && c.t === "meadow";
 const byRiver = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0);
 // Every maximal straight run of matching tiles that all touch the river.
@@ -156,7 +156,7 @@ function combos() {
       if (!good([x, y]) || good([x - dx, y - dy])) continue;
       const run = []; for (let q = [x, y]; good(q); q = [q[0] + dx, q[1] + dy]) run.push(q);
       if (run.length < min) continue;
-      const first = kind === "grove" ? at(run[0]).pr : at(byRiver(run[0])).rid;
+      const first = kind === "grove" && at(run[0]).pr >= 0 ? at(run[0]).pr : at(byRiver(run[0])).rid;
       out.push({kind, tiles:run, rid:root(first), bonus:kind === "grove" ? run.length - 2 : 1 + Math.floor((run.length - 4) / 2)});
     }
   return out;
@@ -331,7 +331,7 @@ function tileText(p) {
   const c = at(p), inCombo = combos().find(k => k.tiles.some(q => q + "" === p + ""));
   if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
   if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. Costs 3 gal to cut through.` : `Part of a wildflower patch of ${inCombo.tiles.length}: +${inCombo.bonus} flow.`;
-  if (c.wild) return "Wild trees. The stream can cut through for 3 gal, or go around.";
+  if (c.wild) return "Wild trees. The stream can cut through for 3 gal, or go around. 3 in a row along the river make a grove: +1 flow.";
   if (c.g) return `Stores ${c.g} extra gal. ${NEW && c.g > 1 ? "Costs 3 gal to cut through. 3 trees in a row along the river make a grove: +1 flow." : "A stream running over it washes that away."}`;
   if (c.ro === 1) return "Rain runs off the mountain here. Run your stream through or beside it for +1 flow.";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
