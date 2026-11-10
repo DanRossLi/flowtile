@@ -258,7 +258,7 @@ function build(mv) {
     S.rivers[g].combo = (S.rivers[g].combo || 0) + (S.rivers[other].combo || 0); S.rivers[other].combo = 0;
     const next = liveOf(g); S.active = next; S.head = S.rivers[next].head; anim.set("m:" + mv.from, now()); wave = now(); bump("cFlow");
     if (gave) float(mv.p, `+${gave} flow`, "#62e0c8"); const cb = recombo();
-    say(g === 0 ? `${riverName(me === 0 ? t : me)} joined the main river: flow now +${S.income} gal a turn${S.income > was ? ` (+${S.income - was})` : ""}. Now building the ${riverName(next).toLowerCase()}.${cb ? " " + cb + "." : ""}`
+    say(g === 0 ? `${me === 0 ? `Your main river reached the ${riverName(t).toLowerCase()}` : `${riverName(me)} joined the main river`}: flow now +${S.income} gal a turn${S.income > was ? ` (+${S.income - was})` : ""}. Now building the ${riverName(next).toLowerCase()}.${cb ? " " + cb + "." : ""}`
       : `The tributaries joined: +${S.rivers[g].pend} gal a turn waits until they reach the main river.${cb ? " " + cb + "." : ""}`); return }
   const b = at(mv.p);
   const notes = []; let bl = 0, gr = 0, t1 = now(), placed = [mv.p];
