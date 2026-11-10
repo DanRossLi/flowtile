@@ -26,7 +26,7 @@ const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
 const TRIB = !!M.tributaries, STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const NEW = STORE > 0, WIND = M.wind || null;
 // Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
-const CYCLE = !!M.cycle, WX = M.weather || null;
+const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = !!M.spread;
 // A fixed roll per map, turn and tile, so undo and replays give the same result.
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
@@ -293,6 +293,29 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   const head = sp ? (up ? `Turn ${S.turn}: +${f.gain - sp} gal. ${sp} gal spilled and rose as a cloud: it rains back on turn ${S.turn + 2}` : `Turn ${S.turn}: +${f.gain - sp} gal. Storage is full at ${S.cap} gal, so ${sp} gal spilled`) : `Turn ${S.turn}: +${f.gain} gal of water`;
   say([head, ...notes].join(". ") + ".") }
 const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add themselves here
+// ---------- living spread: grass beside the river greens a bare bank tile next to it; meadows make it certain; birds carry grove seeds
+const bank = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0 && at(n).t !== "ocean");
+function greenable(p) { const c = at(p); return c.t === "bare" && !c.river && !c.g && !c.rs && !c.ro && !c.pool && !!bank(p) && !salty(p) }
+const salty = p => !!M.salt && nbrs(p).some(n => at(n).t === "ocean") && !nbrs(p).some(n => at(n).river && at(n).t !== "ocean");
+function grow(p, delay, col = "#b6f08a") { const c = at(p), r = root(at(bank(p)).rid); c.g = 1; c.bloom = true; c.pr = r; capAdd(r, 1); anim.set("g:" + p, now() + delay); float(p, "+1 storage", col) }
+const birds = [];
+function spreadTurn() {
+  const grown = []; let seeded = 0;
+  S.tiles.forEach((row, y) => row.forEach((c, x) => { const p = [x, y]; if (!c.g || c.wild || c.river || !bank(p)) return;
+    const sure = nbrs(p).some(n => at(n).t === "meadow"); if (!sure && rnd("spread", S.turn, x, y) >= .35) return;
+    const to = nbrs(p).filter(n => greenable(n) && !grown.some(g => g + "" === n + "")).sort((a, b) => rnd("to", S.turn, ...a) - rnd("to", S.turn, ...b))[0];
+    if (to) grown.push(to) }));
+  grown.forEach((p, i) => grow(p, 250 + 160 * i));
+  if (S.turn % 3 === 0) for (const k of combos().filter(k => k.kind === "grove")) { const mid = k.tiles[Math.floor(k.tiles.length / 2)];
+    const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(q => greenable(q) && Math.abs(q[0] - mid[0]) + Math.abs(q[1] - mid[1]) <= 4)
+      .sort((a, b) => (Math.abs(a[0] - mid[0]) + Math.abs(a[1] - mid[1])) - (Math.abs(b[0] - mid[0]) + Math.abs(b[1] - mid[1])) || rnd("seed", ...a) - rnd("seed", ...b))[0];
+    if (to) { grow(to, 900, "#ffe066"); birds.push({from:mid, to, t0:now()}); seeded++ } }
+  if (!grown.length && !seeded) return "";
+  bump("cWater"); bump("cBloom"); const cb = recombo();
+  const what = [grown.length ? `Grass spread to ${grown.length} tile${grown.length > 1 ? "s" : ""}` : "", seeded ? `a bird carried a seed from your grove` : ""].filter(Boolean).join(" and ");
+  return `${what[0].toUpperCase() + what.slice(1)}: you can store ${S.cap} gal${cb ? ". " + cb : ""}`;
+}
+if (SPREAD) turnHooks.push(spreadTurn);
 // Where a cloud rains: the greenest tile beside the river.
 function rainTarget() { let best = null, bs = -1;
   S.tiles.forEach((r, y) => r.forEach((c, x) => { const p = [x, y]; if (c.river || !(c.g || c.bloom) || !nbrs(p).some(n => at(n).river)) return;
@@ -366,7 +389,7 @@ function tileText(p) {
   if (c.ro === 1) return "Rain runs off the mountain here. Run your stream through or beside it for +1 flow.";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
   const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
-  return {bare:"Plant here once your stream is next to it.", meadow:NEW ? "4 meadows in a row along the river make a wildflower patch: +1 flow." : "Open ground the stream can cross.",
+  return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Pollinators: grass next to a meadow always spreads along the bank." : NEW ? "4 meadows in a row along the river make a wildflower patch: +1 flow." : "Open ground the stream can cross.",
     sand:NEW ? "Cuts flow by 1 when a stream crosses it, and grows grass on the bare ground around it." : "Cuts flow by 1 when a stream crosses it, and blooms the land around it.",
     rock:NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "A stream can cross it. Tiles touching rock only bloom with speed.",
     boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal. Adds +1 flow and blooms the shore.`,
@@ -712,6 +735,9 @@ function draw() {
   for (let i = rains.length - 1; i >= 0; i--) { const r = rains[i], k = (T - r.t0) / 1600; if (k >= 1 || reduce) { rains.splice(i, 1); continue }
     const o = iso(r.p[0], r.p[1], drawLevel(r.p)); ctx.globalAlpha = Math.sin(k * Math.PI); cloud(o.x, o.y - 100, .6);
     for (let j = 0; j < 9; j++) { const dx = -30 + j * 7.5, dy = ((k * 400 + j * 17) % 70); line([[o.x + dx, o.y - 86 + dy], [o.x + dx - 4, o.y - 74 + dy]], "#9fd4ff", 2.2) } ctx.globalAlpha = 1 }
+  for (let i = birds.length - 1; i >= 0; i--) { const b = birds[i], k = (T - b.t0) / 1100; if (k >= 1 || reduce) { birds.splice(i, 1); continue } if (k < 0) continue;
+    const oa = iso(b.from[0], b.from[1], 0), ob = iso(b.to[0], b.to[1], 0), x = oa.x + (ob.x - oa.x) * k, y = oa.y + (ob.y - oa.y) * k - 40 - Math.sin(k * Math.PI) * 50, f = Math.sin(t * 22) * 6;
+    line([[x - 11, y - f], [x - 4, y - 2], [x, y + 1], [x + 4, y - 2], [x + 11, y - f]], "#2a2f3a", 2.6); ell(x + 2, y + 6, 2.2, 2.2, "#ffe066") }
   if (sky && !reduce) { const k = (T - sky.t0) / 2200; if (k >= 1) sky = null; else { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const a = Math.sin(k * Math.PI);
     if (sky.kind === "rain") { ctx.strokeStyle = `rgba(200,230,255,${.55 * a})`; ctx.lineWidth = 2 * lay.dpr; ctx.beginPath(); for (let j = 0; j < 70; j++) { const x = (hsh(j, 1) / 97) * cv.width, y = ((hsh(1, j) / 97) * cv.height + k * cv.height * 1.6) % cv.height; ctx.moveTo(x, y); ctx.lineTo(x - 6 * lay.dpr, y + 22 * lay.dpr) } ctx.stroke() }
     else { ctx.fillStyle = `rgba(255,190,90,${.22 * a})`; ctx.fillRect(0, 0, cv.width, cv.height) }
