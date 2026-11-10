@@ -34,12 +34,12 @@ Controls: tap a tile to open a card showing what it does and what it costs, then
 | 4 · Grass | https://danrossli.github.io/flowtile/4/ | Storage: plant grass by the stream to store enough for a lake |
 | 4a · Trees | https://danrossli.github.io/flowtile/4a/ | Trees: grow grass into trees when there's no room for more grass |
 | 5 · Desert | https://danrossli.github.io/flowtile/5/ | Sand everywhere: every sand tile cuts flow by 1, so go oasis to oasis |
-| 6 · Tributary | https://danrossli.github.io/flowtile/6/ | Start a second river with its own water, flow and storage; merge it to add its flow |
+| 6 · Tributary | https://danrossli.github.io/flowtile/6/ | Build a tributary with the main river's water; once connected, its source adds to your flow |
 | 7 · Rock | https://danrossli.github.io/flowtile/7/ | Rock costs 2 gal, but it's a shortcut through the mountains |
 | 8 · Grove | https://danrossli.github.io/flowtile/8/ | Plant 3 trees in a row along the river for +1 flow |
 | 9 · Pollinators | https://danrossli.github.io/flowtile/9/ | Grow a grove beside meadows: each meadow touching it adds +1 flow |
 | 10 · Mountains | https://danrossli.github.io/flowtile/10/ | Wind: runoff on the windward side gives flow, the far side stays dry |
-| 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest, or go around and keep it as a grove |
+| 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest where the trees left beside you become groves |
 | 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
 | 13 · Spread | https://danrossli.github.io/flowtile/13/ | Grass spreads along the bank; plant next to meadows to make it certain |
 | 14 · Oxbow | https://danrossli.github.io/flowtile/14/ | A tight U-bend becomes a free lake (+1 flow); spill floods the bank green |
