@@ -3,7 +3,6 @@
 //   id, label, types[], elev[], bloomGoal, turnGoal, startHint, help[] (HTML strings), next (URL or null)
 //   pickHint: message when the player taps a non-source tile before starting (default: startHint)
 //   tileCost: every tile costs this many gal before modifiers (default 1)
-//   lakeTileCost: gal per lake tile (default 2)
 //   showBloom: show the bloom chip (default: shown when the map has a bloom goal)
 //   storage: water cap at the start (turns on bare ground: tap ground by the river for grass, then trees, +1 cap each)
 //   tributaries: true lets you tap another source mid-game to start a separate river with its own water, flow and storage;
@@ -21,7 +20,7 @@ const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits 
 const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed number of turns
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal;
 const ROOT = new URL("./", document.currentScript.src).href; // the site root, where play.js lives
-const LAKE_TILE_COST = M.lakeTileCost ?? 2;
+const LAKE_TILE_COST = 2, REACH = 2; // lakes (Nov 9): 2 gal a tile; a full lake lets you plant up to 2 tiles from it
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
 const TRIB = !!M.tributaries, STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const NEW = STORE > 0, WIND = M.wind || null;
@@ -142,8 +141,10 @@ function cost(from, to) {
 function plantable(p) {
   if (!STORE || S.phase !== "play") return false;
   const c = at(p); if (c.t !== "bare" || c.river || c.g >= 2 || c.rs || c.pool || c.beaver || c.fire || salty(p)) return false;
-  return nbrs(p).some(n => at(n).river && (!TRIB || at(n).rid === S.active));
+  return nbrs(p).some(n => at(n).river && (!TRIB || at(n).rid === S.active)) || lakeReach(p);
 }
+// A full lake's reach: ground up to 2 tiles from its water can be planted.
+function lakeReach(p) { return S.lakes.some(L => L.filled && L.tiles.some(q => Math.abs(q[0] - p[0]) + Math.abs(q[1] - p[1]) <= REACH && (!TRIB || at(q).rid === S.active))) }
 // ---------- rivers: the active river's numbers live on S; the others wait in S.rivers
 const RF = ["water", "income", "head", "cap", "combo"];
 const take = o => Object.fromEntries(RF.map(k => [k, o[k] ?? 0]));
@@ -255,8 +256,7 @@ function build(mv) {
   if (b.t === "lake") { const L = S.lakes[b.lake]; L.filled = true; placed = L.tiles;
     for (const p of L.tiles) { const c = at(p); c.river = true; c.bloom = false; c.from = mv.from; c.rid = S.active;
       anim.set(p + "", t1 + 120 * (Math.abs(p[0] - mv.p[0]) + Math.abs(p[1] - mv.p[1]))) }
-    S.income += 1; for (const p of L.tiles) for (const n of nbrs(p)) bl += tryBloom(n, 500 + 90 * bl);
-    notes.push("Lake filled: flow +1 gal a turn"); float(mv.p, "+1 flow", "#62e0c8"); bump("cFlow") }
+    notes.push(STORE ? `Lake filled: you can plant up to ${REACH} tiles from it, and the stream can leave from any side` : "Lake filled: the stream can leave from any side") }
   else { b.river = true; b.bloom = false; b.from = mv.from; b.rid = S.active; anim.set(mv.p + "", t1);
     if (b.g) { const wild = b.wild; if (!wild) capAdd(b.pr, -b.g); const sp = Math.max(0, S.water - S.cap); S.water -= sp;
       notes.push(wild ? "You cut through the forest" : `The river washed away the ${b.g > 1 ? "trees" : "grass"}: storage down to ${S.cap} gal${sp ? `, ${sp} gal spilled` : ""}`);
@@ -474,7 +474,7 @@ function tileText(p) {
   return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Grass next to a meadow always spreads along the bank. A meadow next to a grove adds +1 flow to it." : NEW ? "Pollinators: a meadow next to a grove (3 trees in a row by the river) adds +1 flow to it." : "Open ground the stream can cross.",
     sand:NEW ? "Free to cross, but cuts flow by 1. Grows grass on the bare ground around it." : "Free to cross, but cuts flow by 1. Blooms the land around it.",
     rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "Hard ground: costs 1 gal more to cross. Tiles touching rock don't bloom.",
-    boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal. Adds +1 flow and blooms the shore.`,
+    boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal (2 a tile). The stream can then leave from any side${STORE ? `, and you can plant up to ${REACH} tiles from it` : ""}.`,
     ocean:"Bring a stream here to finish the map.", source:"Where a river starts."}[c.t];
 }
 function actions(p) {
@@ -482,7 +482,7 @@ function actions(p) {
   if (m) { let name = "Extend the stream", sub = "", warn = "";
     if (c.river) { name = `Join the ${riverName(c.rid).toLowerCase()}`; sub = "Adds this river's flow and pours in its water" }
     else if (c.t === "ocean") { name = "Reach the sea"; sub = "Finishes the map" }
-    else if (c.t === "lake") { name = "Fill the lake"; sub = `Flow ${S.income} → ${S.income + 1}, and blooms the shore` }
+    else if (c.t === "lake") { name = "Fill the lake"; sub = STORE ? `Then you can plant up to ${REACH} tiles from it` : "Then the stream can leave from any side" }
     else if (c.t === "spring") { name = "Join the spring"; sub = `Flow ${S.income} → ${S.income + 1}` }
     else if (c.t === "sand") { const g = NEW ? nbrs(p).filter(n => { const k = at(n); return k.t === "bare" && !k.river && !k.g && !k.rs && !touchesRock(n) }).length : 0;
       sub = g ? `Grows ${g} grass around it: store ${S.cap} → ${S.cap + g} gal` : "Blooms the land around it"; warn = `Cuts flow: ${S.income} → ${Math.max(0, S.income - 1)}` }

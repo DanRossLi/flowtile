@@ -23,23 +23,22 @@ window.MAP = {
   id: "map-4-grass",
   label: "Map 4 · Grass",
   types: [
-    "_____L__~",
+    "_____B__~",
     "_____L__~",
     "T____L__~",
     "_____L__~",
-    "_____L__~"],
+    "_____B__~"],
   elev: [
+    "111111110",
     "111110110",
     "111110110",
     "111110110",
-    "111110110",
-    "111110110"],
+    "111111110"],
   storage: 3,
   bloomGoal: 4,
   bloomLabel: "Grass",
-  turnGoal: 5,
+  turnGoal: 6,
   tileCost: 1,
-  lakeTileCost: 1,
   showBloom: true,
   startHint: "Tap the spring on the left to start.",
   next: "../4a/",
@@ -47,7 +46,7 @@ window.MAP = {
     "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>. Water over that spills when you end the turn.",
     "Tap a glowing tile to extend the stream. Every tile costs <b>1 gal</b>. Run it <b>left to right</b> to the sea.",
     "<b>Bare ground</b> next to the stream shows a leaf: tap it and choose <b>Plant grass</b> for 1 gal. Each grass lets you <b>store +1 gal</b>.",
-    "The <b>lake</b> fills all at once for <b>5 gal</b>, more than you can store at the start. Plant grass first. A full lake adds <b>+1 flow</b>.",
+    "The <b>lake</b> fills all at once for <b>2 gal a tile</b>: <b>6 gal</b>, more than you can store at the start. Plant grass first. <b>Mountains</b> block the stream.",
     "If the stream runs over grass it washes it away, and you lose that storage."]
 };
 </script>

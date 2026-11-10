@@ -40,7 +40,7 @@
   const say = {rain:"rain", drought:"a drought", fire:"lightning"};
   window.MAP = {id:"daily-" + day, label:"Daily island · " + day.slice(5), mode:"perfection", turns:20, scoreStars:[30, 45, 60], share:true,
     types, elev, storage:3, wind, cycle:true, weather, spread:true, oxbow:true, floodplain:true, snowmelt:true, moss:true, deer:true,
-    tileCost:1, lakeTileCost:2, showBloom:true, next:null,
+    tileCost:1, showBloom:true, next:null,
     startHint:"A new island every day, the same for everyone. Tap a source on the left to start.", pickHint:"Tap a source on the left.",
     help:["A new island every day, the same for everyone. Every rule from the lessons is on.",
       "Forecast: " + Object.entries(weather).sort((a, b) => a[0] - b[0]).map(([t, k]) => `${say[k]} on turn ${t}`).join(", ") + ".",

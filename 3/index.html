@@ -17,30 +17,29 @@
 </head>
 <body>
 <script>
-// Map 3 · Lake: flat meadow with a 2x2 lake basin (one level down) across the stream's path.
+// Map 3 · Lake: flat meadow with a 3-tile lake between two mountains, right across the stream's path.
 // Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
 window.MAP = {
   id: "map-3-lake",
   label: "Map 3 · Lake",
   types: [
-    "........~",
-    "........~",
-    "S..LL...~",
-    "...LL...~",
-    "........~"],
+    "....B....~",
+    "....L....~",
+    "S...L....~",
+    "....L....~",
+    "....B....~"],
   elev: [
-    "111111110",
-    "111111110",
-    "111001110",
-    "111001110",
-    "111111110"],
-  bloomGoal: 6,
-  turnGoal: 5,
+    "1111111110",
+    "1111011110",
+    "1111011110",
+    "1111011110",
+    "1111111110"],
+  bloomGoal: 0,
+  turnGoal: 7,
   tileCost: 1,
-  lakeTileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../4/",
-  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> a turn.", "Tap a glowing tile to extend the stream. The number is its cost in gallons. Out of water? <b>End turn</b> and your flow refills it.", "The map is flat and every tile costs <b>1 gal</b>. Run the stream <b>left to right</b> to the sea.", "The <b>lake</b> (sunken tiles with blue rings) fills all at once for <b>1 gal per lake tile</b>. A full lake adds <b>+1 flow</b>, blooms its shore, and the stream carries on from any side of it."]
+  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> a turn.", "Tap a glowing tile to extend the stream. The number is its cost in gallons. Out of water? <b>End turn</b> and your flow refills it.", "The map is flat and every tile costs <b>1 gal</b>. Run the stream <b>left to right</b> to the sea. <b>Mountains</b> block it.", "The <b>lake</b> (sunken tiles with blue rings) fills all at once for <b>2 gal a tile</b>: <b>6 gal</b> here. Save up, fill it, and the stream carries on from any side of it."]
 };
 </script>
 <script src="../play.js"></script>
