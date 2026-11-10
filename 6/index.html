@@ -17,39 +17,37 @@
 </head>
 <body>
 <script>
-// Map 6 · Tributary: a second source in a pocket at the top. Start it as its own river and run it into the main river to add its flow.
+// Map 6 · Tributary: a second source between two mountains. Build a tributary from it with the main river's water; once it connects, its flow joins yours.
 // Map key: _ bare ground  s sand  B mountain  ~ sea  T source (3 gal/turn)  S source (2 gal/turn)
 window.MAP = {
   id: "map-6-tributary",
   label: "Map 6 · Tributary",
   types: [
-    "___BSB__~",
-    "___B_B__~",
-    "___B_B__~",
-    "___s____~",
-    "T__s____~",
-    "___s____~"],
+    "____BTB__________~",
+    "____B_B__________~",
+    "S________________~",
+    "_________________~",
+    "_________________~"],
   elev: [
-    "111111110",
-    "111111110",
-    "111111110",
-    "111111110",
-    "111111110",
-    "111111110"],
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110"],
   storage: 3,
   tributaries: true,
-  mainSource: [0, 4],
+  mainSource: [0, 2],
   bloomGoal: 0,
-  turnGoal: 3,
+  turnGoal: 7,
   tileCost: 1,
-  startHint: "Tap the big spring on the left to start your main river.",
-  pickHint: "Start with the big spring on the left. The small one at the top is for a tributary.",
+  startHint: "Tap the spring on the left to start your main river.",
+  pickHint: "Start with the spring on the left. The big one between the mountains is for a tributary.",
   next: "../7/",
   help: [
-    "Start your <b>main river</b> at the spring on the left: <b>3 gal</b> a turn, and you can store 3 gal.",
-    "Any time after that, tap the small spring at the top to start a <b>tributary</b>: a separate river with its <b>own water, flow (2 gal) and storage</b>. The pills at the top show both rivers. Tap one, or tap a river on the board, to choose which one you're building.",
-    "Run the tributary <b>into the main river</b> (1 gal) and it merges: its flow is <b>added to the main river's flow</b>, and any water it saved pours in too (over the main river's storage spills).",
-    "The <b>sand</b> strip is free to cross but cuts the flow of whichever river crosses it by 1. Other tiles cost 1 gal. Reach the sea by turn 3 for the last star."]
+    "Start your <b>main river</b> at the spring on the left: <b>2 gal</b> a turn, and you can store 3 gal.",
+    "Any time after that, tap the big spring between the mountains to start a <b>tributary</b>. It has <b>no water of its own</b>: you build it with your main river's water. Tap a river, or its pill at the top, to choose which one you're building.",
+    "An unconnected tributary earns nothing. Run it <b>into the main river</b> (or the main river into it) and its source's <b>3 gal a turn</b> joins your flow from then on.",
+    "Water over your storage spills, so <b>plant grass</b> by the stream to store the bigger flow. Reach the sea by turn <b>7</b> for the last star."]
 };
 </script>
 <script src="../play.js"></script>

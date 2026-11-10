@@ -5,8 +5,9 @@
 //   tileCost: every tile costs this many gal before modifiers (default 1)
 //   showBloom: show the bloom chip (default: shown when the map has a bloom goal)
 //   storage: water cap at the start (turns on bare ground: tap ground by the river for grass, then trees, +1 cap each)
-//   tributaries: true lets you tap another source mid-game to start a separate river with its own water, flow and storage;
-//     when it runs into another river it merges and adds its flow to that river
+//   tributaries: true lets you tap another source mid-game to start a tributary (Nov 9). It has no water, flow or storage
+//     of its own: you build it with the main river's water, and its source (plus springs and runoff it picks up) adds to
+//     your flow only once it connects to the main river
 //   mainSource: [x, y] of the only source you can start on (others are for tributaries)
 //   plantCost: gal to plant grass or trees (default 1); bloomLabel: name of the bloom chip (default "Bloom")
 //   wind: [dx, dy], the side the wind comes from. The tile on that side of each mountain is runoff (+1 flow when the
@@ -117,7 +118,7 @@ function fresh() {
       for (const n of nbrs(p)) { const nc = tiles[n[1]][n[0]]; if (nc.t === "lake" && nc.lake < 0) { nc.lake = id; st.push(n) } } }
     lakes.push({tiles:members, filled:false});
   }
-  return {tiles, lakes, rivers:[], active:0, phase:"pick", cap:STORE, water:0, income:0, combo:0, turn:0, head:null, msg:M.startHint, warn:false, clouds:[], dry:0};
+  return {tiles, lakes, rivers:[], active:0, phase:"pick", cap:STORE, water:0, income:0, turn:0, head:null, msg:M.startHint, warn:false, clouds:[], dry:0};
 }
 const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
 function nbrs([x, y]) { return [[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy]) => [x+dx, y+dy]).filter(([a,b]) => inside(a, b)) }
@@ -127,7 +128,7 @@ function level(p) { const c = at(p); return c.t === "lake" && S.lakes[c.lake].fi
 // ---------- rules
 function cost(from, to) {
   const b = at(to);
-  const merge = TRIB && b.river && b.rid >= 0 && b.rid !== S.active && b.t !== "source" && b.t !== "ocean";
+  const merge = TRIB && b.river && b.rid >= 0 && root(b.rid) !== root(S.active) && b.t !== "source" && b.t !== "ocean";
   if ((b.river && !merge) || b.t === "boulder" || b.t === "source") return -1;
   if (b.e > level(from)) return -1;
   if (merge) return M.tileCost ?? 1;
@@ -141,16 +142,20 @@ function cost(from, to) {
 function plantable(p) {
   if (!STORE || S.phase !== "play") return false;
   const c = at(p); if (c.t !== "bare" || c.river || c.g >= 2 || c.rs || c.pool || c.beaver || c.fire || salty(p)) return false;
-  return nbrs(p).some(n => at(n).river && (!TRIB || at(n).rid === S.active)) || lakeReach(p);
+  return nbrs(p).some(n => at(n).river && at(n).rid >= 0 && onMain(at(n).rid)) || lakeReach(p);
 }
 // A full lake's reach: ground up to 2 tiles from its water can be planted.
-function lakeReach(p) { return S.lakes.some(L => L.filled && L.tiles.some(q => Math.abs(q[0] - p[0]) + Math.abs(q[1] - p[1]) <= REACH && (!TRIB || at(q).rid === S.active))) }
-// ---------- rivers: the active river's numbers live on S; the others wait in S.rivers
-const RF = ["water", "income", "head", "cap", "combo"];
-const take = o => Object.fromEntries(RF.map(k => [k, o[k] ?? 0]));
-function stash() { if (S.rivers[S.active]) Object.assign(S.rivers[S.active], take(S)) }
-function activate(i) { stash(); S.active = i; Object.assign(S, take(S.rivers[i])) }
-const root = i => { while (i >= 0 && S.rivers[i] && S.rivers[i].into != null) i = S.rivers[i].into; return i };
+function lakeReach(p) { return S.lakes.some(L => L.filled && L.tiles.some(q => Math.abs(q[0] - p[0]) + Math.abs(q[1] - p[1]) <= REACH && onMain(at(q).rid))) }
+// ---------- rivers: water, storage and flow (S.income) belong to the main river. Each river keeps its own head; the
+// active river's head lives on S.head. Rivers that have merged share a group (grp); group 0 is connected to the main river.
+// A group that isn't connected keeps its flow waiting (pend) until it connects.
+function stash() { if (S.rivers[S.active]) S.rivers[S.active].head = S.head }
+function activate(i) { stash(); S.active = i; S.head = S.rivers[i].head }
+const root = i => i >= 0 && S.rivers[i] ? (S.rivers[i].grp ?? i) : i;
+const onMain = i => root(i) === 0;
+// Add flow to a river: straight into your flow if it's connected, otherwise it waits for the connection.
+function flowAdd(rid, d) { const g = root(rid); if (g <= 0) S.income = Math.max(0, S.income + d); else S.rivers[g].pend = Math.max(0, (S.rivers[g].pend || 0) + d) }
+const flowOf = rid => root(rid) <= 0 ? S.income : S.rivers[root(rid)].pend || 0;
 // ---------- combos: groves (3+ trees in a row along the river); meadows touching a grove pollinate it (+1 flow each)
 const GROVE = 3;
 const groveTile = c => !c.river && c.g >= 2 && c.t === "bare";
@@ -177,11 +182,11 @@ function comboBonus(rid) { return combos().filter(k => k.rid === rid).reduce((s,
 // Recount groves; move each river's flow by the change. Returns a note, or "".
 function recombo() {
   if (!NEW || !S.rivers.length) return "";
-  stash(); let note = "";
-  S.rivers.forEach((r, i) => { if (r.into != null) return; const now = comboBonus(i), d = now - (r.combo || 0); if (!d) return;
-    r.income = Math.max(0, r.income + d); r.combo = now;
+  let note = "";
+  S.rivers.forEach((r, i) => { if (root(i) !== i) return; const now = comboBonus(i), d = now - (r.combo || 0); if (!d) return;
+    flowAdd(i, d); r.combo = now;
     if (i === S.active) note = d > 0 ? `Flow +${d} from your grove` : `Lost ${-d} flow from a broken grove`; });
-  Object.assign(S, take(S.rivers[S.active])); if (note) bump("cFlow");
+  if (note) bump("cFlow");
   return note;
 }
 // What doing f() would add to the active river's combo flow (for the tile card).
@@ -189,7 +194,7 @@ function comboPreview(p, f) { const c = at(p), keep = {...c}; const a = comboBon
 // Mountain runoff: the river running through or beside a runoff tile adds +1 flow, once per tile.
 let melted = 0;
 function claimRunoff(tiles) { let n = 0; melted = 0; for (const p of tiles) for (const q of [p, ...nbrs(p)]) { const c = at(q); if (c.ro === 1) { c.ro = 2; n++; float(q, "+1 flow", "#62e0c8"); if (MELT) { const g = addWater(3); melted += g; float(q, `+${g} gal snowmelt`, "#ffffff") } } }
-  if (n) { S.income += n; bump("cFlow") } return n }
+  if (n) { flowAdd(S.active, n); bump("cFlow") } return n }
 // One-time water (rain pools, snowmelt): fills storage; what doesn't fit runs off.
 function addWater(g) { const got = STORE ? Math.min(g, Math.max(0, S.cap - S.water)) : g; S.water += got; bump("cWater"); return got }
 function collect(p) { const c = at(p); if (!c.pool) return; snapshot(); c.pool = false; const got = addWater(2); float(p, `+${got} gal`, "#bfe4ff"); anim.set("g:" + p, now());
@@ -198,13 +203,14 @@ function moss(p) { const c = at(p); if (S.water < 1) return; snapshot(); S.water
   say("Moss broke the rock down into soil: you can plant here now.") }
 const riverName = i => i === 0 ? "Main river" : S.rivers.length > 2 ? `Tributary ${i}` : "Tributary";
 const openRivers = () => S.rivers.map((r, i) => i).filter(i => i !== S.active && !S.rivers[i].joined);
-function capAdd(rid, d) { if (rid === S.active || rid < 0) S.cap += d; else S.rivers[rid].cap += d }
+const liveOf = g => S.rivers.findIndex((r, i) => root(i) === g && !r.joined); // the one river in a group still building
+function capAdd(rid, d) { S.cap += d } // storage belongs to the main river
 function startTributary(p) {
   const c = at(p); snapshot(); stash();
-  const i = S.rivers.length; S.rivers.push({src:p, joined:false, water:STORE ? Math.min(c.yield, STORE) : c.yield, income:c.yield, head:p, cap:STORE, combo:0});
-  c.river = true; c.rid = i; S.active = i; Object.assign(S, take(S.rivers[i])); anim.set(p + "", now()); wave = now();
+  const i = S.rivers.length; S.rivers.push({src:p, joined:false, head:p, grp:i, pend:c.yield, combo:0});
+  c.river = true; c.rid = i; S.active = i; S.head = p; anim.set(p + "", now()); wave = now();
   const ro = claimRunoff([p]);
-  say(`${riverName(i)} started: its own ${S.water} gal and +${S.income} gal a turn${ro ? " (with mountain runoff)" : ""}. Run it into another river to add its flow there.`);
+  say(`${riverName(i)} started. It runs on your main river's water and earns nothing yet: once it reaches the main river, its +${S.rivers[i].pend} gal a turn${ro ? " (with mountain runoff)" : ""} joins your flow.`);
 }
 function plant(p) {
   const c = at(p), what = c.g ? "Trees" : "Grass";
@@ -244,12 +250,16 @@ function build(mv) {
   snapshot();
   S.water -= mv.cost;
   if (at(mv.p).river) { // ran into another river: merge into it
-    const t = at(mv.p).rid, me = S.active, gave = S.income, poured = S.water; at(mv.from).to = mv.p;
-    S.rivers[t].income += gave; stash(); S.rivers[me].joined = true; S.rivers[me].into = t; S.rivers[t].combo = (S.rivers[t].combo || 0) + (S.rivers[me].combo || 0);
-    S.active = t; Object.assign(S, take(S.rivers[t])); anim.set("m:" + mv.from, now()); wave = now();
-    S.water += poured; const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; bump("cFlow"); bump("cWater");
-    float(mv.p, `+${gave} flow`, "#62e0c8"); const cb = recombo();
-    say(`${riverName(me)} joined the ${riverName(t).toLowerCase()}: flow now +${S.income} gal a turn${poured ? `, and ${poured - sp} gal poured in${sp ? ` (${sp} spilled)` : ""}` : ""}.${cb ? " " + cb + "." : ""}`); return }
+    const t = at(mv.p).rid, me = S.active, a = root(me), b = root(t), g = Math.min(a, b), other = g === a ? b : a; at(mv.from).to = mv.p;
+    stash(); S.rivers[me].joined = true; const was = S.income;
+    // the two groups become one; if that connects a group to the main river, its waiting flow joins yours from now on
+    const gave = g === 0 ? S.rivers.reduce((s, r, i) => root(i) === other ? s + (r.pend || 0) : s, 0) : 0;
+    S.rivers.forEach((r, i) => { if (root(i) === other) { if (g === 0) { S.income += r.pend || 0; r.pend = 0 } else if (i !== g) { S.rivers[g].pend = (S.rivers[g].pend || 0) + (r.pend || 0); r.pend = 0 } r.grp = g } });
+    S.rivers[g].combo = (S.rivers[g].combo || 0) + (S.rivers[other].combo || 0); S.rivers[other].combo = 0;
+    const next = liveOf(g); S.active = next; S.head = S.rivers[next].head; anim.set("m:" + mv.from, now()); wave = now(); bump("cFlow");
+    if (gave) float(mv.p, `+${gave} flow`, "#62e0c8"); const cb = recombo();
+    say(g === 0 ? `${riverName(me === 0 ? t : me)} joined the main river: flow now +${S.income} gal a turn${S.income > was ? ` (+${S.income - was})` : ""}. Now building the ${riverName(next).toLowerCase()}.${cb ? " " + cb + "." : ""}`
+      : `The tributaries joined: +${S.rivers[g].pend} gal a turn waits until they reach the main river.${cb ? " " + cb + "." : ""}`); return }
   const b = at(mv.p);
   const notes = []; let bl = 0, gr = 0, t1 = now(), placed = [mv.p];
   if (mv.cost) float(mv.p, `−${mv.cost} gal`, "#bfe4ff");
@@ -261,10 +271,10 @@ function build(mv) {
     if (b.g) { const wild = b.wild; if (!wild) capAdd(b.pr, -b.g); const sp = Math.max(0, S.water - S.cap); S.water -= sp;
       notes.push(wild ? "You cut through the forest" : `The river washed away the ${b.g > 1 ? "trees" : "grass"}: storage down to ${S.cap} gal${sp ? `, ${sp} gal spilled` : ""}`);
       if (!wild) float(mv.p, `−${b.g} storage`, "#ffb27a"); b.g = 0; b.wild = false; bump("cWater") }
-    if (b.t === "spring") { S.income += 1; notes.push("Spring joined: flow +1 gal a turn"); float(mv.p, "+1 flow", "#62e0c8"); bump("cFlow") }
+    if (b.t === "spring") { flowAdd(S.active, 1); notes.push(onMain(S.active) ? "Spring joined: flow +1 gal a turn" : "Spring joined: +1 flow once this tributary reaches the main river"); float(mv.p, "+1 flow", "#62e0c8"); bump("cFlow") }
     if (b.t === "sand") { for (const n of nbrs(mv.p)) { const d = 350 + 110 * (bl + gr); if (NEW) gr += sandGrass(n, d); if (!at(n).bloom || !NEW) bl += tryBloom(n, d) }
-      const was = S.income; S.income = Math.max(0, S.income - 1);
-      notes.push(was > S.income ? `Sand soaked up 1 flow: now +${S.income} gal a turn` : "Sand soaked the ground"); if (was > S.income) float(mv.p, "−1 flow", "#ffb27a"); bump("cFlow") } }
+      const was = flowOf(S.active); flowAdd(S.active, -1); const now1 = flowOf(S.active);
+      notes.push(was > now1 ? (onMain(S.active) ? `Sand soaked up 1 flow: now +${now1} gal a turn` : `Sand soaked up 1 of this tributary's flow: +${now1} once it joins`) : "Sand soaked the ground"); if (was > now1) float(mv.p, "−1 flow", "#ffb27a"); bump("cFlow") } }
   const ro = claimRunoff(placed); if (ro) notes.push(`Mountain runoff: flow +${ro} gal a turn${MELT ? `, and ${melted} gal of snowmelt${melted < 3 * ro ? ` (${3 * ro - melted} ran off: storage is full)` : ""}` : ""}`);
   if (b.pool) { b.pool = false; const got = addWater(2); notes.push(`The stream took in the rain pool: +${got} gal`) }
   if (gr) { notes.push(`Sand grew ${gr} grass: you can store ${S.cap} gal`); bump("cWater") }
@@ -293,7 +303,7 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   if (S.dry > 0) S.dry--; if (f.wx === "drought") S.dry = 1;
   S.water += f.gain; bump("cWater"); wave = now();
   const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp;
-  const src = S.rivers[S.active] && S.rivers[S.active].src; if (src) float(src, `+${f.gain - sp} gal`, "#bfe4ff");
+  const src = S.rivers[0] && S.rivers[0].src; if (src) float(src, `+${f.gain - sp} gal`, "#bfe4ff");
   if (f.wx === "rain") { notes.push("Rainstorm: +2 gal"); sky = {kind:"rain", t0:now()} }
   if (f.dry) { notes.push(`Drought: flow −1 ${S.dry ? "this turn and next" : "this turn"}`); sky = {kind:"drought", t0:now()} }
   const cap0 = S.cap; let fl = 0; if (FLOOD && sp) { const n = floodTurn(sp); if (n) { notes.push(n); fl = 1 } }
@@ -303,7 +313,6 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
     const room = STORE ? Math.max(0, S.cap - S.water) : f.rain, got = Math.min(room, f.rain); S.water += got; float(S.head, `+${got} gal rain`, "#bfe4ff");
     notes.push(`Your cloud rained back ${got} gal${got < f.rain ? ` (${f.rain - got} soaked into the ground)` : ""}`) }
   if (sp && !reduce) { const e = $("cWater"); if (e) { e.classList.remove("spill"); void e.offsetWidth; e.classList.add("spill") } }
-  for (const i of openRivers()) { const r = S.rivers[i]; r.water = STORE ? Math.min(r.cap, r.water + r.income) : r.water + r.income }
   for (const h of turnHooks) { const n = h(); if (n) notes.push(n) }
   if (PERF && S.turn > TURN_GOAL) { S.turn = TURN_GOAL; S.phase = "won"; wave = now(); notes.push(`That's ${TURN_GOAL} turns: the island is scored`) }
   const head = sp ? (up ? `Turn ${S.turn}: +${f.gain - sp} gal. ${up} gal spilled and rose as a cloud: it rains back on turn ${S.turn + 2}` : `Turn ${S.turn}: +${f.gain - sp} gal. Storage is full at ${cap0} gal, so ${sp} gal spilled`) : `Turn ${S.turn}: +${f.gain} gal of water`;
@@ -314,7 +323,7 @@ function oxbow(d) {
   if ([a, b, c].some(q => at(q).t !== "bare" && at(q).t !== "meadow" && at(q).t !== "sand")) return "";
   const id = S.lakes.length; S.lakes.push({tiles:[b, c], filled:true, oxbow:true}); const t1 = now();
   for (const q of [b, c]) { const k = at(q); k.t = "lake"; k.lake = id; k.to = null; anim.set(q + "", t1 + 200) }
-  at(b).from = null; at(a).to = d; at(d).from = a; S.income += 1; float(c, "+1 flow", "#62e0c8"); bump("cFlow"); wave = now();
+  at(b).from = null; at(a).to = d; at(d).from = a; flowAdd(S.active, 1); float(c, "+1 flow", "#62e0c8"); bump("cFlow"); wave = now();
   let bl = 0; for (const q of [b, c]) for (const n of nbrs(q)) bl += tryBloom(n, 600 + 90 * bl);
   return `The bend cut itself off into an oxbow lake: flow +1 gal a turn${bl ? `, and ${bl} tile${bl > 1 ? "s" : ""} bloomed` : ""}`;
 }
@@ -325,7 +334,7 @@ function floodTurn(sp) { if (!sp) return "";
 // ---------- wildlife: beavers dam a pond (+1 flow) when your river runs beside their colony and trees grow next to it
 function beavers() { let n = 0;
   S.tiles.forEach((r, y) => r.forEach((c, x) => { const p = [x, y]; if (c.beaver !== 1 || !bank(p) || !nbrs(p).some(q => at(q).g >= 2)) return;
-    c.beaver = 2; const rid = root(at(bank(p)).rid); if (rid === S.active || rid === root(S.active)) S.income += 1; else S.rivers[rid].income += 1;
+    c.beaver = 2; flowAdd(at(bank(p)).rid, 1);
     anim.set("g:" + p, now() + 200); float(p, "+1 flow", "#62e0c8"); n++ }));
   if (n) bump("cFlow"); return n ? `Beavers built a pond beside your river: flow +${n} gal a turn` : "" }
 // Deer: every 3rd turn they graze one grass tile with no trees next to it.
@@ -383,7 +392,7 @@ function rainTarget() { let best = null, bs = -1;
   return best || S.head }
 function pick(p) {
   const c = at(p); if (c.t !== "source" || (M.mainSource && p + "" !== M.mainSource + "")) { say(M.pickHint ?? M.startHint, true); return }
-  snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield; S.phase = "play";
+  snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield; S.phase = "play";
   anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal a turn`, "#bfe4ff");
   const ro = claimRunoff([p]);
   say(`Your source has a flow of ${S.income} gal a turn${ro ? " (with mountain runoff)" : ""}. Tap a glowing tile to build.`);
@@ -401,8 +410,8 @@ function say(t, warn = false) { S.msg = t; S.warn = warn; if (!quiet) sync() }
 function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump") }
 function sync() {
   const rv = $("rivers"), multi = TRIB && S.rivers && S.rivers.length > 1; rv.hidden = !multi;
-  if (multi) rv.innerHTML = S.rivers.map((r, i) => { const on = i === S.active, d = on ? S : r;
-    return `<button data-r="${i}" class="${on ? "on" : ""}" ${r.joined ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : `${d.water}${STORE ? "/" + d.cap : ""} gal · +${d.income}`}</small></button>` }).join("");
+  if (multi) rv.innerHTML = S.rivers.map((r, i) => { const on = i === S.active;
+    return `<button data-r="${i}" class="${on ? "on" : ""}" ${r.joined ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : onMain(i) ? `+${S.income} a turn` : `+${flowOf(i)} once joined`}</small></button>` }).join("");
   tx("hWater", S.water); tx("hCap", STORE ? `of ${S.cap} gal` : "gal"); tx("cFlow", `+${S.income} a turn`); tx("hTurn", S.turn);
   if (STORE) { const cells = $("cells"); let h = ""; for (let i = 0; i < S.cap; i++) h += `<i class="${i < S.water ? "f" : ""}${i >= prevW && i < S.water ? " new" : ""}" style="--d:${Math.max(0, i - prevW) * 70}ms"></i>`; cells.innerHTML = h; prevW = S.water }
   $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons, flow +${S.income} a turn`);
@@ -480,13 +489,14 @@ function tileText(p) {
 function actions(p) {
   const c = at(p), out = [], m = moves().get(p + "");
   if (m) { let name = "Extend the stream", sub = "", warn = "";
-    if (c.river) { name = `Join the ${riverName(c.rid).toLowerCase()}`; sub = "Adds this river's flow and pours in its water" }
+    if (c.river) { const g = Math.min(root(c.rid), root(S.active)), w = root(c.rid) === 0 ? flowOf(S.active) : flowOf(c.rid);
+      name = `Join the ${riverName(c.rid).toLowerCase()}`; sub = g === 0 ? `Connects to the main river: flow ${S.income} → ${S.income + w}` : "The tributaries join; their flow still waits for the main river" }
     else if (c.t === "ocean") { name = "Reach the sea"; sub = "Finishes the map" }
     else if (c.t === "lake") { name = "Fill the lake"; sub = STORE ? `Then you can plant up to ${REACH} tiles from it` : "Then the stream can leave from any side" }
-    else if (c.t === "spring") { name = "Join the spring"; sub = `Flow ${S.income} → ${S.income + 1}` }
+    else if (c.t === "spring") { name = "Join the spring"; sub = onMain(S.active) ? `Flow ${S.income} → ${S.income + 1}` : "+1 flow once this tributary joins the main river" }
     else if (c.t === "sand") { const g = NEW ? nbrs(p).filter(n => { const k = at(n); return k.t === "bare" && !k.river && !k.g && !k.rs && !touchesRock(n) }).length : 0;
-      sub = g ? `Grows ${g} grass around it: store ${S.cap} → ${S.cap + g} gal` : "Blooms the land around it"; warn = `Cuts flow: ${S.income} → ${Math.max(0, S.income - 1)}` }
-    else if (c.ro === 1 || nbrs(p).some(n => at(n).ro === 1)) sub = `Mountain runoff: flow ${S.income} → ${S.income + [p, ...nbrs(p)].filter(q => at(q).ro === 1).length}`;
+      sub = g ? `Grows ${g} grass around it: store ${S.cap} → ${S.cap + g} gal` : "Blooms the land around it"; warn = `Cuts flow: ${flowOf(S.active)} → ${Math.max(0, flowOf(S.active) - 1)}${onMain(S.active) ? "" : " (this tributary's)"}` }
+    else if (c.ro === 1 || nbrs(p).some(n => at(n).ro === 1)) sub = `Mountain runoff: flow ${flowOf(S.active)} → ${flowOf(S.active) + [p, ...nbrs(p)].filter(q => at(q).ro === 1).length}${onMain(S.active) ? "" : " once joined"}`;
     if (c.wild) sub = "Cuts through the forest";
     else if (c.g) warn = `Washes away the ${c.g > 1 ? "trees" : "grass"}: you lose ${c.g} storage`;
     if (NEW && c.t !== "lake" && !c.river) { const d = comboPreview(p, k => { k.river = true; k.rid = S.active; k.g = 0 });
@@ -498,7 +508,7 @@ function actions(p) {
       warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)}) }
   if (c.pool && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.unshift({k:"collect", name:"Collect the rain pool", cost:0, sub:`+2 gal at once${STORE && S.water + 2 > S.cap ? ` (only ${Math.max(0, S.cap - S.water)} fit)` : ""}`, warn:"", run:() => collect(p)});
   if (MOSS && c.t === "rock" && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.push({k:"moss", name:"Grow moss", cost:1, sub:"Breaks the rock into soil you can plant", warn:"", run:() => moss(p)});
-  if (TRIB && c.t === "source" && !c.river) out.push({k:"trib", name:"Start a tributary", cost:0, sub:`Its own water and storage, +${c.yield} gal a turn`, warn:"", run:() => startTributary(p)});
+  if (TRIB && c.t === "source" && !c.river) out.push({k:"trib", name:"Start a tributary", cost:0, sub:`Build it with your main river's water. Its +${c.yield} gal a turn joins your flow once it reaches the main river`, warn:"", run:() => startTributary(p)});
   return out;
 }
 const canDo = a => S.water >= a.cost;
@@ -520,7 +530,7 @@ function closeCard() { if (!sel) return; sel = null; cardActs = []; $("tcard").h
 function runAct(a) { closeCard(); a.run() }
 function tapTile(p) {
   const c = at(p), m = moves().get(p + "");
-  if (TRIB && c.river && c.rid >= 0 && c.rid !== S.active && !S.rivers[c.rid].joined && !m) { closeCard(); activate(c.rid); say(`Now building the ${riverName(c.rid).toLowerCase()}.`); return }
+  if (TRIB && c.river && c.rid >= 0 && root(c.rid) !== root(S.active) && !m) { const i = liveOf(root(c.rid)); if (i >= 0) { closeCard(); activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`); return } }
   if (sel && sel + "" === p + "") { const a = cardActs.find(canDo); if (a) runAct(a); else closeCard(); return }
   ring(p);
   const acts = actions(p); // one clear choice with nothing to warn about: just do it
@@ -561,7 +571,7 @@ function goals() {
 }
 
 // ---------- persistence: keep the current run across app close/reopen
-const SAVE_KEY = "flowtile.run.v2." + M.id;
+const SAVE_KEY = "flowtile.run.v3." + M.id; // v3: Nov 10 terrain rules (tributaries share the main river's water)
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({S, history})) } catch (_) {} }
 function load() {
   try {
