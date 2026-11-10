@@ -35,14 +35,14 @@ window.MAP = {
     "111111110",
     "111111110"],
   storage: 3,
-  bloomGoal: 6,
+  bloomGoal: 8,
   turnGoal: 5,
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../6/",
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>.",
-    "Every tile costs <b>1 gal</b>. Most of this map is <b>sand</b>: each sand tile <b>cuts your flow by 1</b> for the rest of the run, but it blooms the sand around it.",
+    "Every tile costs <b>1 gal</b>. Most of this map is <b>sand</b>: each sand tile <b>cuts your flow by 1</b> for the rest of the run, but it blooms the sand around it and turns the <b>bare ground</b> next to it into <b>grass</b> (+1 storage each).",
     "<b>Springs</b> are oases: free, and <b>+1 flow</b>. <b>Bare ground</b> costs 1 gal and takes nothing away.",
     "If your flow hits 0 you can't refill. Plan a route from oasis to oasis to the sea."]
 };

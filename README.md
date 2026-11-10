@@ -16,9 +16,11 @@ Plain HTML/JS, no build step, no framework.
 - **Lakes** (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore.
 - **Bare ground** (maps 4 and 4a): you start with a flow of 3 gal and can **store 3 gal**; water over that spills when you end the turn. Bare ground next to the stream shows a leaf: tap it to plant **grass** (1 gal, +1 storage), then **trees** (1 gal, +1 more). If the stream runs over grass or trees it washes them away, and you lose that storage.
 - **Tributaries** (map 6): tap a second source to start a separate river with its own water, flow and storage. Tap a river (or its pill at the top) to choose which one you build. Run it into another river and it merges: its flow is added there and its saved water pours in (anything over storage spills).
+- **Storage maps** (4 onward) also use the Nov 8 tile rules: **rock** costs 2 gal; **trees** (planted or wild forest) cost 3 gal to cut through; **sand** turns the bare ground next to it into grass (+1 storage each); **3+ trees in a row** beside the river make a **grove** (+1 flow, +1 per extra tree); **4+ meadows in a row** beside the river make a **wildflower patch** (+1 flow, +1 per 2 more).
+- **Wind** (map 10): rain runs off the windward side of each mountain into a pool. Run the river through or beside it for **+1 flow**. The far side is in rain shadow: nothing grows there.
 - Reach the sea. Stars for arriving, for blooming **10**+ tiles, and for arriving by turn **7** (all three are possible, but only just).
 
-Controls: tap a tile to open a card showing what it does and what it costs, then choose an action (tap the same tile again to do the first one), **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water; its badge shows what you will get, and warns when some would spill. The board starts zoomed in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
+Controls: tap a tile to open a card showing what it does and what it costs, then choose an action (tap the same tile again to do the first one; a tile with only one option and nothing to warn about acts on the first tap), **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water; its badge shows what you will get, and warns when some would spill. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
 
 ## Maps
 
@@ -33,6 +35,11 @@ Controls: tap a tile to open a card showing what it does and what it costs, then
 | 4a · Trees | https://danrossli.github.io/flowtile/4a/ | Trees: grow grass into trees when there's no room for more grass |
 | 5 · Desert | https://danrossli.github.io/flowtile/5/ | Sand everywhere: every sand tile cuts flow by 1, so go oasis to oasis |
 | 6 · Tributary | https://danrossli.github.io/flowtile/6/ | Start a second river with its own water, flow and storage; merge it to add its flow |
+| 7 · Rock | https://danrossli.github.io/flowtile/7/ | Rock costs 2 gal, but it's a shortcut through the mountains |
+| 8 · Grove | https://danrossli.github.io/flowtile/8/ | Plant 3 trees in a row along the river for +1 flow |
+| 9 · Wildflowers | https://danrossli.github.io/flowtile/9/ | Bend the river along a meadow strip for +1 or +2 flow |
+| 10 · Mountains | https://danrossli.github.io/flowtile/10/ | Wind: runoff on the windward side gives flow, the far side stays dry |
+| 11 · Forest | https://danrossli.github.io/flowtile/11/ | Trees cost 3 gal to cut through: count before you cut |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
 
 Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
