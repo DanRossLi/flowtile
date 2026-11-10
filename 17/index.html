@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 17</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 17 · Wildfire: lightning on turn 2 sets dry trees alight (trees not touching water), and fire spreads each turn. Land by the sea is salty.
+// Map key: _ bare ground  F wild forest  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  id: "map-17-wildfire",
+  label: "Map 17 · Wildfire",
+  types: [
+    "____FF______~",
+    "____FF______~",
+    "T___________~",
+    "____________~",
+    "____________~"],
+  elev: [
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110"],
+  storage: 3,
+  salt: true,
+  weather: {"2": "fire"},
+  bloomGoal: 2,
+  bloomLabel: "Trees",
+  turnGoal: 6,
+  tileCost: 1,
+  lakeTileCost: 2,
+  showBloom: true,
+  startHint: "Tap the spring on the left to start.",
+  next: "../perfection/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>.",
+    "<b>Lightning</b> strikes on <b>turn 2</b> (see the Sky chip). It sets <b>dry trees</b> alight: trees that don't touch water. Each turn the fire burns out and spreads to the trees next to it, unless water is next to the burning tile.",
+    "Burnt trees you planted lose their storage. Keep your trees away from dry forest, or run your river beside the forest to wet it.",
+    "<b>Salt:</b> land right next to the sea is salty. Nothing grows there."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>
