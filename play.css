@@ -21,7 +21,7 @@ body{position:fixed;inset:0;background:linear-gradient(180deg,#1a3346 0%,var(--n
 /* ---------- the game window: an island in the sea */
 .board{grid-area:board;position:relative;min-height:0;border-radius:22px;overflow:hidden;touch-action:none;background:#2b68b0;
   box-shadow:0 6px 0 #0b1620,inset 0 0 0 2px rgba(255,255,255,.08)}
-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .overlay{position:absolute;left:0;right:0;pointer-events:none;padding:10px}
 .overlay button{pointer-events:auto}
 .top{top:0;display:grid;gap:8px;background:linear-gradient(to bottom,rgba(12,28,44,.78) 0%,rgba(12,28,44,.45) 70%,rgba(12,28,44,0) 100%)}

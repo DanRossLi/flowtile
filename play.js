@@ -521,10 +521,13 @@ function placeCard() {
 }
 function closeCard() { if (!sel) return; sel = null; cardActs = []; $("tcard").hidden = true; draw() }
 function runAct(a) { closeCard(); a.run() }
-function tapTile(p) {
+// A quick tap on a tile the stream can reach extends it straight away; press and hold opens the card (Dan, Nov 10).
+function tapTile(p, hold = false) {
   const c = at(p), m = moves().get(p + "");
+  if (hold) { ring(p); sel = p; renderCard(); draw(); return }
   if (TRIB && c.river && c.rid >= 0 && root(c.rid) !== root(S.active) && !m) { const i = liveOf(root(c.rid)); if (i >= 0) { closeCard(); activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`); return } }
   if (sel && sel + "" === p + "") { const a = cardActs.find(canDo); if (a) runAct(a); else closeCard(); return }
+  const st = m && actions(p).find(a => a.k === "stream"); if (st && canDo(st)) { closeCard(); runAct(st); return }
   ring(p);
   const acts = actions(p); // one clear choice with nothing to warn about: just do it
   if (acts.length === 1 && canDo(acts[0]) && !acts[0].warn) { closeCard(); acts[0].run(); return }
@@ -935,12 +938,15 @@ function tileAt(cx, cy) {
 function inPoly(x, y, pts) { let ins = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j];
   if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins } return ins }
 // Drag to pan, pinch or wheel to zoom; a touch that barely moves is a tap.
-const ptrs = new Map(); let drag = null, dragged = false;
+const ptrs = new Map(); let drag = null, dragged = false, holdT = 0, held = false; const HOLD_MS = 420;
+const unhold = () => { clearTimeout(holdT); holdT = 0 };
 cv.addEventListener("pointerdown", e => {
   ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); try { cv.setPointerCapture(e.pointerId) } catch (_) {}
   const pts = [...ptrs.values()];
-  if (pts.length === 1) { drag = {x:e.clientX, y:e.clientY, cx:view.cx, cy:view.cy}; dragged = false }
-  else if (pts.length === 2) { drag = {pinch:Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), z:view.z}; dragged = true }
+  if (pts.length === 1) { drag = {x:e.clientX, y:e.clientY, cx:view.cx, cy:view.cy}; dragged = false; held = false; unhold();
+    const hx = e.clientX, hy = e.clientY; holdT = setTimeout(() => { holdT = 0; if (dragged || ptrs.size !== 1 || S.phase !== "play") return;
+      const p = tileAt(hx, hy); if (!p) return; held = true; try { navigator.vibrate && navigator.vibrate(12) } catch (_) {} tapTile(p, true) }, HOLD_MS) }
+  else if (pts.length === 2) { unhold(); drag = {pinch:Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), z:view.z}; dragged = true }
 });
 cv.addEventListener("pointermove", e => {
   if (!ptrs.has(e.pointerId) || !drag) return; ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -949,14 +955,15 @@ cv.addEventListener("pointermove", e => {
   if (drag.pinch) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (!dragged && Math.hypot(dx, dy) < 9) return;
-  dragged = true; tgt = null; const s = lay.fit * view.z; view.cx = drag.cx - dx / s; view.cy = drag.cy - dy / s; applyView();
+  dragged = true; unhold(); tgt = null; const s = lay.fit * view.z; view.cx = drag.cx - dx / s; view.cy = drag.cy - dy / s; applyView();
 });
 const lift = e => { ptrs.delete(e.pointerId); if (!ptrs.size) drag = null };
-cv.addEventListener("pointercancel", e => { lift(e); dragged = false });
+cv.addEventListener("pointercancel", e => { unhold(); held = false; lift(e); dragged = false });
+cv.addEventListener("contextmenu", e => e.preventDefault()); // a long press opens the tile card, not the browser menu
 cv.addEventListener("wheel", e => { e.preventDefault(); view.z *= Math.exp(-e.deltaY * .0015); tgt = null; applyView() }, {passive:false});
 $("fitBtn").onclick = () => { if (view.z > 1.02) view.z = 1; else { view.z = Math.max(lay.zAuto, 1.8); follow(true) } applyView() };
 cv.addEventListener("pointerup", e => {
-  const wasDrag = dragged; lift(e); if (wasDrag) { if (!ptrs.size) dragged = false; return }
+  unhold(); const wasDrag = dragged; lift(e); if (held) { held = false; return } if (wasDrag) { if (!ptrs.size) dragged = false; return }
   const p = tileAt(e.clientX, e.clientY);
   if (!p) { closeCard(); return }
   if (S.phase === "pick") return pick(p);

@@ -8,7 +8,7 @@ Plain HTML/JS, no build step, no framework.
 
 - **Water** is what you have, in gallons. **Flow** is how many gallons you get each turn.
 - Pick a source. On Spring Hill the left one has a flow of **2 gal** a turn, the right one **3 gal**.
-- Tap a glowing tile to extend the river. The number is its cost in gallons. Out of water? **End turn** and your flow refills it.
+- Tap a glowing tile to extend the river; press and hold it to see what it does first. The number is its cost in gallons. Out of water? **End turn** and your flow refills it.
 - Every map is **flat** (Nov 9 rules): no slopes, waterfalls or speed. Most tiles cost **1 gal**. The river only grows from its end and never re-enters a tile.
 - **Sand** is **free** to enter and blooms the land around it (on storage maps, it turns the bare ground next to it into grass), but it cuts your **flow by 1** for the rest of the run.
 - **Rock** costs **2 gal** to cross, and tiles touching it don't turn green. **Mountains** block the river. **Springs** are free and add **+1 flow**.
@@ -20,7 +20,7 @@ Plain HTML/JS, no build step, no framework.
 - **Wind** (map 10): rain runs off the windward side of each mountain into a pool. Run the river through or beside it for **+1 flow**. The far side is in rain shadow: nothing grows there.
 - Reach the sea. Stars for arriving, for the bloom goal (on Spring Hill, **6**+ tiles), and for arriving by the turn goal (turn **6** on Spring Hill).
 
-Controls: tap a tile to open a card showing what it does and what it costs, then choose an action (tap the same tile again to do the first one; a tile with only one option and nothing to warn about acts on the first tap), **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water; its badge shows what you will get, and warns when some would spill. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
+Controls: a quick tap on a tile the stream can reach extends the stream straight away; press and hold any tile (or tap one the stream can't reach) to open a card showing what it does and what it costs, then choose an action (tap the same tile again to do the first one; a tile with only one option and nothing to warn about acts on the first tap), **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water; its badge shows what you will get, and warns when some would spill. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
 
 ## Maps
 
