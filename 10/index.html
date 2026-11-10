@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 10</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 10 · Mountains: wind from the west. Rain runs off each mountain's west side (+1 flow); the east side is dry.
+// Map key: _ bare ground  B mountain  ~ sea  S source (2 gal/turn)
+window.MAP = {
+  id: "map-10-mountains",
+  label: "Map 10 · Mountains",
+  types: [
+    "__B___B____~",
+    "___________~",
+    "S_______B__~",
+    "___________~",
+    "____B______~"],
+  elev: [
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110"],
+  wind: [-1, 0],
+  storage: 3,
+  bloomGoal: 4,
+  bloomLabel: "Grass",
+  turnGoal: 5,
+  tileCost: 1,
+  showBloom: true,
+  startHint: "Tap the spring on the left to start.",
+  next: "../11/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> a turn, and you can <b>store 3 gal</b>.",
+    "The wind blows from the <b>west</b> (left). Rain runs off the west side of each mountain into a small pool: run your stream <b>through or beside</b> the pool for <b>+1 flow</b>.",
+    "The east side of each mountain is in <b>rain shadow</b>: nothing grows there.",
+    "Stars: reach the sea, grow <b>4 grass</b>, and arrive by turn <b>5</b>."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>

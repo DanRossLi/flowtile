@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 8</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 8 · Grove: a lake too big for your storage. Plant trees in a row along the river: a grove adds flow.
+// Map key: _ bare ground  L lake  ~ sea  S source (2 gal/turn)
+window.MAP = {
+  id: "map-8-grove",
+  label: "Map 8 · Grove",
+  types: [
+    "________~",
+    "________~",
+    "S___LLL_~",
+    "________~",
+    "________~"],
+  elev: [
+    "111111110",
+    "111111110",
+    "111100010",
+    "111111110",
+    "111111110"],
+  storage: 3,
+  bloomGoal: 0,
+  turnGoal: 9,
+  tileCost: 1,
+  lakeTileCost: 3,
+  startHint: "Tap the spring on the left to start.",
+  next: "../9/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is only <b>2 gal</b> a turn, and you can <b>store 3 gal</b>.",
+    "The <b>lake</b> costs <b>9 gal</b> all at once, so you need to store 9. Grass and trees beside the stream each add <b>+1 storage</b>.",
+    "<b>Grove:</b> 3 or more <b>trees in a straight row</b>, all beside the river, add <b>+1 flow</b>, and +1 more for each extra tree in the row.",
+    "Trees cost <b>3 gal</b> for a stream to cut through, so keep them off your route. Stars: reach the sea, and arrive by turn <b>9</b>."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>
