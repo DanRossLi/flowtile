@@ -26,7 +26,7 @@ const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
 const TRIB = !!M.tributaries, STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const NEW = STORE > 0, WIND = M.wind || null;
 // Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
-const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = !!M.spread, OXBOW = !!M.oxbow, FLOOD = !!M.floodplain;
+const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = !!M.spread, OXBOW = !!M.oxbow, FLOOD = !!M.floodplain, MELT = !!M.snowmelt, MOSS = !!M.moss;
 // A fixed roll per map, turn and tile, so undo and replays give the same result.
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
@@ -98,8 +98,8 @@ function fresh() {
   const tiles = [];
   for (let y = 0; y < H; y++) { tiles.push([]); for (let x = 0; x < W; x++) {
     const ch = TYPES[y][x];
-    const t = {"_":"bare",F:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
-    tiles[y].push({t, e:+ELEV[y][x], river:false, bloom:false, g:ch==="F"?2:0, wild:ch==="F", ro:0, rs:false, rid:-1, pr:-1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
+    const t = {"_":"bare",F:"bare",p:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
+    tiles[y].push({t, e:+ELEV[y][x], river:false, bloom:false, g:ch==="F"?2:0, wild:ch==="F", pool:ch==="p", ro:0, rs:false, rid:-1, pr:-1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
   }}
   // Mountains: the tile facing the wind is runoff (ro 1 = waiting, 2 = claimed), the far side is rain shadow.
   if (WIND) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (TYPES[y][x] !== "B") continue;
@@ -138,7 +138,7 @@ function cost(from, to) {
 // Bare ground touching the river can be planted: grass, then trees. Not in a mountain's rain shadow.
 function plantable(p) {
   if (!STORE || S.phase !== "play") return false;
-  const c = at(p); if (c.t !== "bare" || c.river || c.g >= 2 || c.rs) return false;
+  const c = at(p); if (c.t !== "bare" || c.river || c.g >= 2 || c.rs || c.pool) return false;
   return nbrs(p).some(n => at(n).river && (!TRIB || at(n).rid === S.active));
 }
 // ---------- rivers: the active river's numbers live on S; the others wait in S.rivers
@@ -180,8 +180,15 @@ function recombo() {
 // What doing f() would add to the active river's combo flow (for the tile card).
 function comboPreview(p, f) { const c = at(p), keep = {...c}; const a = comboBonus(root(S.active)); f(c); const b = comboBonus(root(S.active)); Object.assign(c, keep); return b - a }
 // Mountain runoff: the river running through or beside a runoff tile adds +1 flow, once per tile.
-function claimRunoff(tiles) { let n = 0; for (const p of tiles) for (const q of [p, ...nbrs(p)]) { const c = at(q); if (c.ro === 1) { c.ro = 2; n++; float(q, "+1 flow", "#62e0c8") } }
+let melted = 0;
+function claimRunoff(tiles) { let n = 0; melted = 0; for (const p of tiles) for (const q of [p, ...nbrs(p)]) { const c = at(q); if (c.ro === 1) { c.ro = 2; n++; float(q, "+1 flow", "#62e0c8"); if (MELT) { const g = addWater(3); melted += g; float(q, `+${g} gal snowmelt`, "#ffffff") } } }
   if (n) { S.income += n; bump("cFlow") } return n }
+// One-time water (rain pools, snowmelt): fills storage; what doesn't fit runs off.
+function addWater(g) { const got = STORE ? Math.min(g, Math.max(0, S.cap - S.water)) : g; S.water += got; bump("cWater"); return got }
+function collect(p) { const c = at(p); if (!c.pool) return; snapshot(); c.pool = false; const got = addWater(2); float(p, `+${got} gal`, "#bfe4ff"); anim.set("g:" + p, now());
+  say(`You collected the rain pool: +${got} gal${got < 2 ? ` (${2 - got} ran off: storage is full)` : ""}.`) }
+function moss(p) { const c = at(p); if (S.water < 1) return; snapshot(); S.water -= 1; c.t = "bare"; c.moss = true; anim.set("g:" + p, now()); float(p, "−1 gal", "#bfe4ff");
+  say("Moss broke the rock down into soil: you can plant here now.") }
 const riverName = i => i === 0 ? "Main river" : S.rivers.length > 2 ? `Tributary ${i}` : "Tributary";
 const openRivers = () => S.rivers.map((r, i) => i).filter(i => i !== S.active && !S.rivers[i].joined);
 function capAdd(rid, d) { if (rid === S.active || rid < 0) S.cap += d; else S.rivers[rid].cap += d }
@@ -253,7 +260,8 @@ function build(mv) {
     if (b.t === "sand") { for (const n of nbrs(mv.p)) { const d = 350 + 110 * (bl + gr); if (NEW) gr += sandGrass(n, d); if (!at(n).bloom || !NEW) bl += tryBloom(n, d) }
       const was = S.income; S.income = Math.max(0, S.income - 1);
       notes.push(was > S.income ? `Sand soaked up 1 flow: now +${S.income} gal a turn` : "Sand soaked the ground"); if (was > S.income) float(mv.p, "−1 flow", "#ffb27a"); bump("cFlow") } }
-  const ro = claimRunoff(placed); if (ro) notes.push(`Mountain runoff: flow +${ro} gal a turn`);
+  const ro = claimRunoff(placed); if (ro) notes.push(`Mountain runoff: flow +${ro} gal a turn${MELT ? `, and ${melted} gal of snowmelt${melted < 3 * ro ? ` (${3 * ro - melted} ran off: storage is full)` : ""}` : ""}`);
+  if (b.pool) { b.pool = false; const got = addWater(2); notes.push(`The stream took in the rain pool: +${got} gal`) }
   if (gr) { notes.push(`Sand grew ${gr} grass: you can store ${S.cap} gal`); bump("cWater") }
   if (bl) notes.push(`${bl} tile${bl > 1 ? "s" : ""} bloomed`);
   const cb = recombo(); if (cb) notes.push(cb);
@@ -392,6 +400,8 @@ function tileName(c) {
   if (c.river) return {lake:"Full lake", ocean:"The sea", source:"Source"}[c.t] || (c.rid >= 0 && c.rid !== S.active ? riverName(c.rid) : "Your stream");
   if (c.wild) return "Forest";
   if (c.g) return c.g > 1 ? "Trees" : "Grass";
+  if (c.pool) return "Rain pool";
+  if (c.moss && !c.g) return "Mossy ground";
   if (c.ro === 1) return "Mountain runoff";
   if (c.rs) return "Rain shadow";
   return {bare:"Bare ground", meadow:"Meadow", sand:"Sand", rock:"Rock", boulder:"Mountain", spring:"Spring", lake:"Empty lake", ocean:"The sea", source:"Source"}[c.t];
@@ -402,12 +412,13 @@ function tileText(p) {
   if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. Costs 3 gal to cut through.` : `Part of a wildflower patch of ${inCombo.tiles.length}: +${inCombo.bonus} flow.`;
   if (c.wild) return "Wild trees. The stream can cut through for 3 gal, or go around. 3 in a row along the river make a grove: +1 flow.";
   if (c.g) return `Stores ${c.g} extra gal. ${NEW && c.g > 1 ? "Costs 3 gal to cut through. 3 trees in a row along the river make a grove: +1 flow." : "A stream running over it washes that away."}`;
-  if (c.ro === 1) return "Rain runs off the mountain here. Run your stream through or beside it for +1 flow.";
+  if (c.pool) return "A puddle of rain. Bring your stream next to it and collect +2 gal, once.";
+  if (c.ro === 1) return MELT ? "Rain and snowmelt run off the mountain here. Reach it for +1 flow and +3 gal of snowmelt." : "Rain runs off the mountain here. Run your stream through or beside it for +1 flow.";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
   const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
   return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Pollinators: grass next to a meadow always spreads along the bank." : NEW ? "4 meadows in a row along the river make a wildflower patch: +1 flow." : "Open ground the stream can cross.",
     sand:NEW ? "Cuts flow by 1 when a stream crosses it, and grows grass on the bare ground around it." : "Cuts flow by 1 when a stream crosses it, and blooms the land around it.",
-    rock:NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "A stream can cross it. Tiles touching rock only bloom with speed.",
+    rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "A stream can cross it. Tiles touching rock only bloom with speed.",
     boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal. Adds +1 flow and blooms the shore.`,
     ocean:"Bring a stream here to finish the map.", source:"Where a river starts."}[c.t];
 }
@@ -430,6 +441,8 @@ function actions(p) {
   if (plantable(p)) { const d = NEW && c.g ? comboPreview(p, k => { k.g++; k.pr = S.active }) : 0;
     out.push({k:"plant", name:c.g ? "Grow trees" : "Plant grass", cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + 1} gal${d > 0 ? `. Grove: flow +${d}` : ""}`,
       warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)}) }
+  if (c.pool && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.unshift({k:"collect", name:"Collect the rain pool", cost:0, sub:`+2 gal at once${STORE && S.water + 2 > S.cap ? ` (only ${Math.max(0, S.cap - S.water)} fit)` : ""}`, warn:"", run:() => collect(p)});
+  if (MOSS && c.t === "rock" && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.push({k:"moss", name:"Grow moss", cost:1, sub:"Breaks the rock into soil you can plant", warn:"", run:() => moss(p)});
   if (TRIB && c.t === "source" && !c.river) out.push({k:"trib", name:"Start a tributary", cost:0, sub:`Its own water and storage, +${c.yield} gal a turn`, warn:"", run:() => startTributary(p)});
   return out;
 }
@@ -794,6 +807,9 @@ function deco(p, c, o, t, h) {
   if (c.ro) { // runoff: a small pool fed by the mountain
     ell(cx, cy + 1, 15, 7.5, c.ro === 2 ? "#2f86c9" : "#3e7fb3"); ell(cx - 2, cy, 9, 4.5, "#7ccbf7");
     if (c.ro === 1) { const a = reduce ? 1 : .6 + .4 * Math.sin(t * 3 + h); ctx.globalAlpha = a; ell(cx + 9, cy - 8, 2, 2, "#ffffff"); ell(cx - 8, cy - 4, 1.5, 1.5, "#ffffff"); ctx.globalAlpha = 1 } }
+  if (c.pool) { ell(cx + 1, cy + 2, 19, 9, "#2f86c9"); ell(cx - 2, cy + 1, 13, 6, "#7ccbf7"); ell(cx - 7, cy - 1, 3, 1.4, "#ffffff");
+    const k = reduce ? 0 : (t * .8 + h / 10) % 1; ctx.globalAlpha = 1 - k; ctx.beginPath(); ctx.ellipse(cx + 5, cy + 2, 4 + k * 9, 2 + k * 4.5, 0, 0, 7); ctx.strokeStyle = "#e6f6ff"; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1; return }
+  if (c.moss && !c.g) { ell(cx - 10, cy + 2, 7, 3.5, "#6fa84a"); ell(cx + 8, cy - 5, 6, 3, "#7cb956"); ell(cx + 3, cy + 7, 5, 2.5, "#5f9a40") }
   if (c.t === "bare" && !c.ro) { line([[cx - 15, cy - 2], [cx - 6, cy + 2], [cx + 2, cy - 1]], shade(topColor(c), .25), 1.5); ell(cx + 12, cy + 6, 3, 2, shade(topColor(c), .3)); ell(cx - 6, cy - 10, 2.4, 1.6, mix(topColor(c), .25));
     if (c.rs) { line([[cx + 4, cy - 8], [cx + 10, cy - 3], [cx + 18, cy - 5]], "rgba(70,45,20,.45)", 1.5); line([[cx - 4, cy + 6], [cx + 2, cy + 10]], "rgba(70,45,20,.45)", 1.5) } }
   if (c.t === "meadow") flowers(cx, cy, h);

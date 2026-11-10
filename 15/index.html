@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 15</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 15 · Harvest: one-time pickups. Rain pools give +2 gal, the mountain's water side gives +3 gal of snowmelt, and moss breaks rock into soil.
+// Map key: _ bare ground  p rain pool  r rock  B mountain  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  id: "map-15-harvest",
+  label: "Map 15 · Harvest",
+  types: [
+    "_____r______~",
+    "__p__r__B___~",
+    "T____r______~",
+    "__p__r______~",
+    "_____r______~"],
+  elev: [
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110"],
+  storage: 3,
+  wind: [-1, 0],
+  snowmelt: true,
+  moss: true,
+  bloomGoal: 3,
+  bloomLabel: "Grass",
+  turnGoal: 3,
+  tileCost: 1,
+  lakeTileCost: 2,
+  showBloom: true,
+  startHint: "Tap the spring on the left to start.",
+  next: "../16/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>.",
+    "<b>Rain pools:</b> bring your stream next to a puddle and collect <b>+2 gal</b> at once, for free. It only fits if you have room in storage.",
+    "<b>Snowmelt:</b> the wind blows from the left. The first time your stream reaches a mountain's water side you get <b>+1 flow</b> and <b>+3 gal</b> of snowmelt.",
+    "<b>Moss:</b> rock beside your stream can grow moss for <b>1 gal</b>. It breaks the rock into soil you can plant."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>

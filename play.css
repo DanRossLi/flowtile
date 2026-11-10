@@ -203,6 +203,8 @@ button.act{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;p
 button.act:active:not(:disabled){box-shadow:0 1px 0 var(--blue-d)}
 button.act.plant{background:#4caf3f;box-shadow:0 4px 0 #2f7a2a}
 button.act.trib{background:#3fb6c9;box-shadow:0 4px 0 #23818f}
+button.act.collect{background:#2f9be8;box-shadow:0 4px 0 #1d6aa6}
+button.act.moss{background:#7a9a4a;box-shadow:0 4px 0 #55702f}
 button.act:disabled{opacity:1;background:#e2ddd0;color:#6c7b83;box-shadow:0 4px 0 #c4bca7}
 .atext{flex:1;min-width:0}
 .atext b{display:block;font-weight:700;font-size:16px;line-height:1.2}
