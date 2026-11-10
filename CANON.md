@@ -69,3 +69,10 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Opening view:** the game opens on the whole island.
 - **Big map:** there's a big test map at `/big/`, 18×18.
 - **No water border** around the map (Nov 10). Don't put the ring of sea tiles back. The goal sea tiles (`~`) stay.
+
+## Linear scope (Nov 10)
+
+- **Scope:** "Check linear and do all tickets related to flowtile" covers the **Ideas** project. Dan is reviewing **Terrain Features** first, so don't build those specs until Dan says so.
+- **Conflicts:** when Linear's spec decisions (Nov 9) conflict with what's built, **Linear wins**. Those decisions sit in Terrain Features, so apply them once Dan's review is done. Examples: trees no longer defend (sediment does), meadows next to a grove give +1 flow, sand is free to enter, lakes cost 2 gal a tile, and Map 2 · Slope is retired.
+- **Rivals:** skip them for now. No rival rivers, capture or stealing, and leave out the rival parts of any Idea.
+- **Tracking:** one new Initial Prototype issue per piece of work, linking the Idea it builds.
