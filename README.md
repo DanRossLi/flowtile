@@ -30,7 +30,6 @@ Controls: tap a tile to open a card showing what it does and what it costs, then
 | Spring Hill | https://danrossli.github.io/flowtile/ | The full v0.1 rules |
 | 1 · Flat | https://danrossli.github.io/flowtile/1/ | Running a stream: 1 gal a tile, left to right |
 | 1a · Sand | https://danrossli.github.io/flowtile/1a/ | Sand: blooms the tiles around it, but costs 1 flow |
-| 2 · Slope | https://danrossli.github.io/flowtile/2/ | Downhill: +1 speed per level, flat tiles take 1 away |
 | 3 · Lake | https://danrossli.github.io/flowtile/3/ | Lakes: save up to fill, +1 flow, blooms the shore |
 | 4 · Grass | https://danrossli.github.io/flowtile/4/ | Storage: plant grass by the stream to store enough for a lake |
 | 4a · Trees | https://danrossli.github.io/flowtile/4a/ | Trees: grow grass into trees when there's no room for more grass |

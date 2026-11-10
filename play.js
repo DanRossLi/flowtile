@@ -1,11 +1,10 @@
-// Flow Tile: shared engine and UI for every map (Spring Hill, 1, 1a, 2, 3, 4, 4a, 5, 6, big).
+// Flow Tile: shared engine and UI for every map. Maps are flat (Nov 9): no slopes, waterfalls or speed.
 // Each map page sets window.MAP before loading this file:
 //   id, label, types[], elev[], bloomGoal, turnGoal, startHint, help[] (HTML strings), next (URL or null)
 //   pickHint: message when the player taps a non-source tile before starting (default: startHint)
-//   tileCost: every tile costs this many gal before modifiers (omit for downhill 1 / flat 2)
+//   tileCost: every tile costs this many gal before modifiers (default 1)
 //   lakeTileCost: gal per lake tile (default 2)
-//   speedRule: "perLevel" (+1 per level dropped, flat -1) or "waterfall" (default: drop-1, so 2+ level drops)
-//   showSpeed / showBloom: show those chips (default: shown when the map uses them)
+//   showBloom: show the bloom chip (default: shown when the map has a bloom goal)
 //   storage: water cap at the start (turns on bare ground: tap ground by the river for grass, then trees, +1 cap each)
 //   tributaries: true lets you tap another source mid-game to start a separate river with its own water, flow and storage;
 //     when it runs into another river it merges and adds its flow to that river
@@ -23,7 +22,6 @@ const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed n
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal;
 const ROOT = new URL("./", document.currentScript.src).href; // the site root, where play.js lives
 const LAKE_TILE_COST = M.lakeTileCost ?? 2;
-const SHOW_SPEED = M.showSpeed ?? M.speedRule === "perLevel";
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
 const TRIB = !!M.tributaries, STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const NEW = STORE > 0, WIND = M.wind || null;
@@ -54,7 +52,6 @@ document.body.innerHTML = `
           <div class="tline"><span>Water</span><b id="hWater">0</b><small id="hCap">gal</small><em id="cFlow">+0 a turn</em></div>
           ${STORE ? `<div class="cells" id="cells" aria-hidden="true"></div>` : ""}
         </div>
-        ${SHOW_SPEED ? `<div class="chip mini" id="cSpeed"><span>Speed</span><b id="hSpeed">0</b></div>` : ""}
         ${WIND ? `<div class="chip mini wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><span>Wind</span><b><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg></b></div>` : ""}
         ${CYCLE || WX ? `<div class="chip mini sky" id="cSky"><span id="lSky">Sky</span><b id="hSky">Clear</b></div>` : ""}
         <div class="chip mini" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
@@ -121,7 +118,7 @@ function fresh() {
       for (const n of nbrs(p)) { const nc = tiles[n[1]][n[0]]; if (nc.t === "lake" && nc.lake < 0) { nc.lake = id; st.push(n) } } }
     lakes.push({tiles:members, filled:false});
   }
-  return {tiles, lakes, rivers:[], active:0, phase:"pick", cap:STORE, water:0, income:0, combo:0, speed:0, turn:0, head:null, msg:M.startHint, warn:false, clouds:[], dry:0};
+  return {tiles, lakes, rivers:[], active:0, phase:"pick", cap:STORE, water:0, income:0, combo:0, turn:0, head:null, msg:M.startHint, warn:false, clouds:[], dry:0};
 }
 const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
 function nbrs([x, y]) { return [[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy]) => [x+dx, y+dy]).filter(([a,b]) => inside(a, b)) }
@@ -136,7 +133,7 @@ function cost(from, to) {
   if (b.e > level(from)) return -1;
   if (merge) return M.tileCost ?? 1;
   if (b.t === "lake") return LAKE_TILE_COST * S.lakes[b.lake].tiles.length;
-  let c = M.tileCost ?? (b.e < level(from) ? 1 : 2); // sand costs the normal price; it cuts flow instead (see build)
+  let c = M.tileCost ?? 1; // flat maps: the tile type sets the cost
   if (b.t === "spring") c = 0;
   if (NEW && b.t === "rock") c += 1;   // hard ground
   if (NEW && b.g >= 2) c += 2;         // trees are hard to cut through
@@ -149,7 +146,7 @@ function plantable(p) {
   return nbrs(p).some(n => at(n).river && (!TRIB || at(n).rid === S.active));
 }
 // ---------- rivers: the active river's numbers live on S; the others wait in S.rivers
-const RF = ["water", "income", "speed", "head", "cap", "combo"];
+const RF = ["water", "income", "head", "cap", "combo"];
 const take = o => Object.fromEntries(RF.map(k => [k, o[k] ?? 0]));
 function stash() { if (S.rivers[S.active]) Object.assign(S.rivers[S.active], take(S)) }
 function activate(i) { stash(); S.active = i; Object.assign(S, take(S.rivers[i])) }
@@ -201,7 +198,7 @@ const openRivers = () => S.rivers.map((r, i) => i).filter(i => i !== S.active &&
 function capAdd(rid, d) { if (rid === S.active || rid < 0) S.cap += d; else S.rivers[rid].cap += d }
 function startTributary(p) {
   const c = at(p); snapshot(); stash();
-  const i = S.rivers.length; S.rivers.push({src:p, joined:false, water:STORE ? Math.min(c.yield, STORE) : c.yield, income:c.yield, speed:0, head:p, cap:STORE, combo:0});
+  const i = S.rivers.length; S.rivers.push({src:p, joined:false, water:STORE ? Math.min(c.yield, STORE) : c.yield, income:c.yield, head:p, cap:STORE, combo:0});
   c.river = true; c.rid = i; S.active = i; Object.assign(S, take(S.rivers[i])); anim.set(p + "", now()); wave = now();
   const ro = claimRunoff([p]);
   say(`${riverName(i)} started: its own ${S.water} gal and +${S.income} gal a turn${ro ? " (with mountain runoff)" : ""}. Run it into another river to add its flow there.`);
@@ -224,11 +221,11 @@ function moves() {
 const touchesRock = p => nbrs(p).some(n => at(n).t === "rock");
 function tryBloom(p, delay = 0) { const c = at(p);
   if (c.river || c.bloom || c.rs || salty(p) || !["meadow","sand","spring"].includes(c.t)) return 0;
-  if (S.speed < 1 && touchesRock(p)) return 0;
+  if (touchesRock(p)) return 0;
   c.bloom = true; anim.set("g:" + p, now() + delay); return 1 }
 // Sand on storage maps: bare ground next to it turns into real grass (+1 storage each).
 function sandGrass(p, delay) { const c = at(p);
-  if (c.t !== "bare" || c.river || c.g || c.rs || c.beaver || salty(p) || (S.speed < 1 && touchesRock(p))) return 0;
+  if (c.t !== "bare" || c.river || c.g || c.rs || c.beaver || salty(p) || touchesRock(p)) return 0;
   c.g = 1; c.bloom = true; c.pr = S.active; S.cap++; anim.set("g:" + p, now() + delay); return 1 }
 const bloomCount = () => S.tiles.flat().filter(c => c.bloom).length;
 const affordable = () => [...moves().values()].some(m => m.cost <= S.water);
@@ -250,8 +247,7 @@ function build(mv) {
     S.water += poured; const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; bump("cFlow"); bump("cWater");
     float(mv.p, `+${gave} flow`, "#62e0c8"); const cb = recombo();
     say(`${riverName(me)} joined the ${riverName(t).toLowerCase()}: flow now +${S.income} gal a turn${poured ? `, and ${poured - sp} gal poured in${sp ? ` (${sp} spilled)` : ""}` : ""}.${cb ? " " + cb + "." : ""}`); return }
-  const b = at(mv.p), drop = level(mv.from) - b.e;
-  S.speed = M.speedRule === "perLevel" ? (drop > 0 ? S.speed + drop : Math.max(0, S.speed - 1)) : Math.max(0, S.speed + drop - 1);
+  const b = at(mv.p);
   const notes = []; let bl = 0, gr = 0, t1 = now(), placed = [mv.p];
   if (mv.cost) float(mv.p, `−${mv.cost} gal`, "#bfe4ff");
   if (b.t === "lake") { const L = S.lakes[b.lake]; L.filled = true; placed = L.tiles;
@@ -273,8 +269,6 @@ function build(mv) {
   if (bl) notes.push(`${bl} tile${bl > 1 ? "s" : ""} bloomed`);
   const cb = recombo(); if (cb) notes.push(cb);
   const bv = beavers(); if (bv) notes.push(bv);
-  if (M.speedRule === "perLevel") notes.push(drop >= 1 ? `Downhill: speed ${S.speed}` : S.speed ? `Flat: speed down to ${S.speed}` : "Flat: no speed");
-  else if (drop >= 2) notes.push("Waterfall! Speed up");
   S.head = mv.p;
   if (OXBOW && b.t !== "ocean" && b.t !== "lake") { const ox = oxbow(mv.p); if (ox) notes.push(ox) }
   if (b.t === "ocean") { S.phase = "won"; wave = now(); float(mv.p, "Splash!", "#ffffff"); say(`You reached the sea on turn ${S.turn}.`); return }
@@ -407,7 +401,7 @@ function sync() {
   const rv = $("rivers"), multi = TRIB && S.rivers && S.rivers.length > 1; rv.hidden = !multi;
   if (multi) rv.innerHTML = S.rivers.map((r, i) => { const on = i === S.active, d = on ? S : r;
     return `<button data-r="${i}" class="${on ? "on" : ""}" ${r.joined ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : `${d.water}${STORE ? "/" + d.cap : ""} gal · +${d.income}`}</small></button>` }).join("");
-  tx("hWater", S.water); tx("hCap", STORE ? `of ${S.cap} gal` : "gal"); tx("cFlow", `+${S.income} a turn`); tx("hSpeed", S.speed); tx("hTurn", S.turn);
+  tx("hWater", S.water); tx("hCap", STORE ? `of ${S.cap} gal` : "gal"); tx("cFlow", `+${S.income} a turn`); tx("hTurn", S.turn);
   if (STORE) { const cells = $("cells"); let h = ""; for (let i = 0; i < S.cap; i++) h += `<i class="${i < S.water ? "f" : ""}${i >= prevW && i < S.water ? " new" : ""}" style="--d:${Math.max(0, i - prevW) * 70}ms"></i>`; cells.innerHTML = h; prevW = S.water }
   $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons, flow +${S.income} a turn`);
   $("cTurn").classList.toggle("over", S.turn > TURN_GOAL);
@@ -417,7 +411,6 @@ function sync() {
     gain.textContent = sp ? `+${g} · ${sp} ${CYCLE ? "to cloud" : "spill"}` : `+${f.gain} gal`; gain.classList.toggle("spill", sp > 0) }
   if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); tx("lSky", nx.turn > S.turn ? `Sky · T${nx.turn}` : "Sky"); $("cSky").className = "chip mini sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
   if ((S.head || "") + "|" + S.active !== lastHead) { lastHead = (S.head || "") + "|" + S.active; follow() }
-  $("cSpeed")?.classList.toggle("fast", S.speed >= 1);
   const me = $("msg"); if (me.textContent !== (S.msg || "")) { me.textContent = S.msg || ""; if (!reduce) { me.classList.remove("pop"); void me.offsetWidth; me.classList.add("pop") } }
   me.classList.toggle("warn", !!S.warn);
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length || (hard() && (S.undos || 0) >= UNDOS);
@@ -477,7 +470,7 @@ function tileText(p) {
   const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
   return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Pollinators: grass next to a meadow always spreads along the bank." : NEW ? "4 meadows in a row along the river make a wildflower patch: +1 flow." : "Open ground the stream can cross.",
     sand:NEW ? "Cuts flow by 1 when a stream crosses it, and grows grass on the bare ground around it." : "Cuts flow by 1 when a stream crosses it, and blooms the land around it.",
-    rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "A stream can cross it. Tiles touching rock only bloom with speed.",
+    rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "A stream can cross it. Tiles touching rock don't bloom.",
     boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal. Adds +1 flow and blooms the shore.`,
     ocean:"Bring a stream here to finish the map.", source:"Where a river starts."}[c.t];
 }

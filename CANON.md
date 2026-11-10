@@ -37,9 +37,9 @@ These are the instructions Dan has given for this project, kept in one place. Th
 
 - **Map 1** is flat plains, and the stream goes in one direction, **left to right**. Maps run left to right in general.
 - **Tile cost:** adding a tile costs 1 water (gal).
-- **Map 2** slopes. Going downhill picks up +1 speed per tile, and flat ground takes 1 speed away.
+- ~~**Map 2** slopes. Going downhill picks up +1 speed per tile, and flat ground takes 1 speed away.~~ *Superseded Nov 10: Map 2 · Slope is retired and every map is flat, with no speed (Terrain Features, applied on Dan's "Apply them now").*
 - **Map 3** is flat with a **lake**.
-- **Map 1a** introduces **sand**. Sand costs 1 to enter but takes away 1 flow. On the desert map with storage (5), sand also turns the bare ground next to it into grass.
+- **Map 1a** introduces **sand**. ~~Sand costs 1 to enter~~ *(superseded Nov 10: sand is free to enter)* but takes away 1 flow. On the desert map with storage (5), sand also turns the bare ground next to it into grass.
 - **Bare ground:** a stream through it costs 1 gal.
   - **Grass:** 1 gal turns bare ground next to the river into grass, for +1 storage.
   - **Trees:** 1 more gal turns grass into trees, for +1 more storage.
@@ -50,15 +50,15 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Banks** on rivers and lakes are only for looks.
 - **Tributaries:**
   - You start one by tapping a second source.
-  - It's a separate river with **its own metrics kept separate**.
+  - ~~It's a separate river with **its own metrics kept separate**.~~ *Superseded Nov 10: a tributary has no water, flow or storage of its own. You build it with the main river's water, and its source adds to your flow only once it connects (Terrain Features).*
   - You select a river by tapping it.
   - When a tributary meets the main river, it **pours into the main river** and adds its flow.
 - **Nov 10 rules** (on maps with storage):
   - **Groves:** 3 or more trees in a row beside the river.
-  - **Wildflower patches:** 4 or more meadows in a row.
+  - ~~**Wildflower patches:** 4 or more meadows in a row.~~ *Superseded Nov 10 by pollinators: a meadow next to a grove adds +1 flow.*
   - **Sand** greens its neighbours.
   - **Mountain runoff** on the windward side, with a rain shadow on the other.
-  - **Trees as defense:** trees cost 3 gal to cut through, rock 2.
+  - ~~**Trees as defense:** trees cost 3 gal to cut through~~, rock 2. *Superseded Nov 10: trees no longer defend; sediment is the defense tile.*
 - **Wild forest** counts toward groves (Nov 10).
 - **New maps:** one new map per new rule.
 
@@ -72,7 +72,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 
 ## Linear scope (Nov 10)
 
-- **Scope:** "Check linear and do all tickets related to flowtile" covers the **Ideas** project. Dan is reviewing **Terrain Features** first, so don't build those specs until Dan says so.
+- **Scope:** "Check linear and do all tickets related to flowtile" covers the **Ideas** project. Dan is reviewing **Terrain Features** first, so don't build those specs until Dan says so. **Nov 10: Dan said "Apply them now"**, so the Terrain Features decisions are now in force (rival-only parts still skipped).
 - **Conflicts:** when Linear's spec decisions (Nov 9) conflict with what's built, **Linear wins**. Those decisions sit in Terrain Features, so apply them once Dan's review is done. Examples: trees no longer defend (sediment does), meadows next to a grove give +1 flow, sand is free to enter, lakes cost 2 gal a tile, and Map 2 · Slope is retired.
 - **Rivals:** skip them for now. No rival rivers, capture or stealing, and leave out the rival parts of any Idea.
 - **Tracking:** one new Initial Prototype issue per piece of work, linking the Idea it builds.

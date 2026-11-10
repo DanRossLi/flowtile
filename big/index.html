@@ -17,7 +17,7 @@
 </head>
 <body>
 <script>
-// Big test map (18x18): every tile type on one slope, with bare ground, grass, trees and storage.
+// Big test map (18x18): every tile type on one flat island, with bare ground, grass, trees and storage.
 // Map key: _ bare ground  . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  T source (3 gal/turn)
 window.MAP = {
   id: "big-18",
@@ -42,23 +42,23 @@ window.MAP = {
     "_________________~",
     "~~~~~~~~~~~~~~~~~~"],
   elev: [
-    "888877776666555540",
-    "888777766665555440",
-    "887777666655554440",
-    "877776666555544440",
-    "777766665555334430",
-    "777666655554334330",
-    "776666555544443330",
-    "766665555444433330",
-    "666655554444333320",
-    "666555333443333220",
-    "665555333433332220",
-    "655554444333322220",
-    "555544443333222210",
-    "555444433332222110",
-    "554444333322221110",
-    "544443333222211110",
-    "444433332222111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111001110",
+    "111111111111001110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111000111111110",
+    "111111000111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
     "000000000000000000"],
   storage: 3,
   bloomGoal: 12,
@@ -71,7 +71,7 @@ window.MAP = {
   next: null,
   help: [
     "A big test map: pick either spring. Each has a <b>flow</b> of <b>3 gal</b> a turn, and you can <b>store 3 gal</b>. Water over that spills when you end the turn.",
-    "Every stream tile costs <b>1 gal</b>. Water only runs <b>downhill or flat</b>: the land falls toward the sea at the bottom right.",
+    "Every stream tile costs <b>1 gal</b>. The island is flat; the sea is along the right and bottom edges.",
     "Tap <b>bare ground</b> next to the stream to plant <b>grass</b> (1 gal, +1 storage), then tap it again for <b>trees</b> (+1 more). The stream washes away any grass it runs over.",
     "<b>Springs</b> are free and add <b>+1 flow</b>. <b>Sand</b> greens the land around it but cuts your flow by 1. <b>Mountains</b> block the stream.",
     "<b>Lakes</b> cost 1 gal per tile and fill all at once: they add <b>+1 flow</b> and green the shore. You may need to plant first to store enough."]

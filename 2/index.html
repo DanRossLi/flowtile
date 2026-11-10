@@ -2,47 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 2</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Map 2 retired</title>
+<meta http-equiv="refresh" content="0; url=../3/">
+<link rel="canonical" href="../3/">
 </head>
-<body>
-<script>
-// Map 2 · Slope: all meadow, one level lower per column. Source on the left, sea on the right.
-// Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
-window.MAP = {
-  id: "map-2-slope",
-  label: "Map 2 · Slope",
-  types: [
-    "........~",
-    "........~",
-    "S.......~",
-    "........~",
-    "........~"],
-  elev: [
-    "876543210",
-    "876543210",
-    "876543210",
-    "876543210",
-    "876543210"],
-  bloomGoal: 0,
-  turnGoal: 4,
-  tileCost: 1,
-  speedRule: "perLevel",
-  startHint: "Tap the spring on the left to start.",
-  next: "../3/",
-  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> a turn.", "Tap a glowing tile to extend the stream. The number is its cost in gallons. Out of water? <b>End turn</b> and your flow refills it.", "The land slopes down from left to right. Run the stream <b>left to right</b> to the sea. Every tile costs <b>1 gal</b>.", "Every level downhill adds <b>+1 speed</b>. Each flat (sideways) tile takes <b>1 speed</b> away."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- Map 2 · Slope was retired on Nov 10: Flow Tile maps are flat, with no slopes or speed. -->
+<p>Map 2 · Slope has been retired. <a href="../3/">Go on to Map 3 · Lake</a>.</p>
+<script>location.replace("../3/")</script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 const VERSION = "v22";
 const CACHE = `flowtile-${VERSION}`;
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap";
-const LOCAL = ["./", "./1/", "./1a/", "./2/", "./3/", "./4/", "./4a/", "./5/", "./6/", "./7/", "./8/", "./9/", "./10/", "./11/", "./12/", "./13/", "./14/", "./15/", "./16/", "./17/", "./perfection/", "./daily/", "./world/", "./custom/", "./big/", "./play.js", "./play.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+const LOCAL = ["./", "./1/", "./1a/", "./3/", "./4/", "./4a/", "./5/", "./6/", "./7/", "./8/", "./9/", "./10/", "./11/", "./12/", "./13/", "./14/", "./15/", "./16/", "./17/", "./perfection/", "./daily/", "./world/", "./custom/", "./big/", "./play.js", "./play.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil((async () => {
