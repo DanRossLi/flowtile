@@ -17,11 +17,11 @@
 </head>
 <body>
 <script>
-// Map 14 · Oxbow: a tight U-bend cuts itself off into a free lake (+1 flow). At full storage the spill floods the bank and greens it.
+// Map 14 · Floodplain: at full storage the spill floods a bare tile beside the river and greens it.
 // Map key: _ bare ground  . meadow  ~ sea  S source (2 gal/turn)
 window.MAP = {
-  id: "map-14-oxbow",
-  label: "Map 14 · Oxbow",
+  id: "map-14-floodplain",
+  label: "Map 14 · Floodplain",
   types: [
     "___________~",
     "___________~",
@@ -35,7 +35,6 @@ window.MAP = {
     "111111111110",
     "111111111110"],
   storage: 3,
-  oxbow: true,
   floodplain: true,
   bloomGoal: 1,
   bloomLabel: "Grass",
@@ -46,7 +45,6 @@ window.MAP = {
   next: "../15/",
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> a turn, and you can <b>store 3 gal</b>.",
-    "Make a <b>tight U-bend</b>: when the new tile touches your river 3 tiles back, the bend cuts itself off into an <b>oxbow lake</b>. It's free, full, and adds <b>+1 flow</b>. The river runs straight across.",
     "<b>Floodplain:</b> when your storage is full at the end of a turn, the spill floods a bare tile beside the river and turns it into grass (+1 storage)."]
 };
 </script>

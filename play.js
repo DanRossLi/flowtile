@@ -26,7 +26,7 @@ const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
 const TRIB = !!M.tributaries, STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const NEW = STORE > 0, WIND = M.wind || null;
 // Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
-const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = !!M.spread, OXBOW = !!M.oxbow, FLOOD = !!M.floodplain, MELT = !!M.snowmelt, MOSS = !!M.moss, DEER = !!M.deer;
+const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = !!M.spread, FLOOD = !!M.floodplain, MELT = !!M.snowmelt, MOSS = !!M.moss, DEER = !!M.deer;
 const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add themselves here
 // A fixed roll per map, turn and tile, so undo and replays give the same result.
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
@@ -282,7 +282,6 @@ function build(mv) {
   const cb = recombo(); if (cb) notes.push(cb);
   const bv = beavers(); if (bv) notes.push(bv);
   S.head = mv.p;
-  if (OXBOW && b.t !== "ocean" && b.t !== "lake") { const ox = oxbow(mv.p); if (ox) notes.push(ox) }
   if (b.t === "ocean") { S.phase = "won"; wave = now(); float(mv.p, "Splash!", "#ffffff"); say(`You reached the sea on turn ${S.turn}.`); return }
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.push(`This river can't go on. Tap your ${riverName(openRivers()[0]).toLowerCase()} to switch`); say(notes.join(". ") + ".", true); return }
   if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on: the island is scored. Undo to try another way."); return }
@@ -317,16 +316,6 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   if (PERF && S.turn > TURN_GOAL) { S.turn = TURN_GOAL; S.phase = "won"; wave = now(); notes.push(`That's ${TURN_GOAL} turns: the island is scored`) }
   const head = sp ? (up ? `Turn ${S.turn}: +${f.gain - sp} gal. ${up} gal spilled and rose as a cloud: it rains back on turn ${S.turn + 2}` : `Turn ${S.turn}: +${f.gain - sp} gal. Storage is full at ${cap0} gal, so ${sp} gal spilled`) : `Turn ${S.turn}: +${f.gain} gal of water`;
   say([head, ...notes].join(". ") + ".") }
-// ---------- oxbow lakes: a tight U-bend (the new tile touches the river 3 tiles back) cuts off the bend into a free full lake
-function oxbow(d) {
-  const c = at(d).from, b = c && at(c).from, a = b && at(b).from; if (!a || !nbrs(d).some(n => same(n, a))) return "";
-  if ([a, b, c].some(q => at(q).t !== "bare" && at(q).t !== "meadow" && at(q).t !== "sand")) return "";
-  const id = S.lakes.length; S.lakes.push({tiles:[b, c], filled:true, oxbow:true}); const t1 = now();
-  for (const q of [b, c]) { const k = at(q); k.t = "lake"; k.lake = id; k.to = null; anim.set(q + "", t1 + 200) }
-  at(b).from = null; at(a).to = d; at(d).from = a; flowAdd(S.active, 1); float(c, "+1 flow", "#62e0c8"); bump("cFlow"); wave = now();
-  let bl = 0; for (const q of [b, c]) for (const n of nbrs(q)) bl += tryBloom(n, 600 + 90 * bl);
-  return `The bend cut itself off into an oxbow lake: flow +1 gal a turn${bl ? `, and ${bl} tile${bl > 1 ? "s" : ""} bloomed` : ""}`;
-}
 // ---------- floodplain: at full storage, spilled water floods one bare tile beside the river and greens it
 function floodTurn(sp) { if (!sp) return "";
   const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(greenable).sort((a, b) => rnd("flood", S.turn, ...a) - rnd("flood", S.turn, ...b))[0];
