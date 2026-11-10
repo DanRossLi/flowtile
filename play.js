@@ -12,7 +12,7 @@
 //   plantCost: gal to plant grass or trees (default 1); bloomLabel: name of the bloom chip (default "Bloom")
 //   wind: [dx, dy], the side the wind comes from. The tile on that side of each mountain is runoff (+1 flow when the
 //     river runs through or beside it); the tile on the far side is in rain shadow (can't turn green).
-// Storage maps (storage > 0) also use the Nov 8 tile rules: rock costs +1, trees cost +2 to cut through, sand grows
+// Tile costs (Nov 9): sand is free, rock costs +1, trees cost the normal price (they don't defend). Storage maps also: sand grows
 // grass on the bare ground around it, 3+ trees in a row along the river make a grove (+1 flow, +1 per extra tree)
 // and 4+ meadows in a row along the river make a wildflower patch (+1 flow, +1 per 2 more). Map code F = wild forest.
 (() => {
@@ -134,9 +134,8 @@ function cost(from, to) {
   if (merge) return M.tileCost ?? 1;
   if (b.t === "lake") return LAKE_TILE_COST * S.lakes[b.lake].tiles.length;
   let c = M.tileCost ?? 1; // flat maps: the tile type sets the cost
-  if (b.t === "spring") c = 0;
-  if (NEW && b.t === "rock") c += 1;   // hard ground
-  if (NEW && b.g >= 2) c += 2;         // trees are hard to cut through
+  if (b.t === "spring" || b.t === "sand") c = 0; // sand is free to enter; it cuts flow instead (see build)
+  if (b.t === "rock") c += 1;   // hard ground
   return c;
 }
 // Bare ground touching the river can be planted: grass, then trees. Not in a mountain's rain shadow.
@@ -456,9 +455,9 @@ function tileName(c) {
 function tileText(p) {
   const c = at(p), inCombo = combos().find(k => k.tiles.some(q => q + "" === p + ""));
   if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
-  if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. Costs 3 gal to cut through.` : `Part of a wildflower patch of ${inCombo.tiles.length}: +${inCombo.bonus} flow.`;
-  if (c.wild) return "Wild trees. The stream can cut through for 3 gal, or go around. 3 in a row along the river make a grove: +1 flow.";
-  if (c.g) return `Stores ${c.g} extra gal. ${NEW && c.g > 1 ? "Costs 3 gal to cut through. 3 trees in a row along the river make a grove: +1 flow." : "A stream running over it washes that away."}${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= 2) ? " Deer may graze it: no trees next to it." : ""}${c.g >= 2 && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
+  if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : `Part of a wildflower patch of ${inCombo.tiles.length}: +${inCombo.bonus} flow.`;
+  if (c.wild) return "Wild trees. A stream can run through for the normal cost, but it clears them. 3 in a row along the river make a grove: +1 flow.";
+  if (c.g) return `Stores ${c.g} extra gal. ${NEW && c.g > 1 ? "3 trees in a row along the river make a grove: +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= 2) ? " Deer may graze it: no trees next to it." : ""}${c.g >= 2 && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
   if (c.beaver === 1) return "Beavers live here. Run your stream beside it with trees next to the colony, and they dam a pond: +1 flow.";
   if (c.beaver === 2) return "The beavers' pond. It adds +1 flow to your river.";
   if (c.fire) return wet(p) ? "Burning. It burns out at the end of the turn. Water is next to it, so the fire stops here." : "Burning. It burns out at the end of the turn and spreads to the trees next to it, because no water is next to it.";
@@ -469,8 +468,8 @@ function tileText(p) {
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
   const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
   return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Pollinators: grass next to a meadow always spreads along the bank." : NEW ? "4 meadows in a row along the river make a wildflower patch: +1 flow." : "Open ground the stream can cross.",
-    sand:NEW ? "Cuts flow by 1 when a stream crosses it, and grows grass on the bare ground around it." : "Cuts flow by 1 when a stream crosses it, and blooms the land around it.",
-    rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "A stream can cross it. Tiles touching rock don't bloom.",
+    sand:NEW ? "Free to cross, but cuts flow by 1. Grows grass on the bare ground around it." : "Free to cross, but cuts flow by 1. Blooms the land around it.",
+    rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "Hard ground: costs 1 gal more to cross. Tiles touching rock don't bloom.",
     boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal. Adds +1 flow and blooms the shore.`,
     ocean:"Bring a stream here to finish the map.", source:"Where a river starts."}[c.t];
 }

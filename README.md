@@ -39,7 +39,7 @@ Controls: tap a tile to open a card showing what it does and what it costs, then
 | 8 · Grove | https://danrossli.github.io/flowtile/8/ | Plant 3 trees in a row along the river for +1 flow |
 | 9 · Wildflowers | https://danrossli.github.io/flowtile/9/ | Bend the river along a meadow strip for +1 or +2 flow |
 | 10 · Mountains | https://danrossli.github.io/flowtile/10/ | Wind: runoff on the windward side gives flow, the far side stays dry |
-| 11 · Forest | https://danrossli.github.io/flowtile/11/ | Trees cost 3 gal to cut through: count before you cut |
+| 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest, or go around and keep it as a grove |
 | 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
 | 13 · Spread | https://danrossli.github.io/flowtile/13/ | Grass spreads along the bank; plant next to meadows to make it certain |
 | 14 · Oxbow | https://danrossli.github.io/flowtile/14/ | A tight U-bend becomes a free lake (+1 flow); spill floods the bank green |

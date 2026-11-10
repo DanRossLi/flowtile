@@ -17,7 +17,7 @@
 </head>
 <body>
 <script>
-// Map 11 · Forest: a wild forest across the middle. Cutting through costs 3 gal a tile; going around is longer but cheaper.
+// Map 11 · Forest: a wild forest across the middle. Cutting through clears it; going around keeps it as a grove.
 // Map key: _ bare ground  F wild forest  ~ sea  T source (3 gal/turn)
 window.MAP = {
   id: "map-11-forest",
@@ -42,9 +42,9 @@ window.MAP = {
   next: "../12/",
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>.",
-    "<b>Trees</b> are hard to cut through: a stream entering a forest tile pays <b>3 gal</b>. That goes for trees you plant too.",
+    "A stream can run through <b>forest</b> for the normal <b>1 gal</b>, but it clears the trees it crosses.",
     "A river running beside <b>3 or more forest tiles in a row</b> makes a <b>grove</b>: <b>+1 flow</b>, and +1 more for each extra tree.",
-    "Count the cost: straight through the forest, or around it?",
+    "Straight through the forest is shorter. Around it keeps the grove. Which pays?",
     "Stars: reach the sea, and arrive by turn <b>5</b>."]
 };
 </script>
