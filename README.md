@@ -37,7 +37,7 @@ Controls: tap a tile to open a card showing what it does and what it costs, then
 | 6 · Tributary | https://danrossli.github.io/flowtile/6/ | Start a second river with its own water, flow and storage; merge it to add its flow |
 | 7 · Rock | https://danrossli.github.io/flowtile/7/ | Rock costs 2 gal, but it's a shortcut through the mountains |
 | 8 · Grove | https://danrossli.github.io/flowtile/8/ | Plant 3 trees in a row along the river for +1 flow |
-| 9 · Wildflowers | https://danrossli.github.io/flowtile/9/ | Bend the river along a meadow strip for +1 or +2 flow |
+| 9 · Pollinators | https://danrossli.github.io/flowtile/9/ | Grow a grove beside meadows: each meadow touching it adds +1 flow |
 | 10 · Mountains | https://danrossli.github.io/flowtile/10/ | Wind: runoff on the windward side gives flow, the far side stays dry |
 | 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest, or go around and keep it as a grove |
 | 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
@@ -55,7 +55,7 @@ Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each m
 ## Modes
 
 - **Islands** (https://danrossli.github.io/flowtile/world/): the campaign. Islands are grouped by biome, show your best stars, and each one opens when the one before it has a star.
-- **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, green tile and fish, 3 per grove or wildflower patch, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
+- **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, green tile and fish, 3 per grove, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
 - **Daily island** (`/daily/`): generated from the date, so everyone gets the same island. Add `?d=YYYY-MM-DD` to play another day's island. **Share score** copies your result.
 - **Hard mode**: tick it in the **?** menu to get 3 undos per map.
 - **Map codes**: **?** → **Copy map code** copies a link that plays the map at `/custom/#<code>`.

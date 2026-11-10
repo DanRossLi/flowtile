@@ -17,34 +17,34 @@
 </head>
 <body>
 <script>
-// Map 9 · Wildflowers: a strip of meadow along the top. Bend the river along it for a wildflower patch.
+// Map 9 · Pollinators: a few meadows along the top. Grow a grove beside them and the bees add flow.
 // Map key: _ bare ground  . meadow  ~ sea  S source (2 gal/turn)
 window.MAP = {
-  id: "map-9-wildflowers",
-  label: "Map 9 · Wildflowers",
+  id: "map-9-pollinators",
+  label: "Map 9 · Pollinators",
   types: [
-    "_.......___~",
-    "___________~",
-    "S__________~",
-    "___________~",
-    "___________~"],
+    "_..._____________~",
+    "_________________~",
+    "S________________~",
+    "_________________~",
+    "_________________~"],
   elev: [
-    "111111111110",
-    "111111111110",
-    "111111111110",
-    "111111111110",
-    "111111111110"],
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110"],
   storage: 3,
   bloomGoal: 0,
-  turnGoal: 5,
+  turnGoal: 8,
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../10/",
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> a turn, and you can <b>store 3 gal</b>.",
-    "<b>Meadow</b> can't be planted, but <b>4 meadows in a row</b> beside the river make a <b>wildflower patch</b>: <b>+1 flow</b>, and +1 more for every 2 extra meadows.",
-    "The straight way to the sea is shortest. The way along the meadows is longer, but your flow grows.",
-    "Stars: reach the sea, and arrive by turn <b>5</b>."]
+    "<b>Grove:</b> 3 or more <b>trees in a row</b> beside the river add <b>+1 flow</b>. Plant grass, then grow it into trees.",
+    "<b>Pollinators:</b> every <b>meadow</b> touching a grove adds <b>+1 more flow</b>. Meadows can't be planted, so grow your grove next to them.",
+    "Stars: reach the sea, and arrive by turn <b>8</b>."]
 };
 </script>
 <script src="../play.js"></script>

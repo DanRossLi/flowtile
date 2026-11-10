@@ -14,7 +14,7 @@
 //     river runs through or beside it); the tile on the far side is in rain shadow (can't turn green).
 // Tile costs (Nov 9): sand is free, rock costs +1, trees cost the normal price (they don't defend). Storage maps also: sand grows
 // grass on the bare ground around it, 3+ trees in a row along the river make a grove (+1 flow, +1 per extra tree)
-// and 4+ meadows in a row along the river make a wildflower patch (+1 flow, +1 per 2 more). Map code F = wild forest.
+// and each meadow touching a grove adds +1 flow to it (pollinators, Nov 9). Map code F = wild forest.
 (() => {
 const M = window.MAP;
 const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits next to play.js
@@ -84,7 +84,7 @@ document.body.innerHTML = `
     <li><b>Water</b> is what you have, in gallons. <b>Flow</b> is how many gallons you get each turn.</li>
     <li>Tap a tile to see what it does and what it costs, then choose. <b>Tap the same tile again</b> to do the first action.</li>
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
-    <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, green tile and fish, 3 per grove or wildflower patch, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
+    <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, green tile and fish, 3 per grove, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
   </ul>
   <div class="opts">
     <label class="hard"><input type="checkbox" id="hard"> Hard mode: <b>3 undos</b> per map</label>
@@ -150,33 +150,36 @@ const take = o => Object.fromEntries(RF.map(k => [k, o[k] ?? 0]));
 function stash() { if (S.rivers[S.active]) Object.assign(S.rivers[S.active], take(S)) }
 function activate(i) { stash(); S.active = i; Object.assign(S, take(S.rivers[i])) }
 const root = i => { while (i >= 0 && S.rivers[i] && S.rivers[i].into != null) i = S.rivers[i].into; return i };
-// ---------- combos: groves (3+ trees in a row along the river) and wildflower patches (4+ meadows in a row)
-const GROVE = 3, PATCH = 4;
+// ---------- combos: groves (3+ trees in a row along the river); meadows touching a grove pollinate it (+1 flow each)
+const GROVE = 3;
 const groveTile = c => !c.river && c.g >= 2 && c.t === "bare";
-const patchTile = c => !c.river && c.t === "meadow";
 const byRiver = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0);
 // Every maximal straight run of matching tiles that all touch the river.
 function combos() {
   const out = []; if (!NEW || !S.rivers.length) return out;
-  for (const [kind, ok, min] of [["grove", groveTile, GROVE], ["patch", patchTile, PATCH]])
+  for (const [kind, ok, min] of [["grove", groveTile, GROVE]])
     for (const [dx, dy] of [[1, 0], [0, 1]]) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const good = q => inside(...q) && ok(at(q)) && !!byRiver(q);
       if (!good([x, y]) || good([x - dx, y - dy])) continue;
       const run = []; for (let q = [x, y]; good(q); q = [q[0] + dx, q[1] + dy]) run.push(q);
       if (run.length < min) continue;
       const first = kind === "grove" && at(run[0]).pr >= 0 ? at(run[0]).pr : at(byRiver(run[0])).rid;
-      out.push({kind, tiles:run, rid:root(first), bonus:kind === "grove" ? run.length - 2 : 1 + Math.floor((run.length - 4) / 2)});
+      out.push({kind, tiles:run, rid:root(first), bonus:run.length - 2, bees:[]});
     }
+  // pollinators: each meadow next to a grove adds +1 flow to it (a meadow counts once)
+  const used = new Set();
+  for (const k of out) for (const q of k.tiles) for (const n of nbrs(q)) { const c = at(n);
+    if (c.t !== "meadow" || c.river || used.has(n + "")) continue; used.add(n + ""); k.bees.push(n); k.bonus++ }
   return out;
 }
 function comboBonus(rid) { return combos().filter(k => k.rid === rid).reduce((s, k) => s + k.bonus, 0) }
-// Recount groves and patches; move each river's flow by the change. Returns a note, or "".
+// Recount groves; move each river's flow by the change. Returns a note, or "".
 function recombo() {
   if (!NEW || !S.rivers.length) return "";
   stash(); let note = "";
   S.rivers.forEach((r, i) => { if (r.into != null) return; const now = comboBonus(i), d = now - (r.combo || 0); if (!d) return;
     r.income = Math.max(0, r.income + d); r.combo = now;
-    if (i === S.active) note = d > 0 ? `Flow +${d} from ${combos().some(k => k.rid === i && k.kind === "grove") ? "your grove" : "the wildflowers"}` : `Lost ${-d} flow from a broken grove`; });
+    if (i === S.active) note = d > 0 ? `Flow +${d} from your grove` : `Lost ${-d} flow from a broken grove`; });
   Object.assign(S, take(S.rivers[S.active])); if (note) bump("cFlow");
   return note;
 }
@@ -421,7 +424,7 @@ function sync() {
     const BIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/><path class="glint" d="M12 2.5l2.9 6 6.6.8L12 12z"/></svg>';
     if ($("wStars").dataset.n !== String(n)) { $("wStars").dataset.n = n; $("wStars").innerHTML = [0, 1, 2].map(i => `<span class="st ${i < n ? "on" : ""} s${i}">${BIG}</span>`).join("") }
     $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
-    const rows = [["River tiles", sc.river], ["Green tiles", sc.green], ["Groves and patches", sc.combos], ["Fish", sc.fish], ["Full lakes", sc.lakes], ["Reached the sea", sc.sea]].filter(r => r[1]);
+    const rows = [["River tiles", sc.river], ["Green tiles", sc.green], ["Groves", sc.combos], ["Fish", sc.fish], ["Full lakes", sc.lakes], ["Reached the sea", sc.sea]].filter(r => r[1]);
     $("wGoals").innerHTML = rows.map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>+${v}</b></li>`).join("") + `<li class="g3 extra"><i></i><span>${sc.total > prevBest && prevBest ? "New best! Before" : "Best score"}</span><b>${sc.total > prevBest && prevBest ? prevBest : Math.max(prevBest, sc.total)}</b></li>`;
   } else if (won) {
     const bl = bloomCount(), goals = [[true, `Reached the sea · turn ${S.turn}`], [bl >= BLOOM_GOAL, BLOOM_GOAL ? (M.bloomLabel ? `${M.bloomLabel} on ${bl}/${BLOOM_GOAL} tiles` : `Bloomed ${bl}/${BLOOM_GOAL} tiles`) : "Bloom goal (none on this map)"], [S.turn <= TURN_GOAL, `Turn ${S.turn} (goal: by turn ${TURN_GOAL})`]];
@@ -453,9 +456,10 @@ function tileName(c) {
   return {bare:"Bare ground", meadow:"Meadow", sand:"Sand", rock:"Rock", boulder:"Mountain", spring:"Spring", lake:"Empty lake", ocean:"The sea", source:"Source"}[c.t];
 }
 function tileText(p) {
-  const c = at(p), inCombo = combos().find(k => k.tiles.some(q => q + "" === p + ""));
+  const c = at(p), cs = combos(), inCombo = cs.find(k => k.tiles.some(q => q + "" === p + "")), bee = cs.find(k => k.bees.some(q => q + "" === p + ""));
   if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
-  if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : `Part of a wildflower patch of ${inCombo.tiles.length}: +${inCombo.bonus} flow.`;
+  if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : "";
+  if (bee) return "Pollinators: bees from this meadow add +1 flow to the grove next to it.";
   if (c.wild) return "Wild trees. A stream can run through for the normal cost, but it clears them. 3 in a row along the river make a grove: +1 flow.";
   if (c.g) return `Stores ${c.g} extra gal. ${NEW && c.g > 1 ? "3 trees in a row along the river make a grove: +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= 2) ? " Deer may graze it: no trees next to it." : ""}${c.g >= 2 && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
   if (c.beaver === 1) return "Beavers live here. Run your stream beside it with trees next to the colony, and they dam a pond: +1 flow.";
@@ -467,7 +471,7 @@ function tileText(p) {
   if (c.ro === 1) return MELT ? "Rain and snowmelt run off the mountain here. Reach it for +1 flow and +3 gal of snowmelt." : "Rain runs off the mountain here. Run your stream through or beside it for +1 flow.";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
   const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
-  return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Pollinators: grass next to a meadow always spreads along the bank." : NEW ? "4 meadows in a row along the river make a wildflower patch: +1 flow." : "Open ground the stream can cross.",
+  return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Grass next to a meadow always spreads along the bank. A meadow next to a grove adds +1 flow to it." : NEW ? "Pollinators: a meadow next to a grove (3 trees in a row by the river) adds +1 flow to it." : "Open ground the stream can cross.",
     sand:NEW ? "Free to cross, but cuts flow by 1. Grows grass on the bare ground around it." : "Free to cross, but cuts flow by 1. Blooms the land around it.",
     rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "Hard ground: costs 1 gal more to cross. Tiles touching rock don't bloom.",
     boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal. Adds +1 flow and blooms the shore.`,
@@ -486,8 +490,8 @@ function actions(p) {
     if (c.wild) sub = "Cuts through the forest";
     else if (c.g) warn = `Washes away the ${c.g > 1 ? "trees" : "grass"}: you lose ${c.g} storage`;
     if (NEW && c.t !== "lake" && !c.river) { const d = comboPreview(p, k => { k.river = true; k.rid = S.active; k.g = 0 });
-      if (d < 0) warn = (warn ? warn + ". " : "") + `Breaks a ${combos().some(k => k.kind === "grove") ? "grove" : "patch"}: flow −${-d}`;
-      else if (d > 0) sub = (sub ? sub + ". " : "") + `Wildflowers: flow +${d}` }
+      if (d < 0) warn = (warn ? warn + ". " : "") + `Breaks a grove: flow −${-d}`;
+      else if (d > 0) sub = (sub ? sub + ". " : "") + `Grove: flow +${d}` }
     out.push({k:"stream", name, cost:m.cost, sub, warn, run:() => build(m)}) }
   if (plantable(p)) { const d = NEW && c.g ? comboPreview(p, k => { k.g++; k.pr = S.active }) : 0;
     out.push({k:"plant", name:c.g ? "Grow trees" : "Plant grass", cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + 1} gal${d > 0 ? `. Grove: flow +${d}` : ""}`,
@@ -710,6 +714,10 @@ function cloud(x, y, s) {
 function fishCount() { const n = S.tiles.flat().filter(c => c.river && c.t !== "source" && c.t !== "ocean").length; return n >= 6 ? Math.floor(n / 4) : 0 }
 function deerSprite(x, y, b) { ell(x, y + 10, 12, 3, "rgba(0,0,0,.2)"); line([[x - 7, y + 9], [x - 7, y + 1]], "#6b4326", 2); line([[x + 6, y + 9], [x + 5, y + 1]], "#6b4326", 2);
   ell(x, y, 10, 5, "#b0703c"); ell(x + 10, y - 6 + b, 4, 3.5, "#b0703c"); line([[x + 8, y - 2], [x + 10, y - 6 + b]], "#b0703c", 4); line([[x + 10, y - 9 + b], [x + 8, y - 15 + b], [x + 5, y - 17 + b]], "#6b4326", 1.6); line([[x + 11, y - 9 + b], [x + 14, y - 15 + b]], "#6b4326", 1.6); ell(x - 9, y - 2, 2, 2, "#ffffff") }
+function bee(x, y) { // a little striped bee with white wings
+  ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.ellipse(x - 1, y - 4, 3, 2, -.5, 0, 7); ctx.ellipse(x + 2, y - 4, 3, 2, .5, 0, 7); ctx.fill();
+  ctx.fillStyle = "#ffcf3a"; ctx.beginPath(); ctx.ellipse(x, y, 4.5, 3, 0, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#3a2600"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 1, y - 3); ctx.lineTo(x - 1, y + 3); ctx.moveTo(x + 1.6, y - 2.6); ctx.lineTo(x + 1.6, y + 2.6); ctx.stroke() }
 function fish(x, y, dir) { ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
   ctx.beginPath(); ctx.moveTo(-7, 0); ctx.quadraticCurveTo(0, -6, 7, 0); ctx.quadraticCurveTo(0, 6, -7, 0); ctx.moveTo(7, 0); ctx.lineTo(13, -4); ctx.lineTo(13, 4); ctx.closePath();
   ctx.fillStyle = "rgba(10,44,92,.45)"; ctx.fill(); ctx.restore() }
@@ -804,8 +812,9 @@ function draw() {
       badges.push({o, plant:true, ok:S.water >= PLANT_COST});
     }
   }
-  // groves and wildflower patches: a golden thread through the tiles and the flow they give
-  for (const k of combos()) { const pts = k.tiles.map(q => { const o = iso(q[0], q[1], drawLevel(q)); return [o.x, o.y + 6] });
+  // groves: a golden thread through the tiles and the flow they give; bees hover over the meadows that pollinate them
+  for (const k of combos()) { for (const q of k.bees) { const o = iso(q[0], q[1], drawLevel(q)), h = hsh(...q), b = reduce ? 0 : t * 2.2 + h;
+      bee(o.x - 10 + Math.cos(b) * 12, o.y - 16 + Math.sin(b * 1.7) * 5); bee(o.x + 12 + Math.sin(b * .8) * 9, o.y - 8 + Math.cos(b * 1.3) * 4) } const pts = k.tiles.map(q => { const o = iso(q[0], q[1], drawLevel(q)); return [o.x, o.y + 6] });
     ctx.save(); ctx.setLineDash([3, 6]); ctx.lineDashOffset = reduce ? 0 : -t * 12; line(pts, "rgba(255,209,102,.95)", 3); ctx.restore();
     const mid = pts[Math.floor(pts.length / 2)]; badges.push({o:{x:mid[0], y:mid[1] - 30}, combo:`+${k.bonus}`}) }
   // fish come to long rivers
