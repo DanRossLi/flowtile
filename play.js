@@ -428,7 +428,7 @@ let scale = 1, off = {x:0, y:0}, t0 = now(), lastSize = "", lastHead = null;
 // view.z is zoom relative to "whole map fits"; cx/cy is the world point at the middle of the free area
 const view = {z:null, cx:0, cy:0}, lay = {w:0, h:0, topH:0, availH:0, dpr:1, fit:1, zAuto:1};
 let tgt = null;
-const RING = 3, CELLS = [];
+const RING = 0, CELLS = []; // no sea border around the map
 for (let y = -RING; y < H + RING; y++) for (let x = -RING; x < W + RING; x++) CELLS.push([x, y]);
 CELLS.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
 const ORDER = CELLS.filter(p => inside(...p));
@@ -561,7 +561,7 @@ function prism(d, depth, top) {
   poly(d, top); line([d[3], d[0], d[1]], mix(top, .3), 2);
 }
 // ---------- the sea around the island: deep water with waves and fish; goal tiles (~) are bright shallows
-const isWater = p => !inside(...p) || TYPES[p[1]][p[0]] === "~"; // the sea goal (~) stays the brightest water so you can tell where to go
+const isWater = p => inside(...p) && TYPES[p[1]][p[0]] === "~"; // the sea goal (~) stays the brightest water so you can tell where to go
 function seaCell(p, t) {
   const o = iso(p[0], p[1], 0), d = [[o.x, o.y - TH/2], [o.x + TW/2, o.y], [o.x, o.y + TH/2], [o.x - TW/2, o.y]], h = hsh(p[0], p[1]);
   const far = Math.max(-p[0], -p[1], p[0] - W + 1, p[1] - H + 1); // 1..RING
