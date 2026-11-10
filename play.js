@@ -320,12 +320,12 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
 function floodTurn(sp) { if (!sp) return "";
   const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(greenable).sort((a, b) => rnd("flood", S.turn, ...a) - rnd("flood", S.turn, ...b))[0];
   if (!to) return ""; grow(to, 300, "#9fd4ff"); bump("cWater"); return `The spill flooded the bank and greened it: you can store ${S.cap} gal` }
-// ---------- wildlife: beavers dam a pond (+1 flow) when your river runs beside their colony and trees grow next to it
+// ---------- wildlife: beavers dam a pond (+1 flow) when your river runs THROUGH their colony and trees grow next to it (Dan, Nov 10)
 function beavers() { let n = 0;
-  S.tiles.forEach((r, y) => r.forEach((c, x) => { const p = [x, y]; if (c.beaver !== 1 || !bank(p) || !nbrs(p).some(q => at(q).g >= 2)) return;
-    c.beaver = 2; flowAdd(at(bank(p)).rid, 1);
+  S.tiles.forEach((r, y) => r.forEach((c, x) => { const p = [x, y]; if (c.beaver !== 1 || !c.river || !nbrs(p).some(q => at(q).g >= 2 && !at(q).river)) return;
+    c.beaver = 2; flowAdd(c.rid, 1);
     anim.set("g:" + p, now() + 200); float(p, "+1 flow", "#62e0c8"); n++ }));
-  if (n) bump("cFlow"); return n ? `Beavers built a pond beside your river: flow +${n} gal a turn` : "" }
+  if (n) bump("cFlow"); return n ? `Beavers dammed a pond on your river: flow +${n} gal a turn` : "" }
 // Deer: every 3rd turn they graze one grass tile with no trees next to it.
 function deerTurn() { if (S.turn % 3) return "";
   const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(q => { const c = at(q); return c.g === 1 && !c.river && !nbrs(q).some(n => at(n).g >= 2) })
@@ -441,6 +441,7 @@ function sync() {
 // ---------- tile card: tap a tile to see what it does and choose an action
 let sel = null, cardActs = [];
 function tileName(c) {
+  if (c.river && c.beaver) return c.beaver === 2 ? "Beaver pond" : "Beaver colony";
   if (c.river) return {lake:"Full lake", ocean:"The sea", source:"Source"}[c.t] || (c.rid >= 0 && c.rid !== S.active ? riverName(c.rid) : "Your stream");
   if (c.wild) return "Forest";
   if (c.g) return c.g > 1 ? "Trees" : "Grass";
@@ -455,12 +456,14 @@ function tileName(c) {
 }
 function tileText(p) {
   const c = at(p), cs = combos(), inCombo = cs.find(k => k.tiles.some(q => q + "" === p + "")), bee = cs.find(k => k.bees.some(q => q + "" === p + ""));
+  if (c.river && c.beaver === 1) return "Your river runs through the beaver colony. Grow trees next to it and they dam a pond: +1 flow.";
+  if (c.river && c.beaver === 2) return "The beavers dammed a pond on your river. It adds +1 flow.";
   if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
   if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : "";
   if (bee) return "Pollinators: bees from this meadow add +1 flow to the grove next to it.";
   if (c.wild) return "Wild trees. A stream can run through for the normal cost, but it clears them. 3 in a row along the river make a grove: +1 flow.";
   if (c.g) return `Stores ${c.g} extra gal. ${NEW && c.g > 1 ? "3 trees in a row along the river make a grove: +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= 2) ? " Deer may graze it: no trees next to it." : ""}${c.g >= 2 && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
-  if (c.beaver === 1) return "Beavers live here. Run your stream beside it with trees next to the colony, and they dam a pond: +1 flow.";
+  if (c.beaver === 1) return "Beavers live here. Run your stream through the colony and grow trees next to it, and they dam a pond: +1 flow. Running beside it isn't enough.";
   if (c.beaver === 2) return "The beavers' pond. It adds +1 flow to your river.";
   if (c.fire) return wet(p) ? "Burning. It burns out at the end of the turn. Water is next to it, so the fire stops here." : "Burning. It burns out at the end of the turn and spreads to the trees next to it, because no water is next to it.";
   if (c.ash && !c.g) return "Burnt ground. You can plant here again.";
@@ -486,6 +489,7 @@ function actions(p) {
     else if (c.t === "sand") { const g = NEW ? nbrs(p).filter(n => { const k = at(n); return k.t === "bare" && !k.river && !k.g && !k.rs && !touchesRock(n) }).length : 0;
       sub = g ? `Grows ${g} grass around it: store ${S.cap} → ${S.cap + g} gal` : "Blooms the land around it"; warn = `Cuts flow: ${flowOf(S.active)} → ${Math.max(0, flowOf(S.active) - 1)}${onMain(S.active) ? "" : " (this tributary's)"}` }
     else if (c.ro === 1 || nbrs(p).some(n => at(n).ro === 1)) sub = `Mountain runoff: flow ${flowOf(S.active)} → ${flowOf(S.active) + [p, ...nbrs(p)].filter(q => at(q).ro === 1).length}${onMain(S.active) ? "" : " once joined"}`;
+    if (c.beaver === 1) sub = nbrs(p).some(q => at(q).g >= 2 && !at(q).river) ? `Through the beaver colony: they dam a pond, flow +1` : "Through the beaver colony. Grow trees next to it for a pond: +1 flow";
     if (c.wild) sub = "Cuts through the forest";
     else if (c.g) warn = `Washes away the ${c.g > 1 ? "trees" : "grass"}: you lose ${c.g} storage`;
     if (NEW && c.t !== "lake" && !c.river) { const d = comboPreview(p, k => { k.river = true; k.rid = S.active; k.g = 0 });
@@ -878,9 +882,14 @@ function source(o, t) { // a fountain at the source
   ctx.beginPath(); ctx.moveTo(o.x, o.y - 2); ctx.quadraticCurveTo(o.x - 9, o.y - 13 - b, o.x, o.y - 30 - b); ctx.quadraticCurveTo(o.x + 9, o.y - 13 - b, o.x, o.y - 2); ctx.fillStyle = "#dff3ff"; ctx.fill();
   ell(o.x - 8, o.y - 13 + b, 2, 2, "#ffffff"); ell(o.x + 8, o.y - 18 - b, 1.6, 1.6, "#ffffff");
 }
+function lodge(cx, cy, pond, t, h) { // a beaver lodge on the bank of a river tile; once dammed, a stick dam across the water
+  if (pond) { for (let i = 0; i < 5; i++) line([[cx - 14 + i * 6, cy + 4 + i * 1.5], [cx - 9 + i * 6, cy - 2 + i * 1.5]], "#6b4a2b", 3);
+    ctx.globalAlpha = .6 + .3 * Math.sin(t * 2 + h); ell(cx - 6, cy - 3, 3, 1.5, "#ffffff"); ctx.globalAlpha = 1 }
+  const x = cx + 13, y = cy - 6; ell(x + 1, y + 4, 11, 4, "rgba(0,0,0,.2)"); ctx.beginPath(); ctx.ellipse(x, y, 10, 8, 0, Math.PI, 0); ctx.fillStyle = "#7a5233"; ctx.fill();
+  for (let i = 0; i < 4; i++) line([[x - 9 + i * 5, y], [x - 6 + i * 4, y - 6 - (i % 2) * 2]], "#5a3a20", 1.6); ell(x, y - 1, 2.5, 2, "#2a1a0e") }
 function deco(p, c, o, t, h) {
   const {x: cx, y: cy} = o, sway = reduce ? 0 : Math.sin(t * 1.6 + h) * 1.2;
-  if (c.river) return;
+  if (c.river) { if (c.beaver) lodge(cx, cy, c.beaver === 2, t, h); return }
   if (c.t === "ocean") { const w = reduce ? 0 : Math.sin(t * 2 + p[0] + p[1]) * 3; if (h % 3 === 0) line([[cx - 10 + w, cy - 2], [cx + 6 + w, cy - 2]], "rgba(255,255,255,.6)", 2);
     ctx.globalAlpha = .5 + .3 * Math.sin(t * 2 + h); line([[cx - 16, cy + 6], [cx - 8, cy + 3], [cx, cy + 6], [cx + 8, cy + 3]], "#ffffff", 1.8); ctx.globalAlpha = 1; return }
   if (c.t === "source") { source(o, t); return }

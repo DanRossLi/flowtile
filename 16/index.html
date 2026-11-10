@@ -17,7 +17,7 @@
 </head>
 <body>
 <script>
-// Map 16 · Wildlife: beavers dam a pond (+1 flow) when your river runs beside their colony with trees next to it. Deer graze grass that has no trees beside it.
+// Map 16 · Wildlife: beavers dam a pond (+1 flow) when your river runs through their colony with trees next to it. Deer graze grass that has no trees beside it.
 // Map key: _ bare ground  v beaver colony  ~ sea  T source (3 gal/turn)
 window.MAP = {
   id: "map-16-wildlife",
@@ -36,16 +36,16 @@ window.MAP = {
     "1111111111110"],
   storage: 3,
   deer: true,
-  bloomGoal: 4,
+  bloomGoal: 7,
   bloomLabel: "Green",
-  turnGoal: 5,
+  turnGoal: 6,
   tileCost: 1,
   showBloom: true,
   startHint: "Tap the spring on the left to start.",
   next: "../17/",
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>.",
-    "<b>Beavers:</b> run your stream beside a beaver colony and grow <b>trees</b> next to it. The beavers dam a pond: <b>+1 flow</b>.",
+    "<b>Beavers:</b> run your stream <b>through</b> a beaver colony and grow <b>trees</b> next to it. The beavers dam a pond on your river: <b>+1 flow</b>. Running beside it isn't enough.",
     "<b>Deer</b> come every 3rd turn and graze one <b>grass</b> tile that has no trees next to it (−1 storage). Trees keep them away.",
     "<b>Fish</b> come to long rivers."]
 };

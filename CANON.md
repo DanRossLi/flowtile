@@ -60,6 +60,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - **Mountain runoff** on the windward side, with a rain shadow on the other.
   - ~~**Trees as defense:** trees cost 3 gal to cut through~~, rock 2. *Superseded Nov 10: trees no longer defend; sediment is the defense tile.*
 - **Wild forest** counts toward groves (Nov 10).
+- **Beavers** (Nov 10): you have to route your river THROUGH a beaver colony to get its bonus (with trees next to it). Running beside it isn't enough.
 - **No oxbow lakes** (Nov 10): Dan said "do not make oxbow lakes". The river never cuts a bend off into a lake, and Map 14 is now Floodplain. Don't bring them back.
 - **New maps:** one new map per new rule.
 
