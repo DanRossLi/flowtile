@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 14</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 14 · Oxbow: a tight U-bend cuts itself off into a free lake (+1 flow). At full storage the spill floods the bank and greens it.
+// Map key: _ bare ground  . meadow  ~ sea  S source (2 gal/turn)
+window.MAP = {
+  id: "map-14-oxbow",
+  label: "Map 14 · Oxbow",
+  types: [
+    "___________~",
+    "___________~",
+    "S__________~",
+    "___________~",
+    "___________~"],
+  elev: [
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110"],
+  storage: 3,
+  oxbow: true,
+  floodplain: true,
+  bloomGoal: 1,
+  bloomLabel: "Grass",
+  turnGoal: 6,
+  tileCost: 1,
+  lakeTileCost: 2,
+  showBloom: true,
+  startHint: "Tap the spring on the left to start.",
+  next: "../15/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> a turn, and you can <b>store 3 gal</b>.",
+    "Make a <b>tight U-bend</b>: when the new tile touches your river 3 tiles back, the bend cuts itself off into an <b>oxbow lake</b>. It's free, full, and adds <b>+1 flow</b>. The river runs straight across.",
+    "<b>Floodplain:</b> when your storage is full at the end of a turn, the spill floods a bare tile beside the river and turns it into grass (+1 storage)."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>
