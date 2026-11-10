@@ -20,6 +20,8 @@ Plain HTML/JS, no build step, no framework.
 - **Wind** (map 10): rain runs off the windward side of each mountain into a pool. Run the river through or beside it for **+1 flow**. The far side is in rain shadow: nothing grows there.
 - Reach the sea. Stars for arriving, for the bloom goal (on Spring Hill, **6**+ tiles), and for arriving by the turn goal (turn **6** on Spring Hill).
 
+Every map opens on a **goal card**: what the map teaches and its three star goals. It shows again after **Restart**, and the map's lesson is at the top of the help (?).
+
 Controls: a quick tap on a tile the stream can reach extends the stream straight away; press and hold any tile (or tap one the stream can't reach) to open a card showing what it does and what it costs, then choose an action (tap the same tile again to do the first one; a tile with only one option and nothing to warn about acts on the first tap), **Undo** steps back one action, **Restart** resets the map, **End turn** (or Space on a keyboard) adds your flow to your water; its badge shows what you will get, and warns when some would spill. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
 
 ## Maps

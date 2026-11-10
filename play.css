@@ -142,6 +142,16 @@ button:focus-visible,a.btn:focus-visible{outline:3px solid var(--gold);outline-o
 .end.ready{animation:ready 1.4s ease-in-out infinite}
 @keyframes ready{50%{transform:translateY(-2px);box-shadow:0 7px 0 var(--blue-d),0 0 0 7px rgba(92,192,255,.3)}}
 
+/* ---------- goal card: what this map teaches and its star goals */
+dialog.goalcard .eyebrow{display:block;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#2f9be8;margin:0 0 2px}
+dialog.goalcard .learn{margin:0 0 14px;font-size:16px}
+dialog.goalcard h3{font-family:var(--display);color:var(--paper-ink);font-size:16px;margin:0 0 8px}
+dialog.goalcard .aims{list-style:none;padding:0;margin:0 0 16px;gap:8px}
+dialog.goalcard .aims li{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:#ebe5d6;font-weight:700;animation:aimin .4s both}
+dialog.goalcard .aims li:nth-child(2){animation-delay:.12s}dialog.goalcard .aims li:nth-child(3){animation-delay:.24s}
+dialog.goalcard .aims svg{width:22px;height:22px;flex:none;fill:#ffcf3a;stroke:#c9961a;stroke-width:1.5;stroke-linejoin:round}
+@keyframes aimin{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){dialog.goalcard .aims li{animation:none}}
 /* ---------- help dialog */
 dialog{background:var(--paper);color:#4c5c65;border:0;border-radius:20px;padding:18px 18px;font-size:15px;line-height:1.45;
   width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;box-sizing:border-box;box-shadow:0 6px 0 #b9b19c}

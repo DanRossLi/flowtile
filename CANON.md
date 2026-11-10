@@ -47,6 +47,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - A river can flow through grass or trees, but washes them away.
   - Water over storage **spills** at the end of the turn.
 - **Clicking tiles:** tiles are clickable. Tap one to see what it does, then choose. A tile with only one option builds on the first tap.
+- **Goal card** (Nov 10): every map starts with a prompt saying what the player is supposed to learn and accomplish (its lesson and star goals).
 - **Quick tap and hold** (Nov 10): a quick tap on a tile the stream can reach extends the stream. Press and hold opens the menu (the tile card).
 - **Banks** on rivers and lakes are only for looks.
 - **Tributaries:**

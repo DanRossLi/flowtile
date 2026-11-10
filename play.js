@@ -1,6 +1,7 @@
 // Flow Tile: shared engine and UI for every map. Maps are flat (Nov 9): no slopes, waterfalls or speed.
 // Each map page sets window.MAP before loading this file:
 //   id, label, types[], elev[], bloomGoal, turnGoal, startHint, help[] (HTML strings), next (URL or null)
+//   lesson: what this map teaches (HTML), shown with the star goals on a goal card when a run starts (Dan, Nov 10)
 //   pickHint: message when the player taps a non-source tile before starting (default: startHint)
 //   tileCost: every tile costs this many gal before modifiers (default 1)
 //   showBloom: show the bloom chip (default: shown when the map has a bloom goal)
@@ -78,11 +79,20 @@ document.body.innerHTML = `
     <button id="end" class="end">End turn <span class="gain" id="gain" hidden></span></button>
   </div>
 </div>
+<dialog id="goal" class="goalcard" aria-labelledby="goalTitle">
+  <small class="eyebrow">${M.label}</small>
+  <h2 id="goalTitle">What you'll learn</h2>
+  <p class="learn">${M.lesson || "Reach the sea."}</p>
+  <h3>${PERF ? "Your goal" : "Earn 3 stars"}</h3>
+  <ul class="aims">${aims().map(a => `<li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span>${a}</span></li>`).join("")}</ul>
+  <form method="dialog"><button class="end" id="goalGo">Let's go</button></form>
+</dialog>
 <dialog id="help" aria-labelledby="helpTitle">
   <h2 id="helpTitle">How to play</h2>
   <ul>
     <li><b>Water</b> is what you have, in gallons. <b>Flow</b> is how many gallons you get each turn.</li>
-    <li>Tap a tile to see what it does and what it costs, then choose. <b>Tap the same tile again</b> to do the first action.</li>
+    ${M.lesson ? `<li><b>This map:</b> ${M.lesson}</li>` : ""}
+    <li><b>Tap</b> a glowing tile to extend the stream. <b>Press and hold</b> any tile to see what it does and what it costs, then choose.</li>
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
     <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, green tile and fish, 3 per grove, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
   </ul>
@@ -98,6 +108,13 @@ const tx = (id, v) => { const e = $(id); if (e) e.textContent = v };
 
 // ---------- state
 let S, history = [], prevW = 0;
+// The star goals in words, for the goal card.
+function aims() {
+  if (PERF) return [`Score as many points as you can in <b>${TURN_GOAL} turns</b>`, `Stars at <b>${(M.scoreStars || [20, 30, 40]).join(", ")}</b> points`, "Reaching the sea ends the run with a bonus"];
+  const what = {Grass:"tiles of grass", Green:"tiles green", Trees:"tiles of trees"}[M.bloomLabel], verb = M.bloomLabel === "Green" ? "Turn" : "Grow";
+  return ["Reach the <b>sea</b>", ...(BLOOM_GOAL ? [what ? `${verb} <b>${BLOOM_GOAL}</b> ${what}` : `Bloom <b>${BLOOM_GOAL}</b> tiles`] : []), `Arrive by <b>turn ${TURN_GOAL}</b>`];
+}
+function showGoal() { try { const g = document.getElementById("goal"); if (!g.open) g.showModal() } catch (_) {} }
 function fresh() {
   const tiles = [];
   for (let y = 0; y < H; y++) { tiles.push([]); for (let x = 0; x < W; x++) {
@@ -391,7 +408,7 @@ const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0); closeCard(); S = JSON.parse(history.pop()); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { closeCard(); S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); zoomTo(1) }
+function restart() { closeCard(); S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); zoomTo(1); showGoal() }
 
 // ---------- UI
 let quiet = false; // set by the test solver: skip the screen
@@ -976,7 +993,7 @@ $("tcard").addEventListener("click", e => {
 });
 $("end").onclick = endTurn; $("undo").onclick = undo; $("restart").onclick = restart; $("again").onclick = restart;
 addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
-addEventListener("keydown", e => { if (e.key === " " && !$("help").open) { e.preventDefault(); endTurn() } });
+addEventListener("keydown", e => { if (e.key === " " && !$("help").open && !$("goal").open) { e.preventDefault(); endTurn() } });
 $("rivers").addEventListener("click", e => { const b = e.target.closest("button[data-r]"); if (!b || S.phase !== "play") return; const i = +b.dataset.r;
   if (i !== S.active && !S.rivers[i].joined) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } });
 $("helpBtn").onclick = () => { $("hard").checked = hard(); $("help").showModal() };
@@ -989,10 +1006,12 @@ $("codeBtn").onclick = async () => { const url = new URL("custom/#" + mapCode(),
 if ($("share")) $("share").onclick = async () => { const sc = score(), n = perfStars(sc.total), txt = `Flow Tile · ${M.label}: ${sc.total} points ${"★".repeat(n)}${"☆".repeat(3 - n)}${sc.sea ? " · reached the sea" : ""}\n${location.href}`;
   try { if (navigator.share) await navigator.share({text:txt}); else { await navigator.clipboard.writeText(txt); $("share").textContent = "Copied!" } } catch (_) {} };
 $("help").addEventListener("click", e => { if (e.target === $("help")) $("help").close() }); // tap backdrop to close
+$("goal").addEventListener("click", e => { if (e.target === $("goal")) $("goal").close() });
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
 function loop() { if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
 if (!load()) S = fresh();
+if (S.phase === "pick" && !S.turn) showGoal(); // a new run opens on the map's goal card
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
