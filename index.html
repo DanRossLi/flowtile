@@ -18,7 +18,7 @@
 <body>
 <script>
 // Spring Hill: the original v0.1 test map, with the full rules (downhill 1 gal, flat 2 gal, waterfalls give speed).
-// Map key: . meadow  s sand  r rock  B boulder  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
+// Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
 window.MAP = {
   id: "spring-hill",
   label: "Test map · Spring Hill",
@@ -55,7 +55,7 @@ window.MAP = {
     "Water only runs <b>downhill (1 gal)</b> or <b>flat (2 gal)</b>, never uphill.",
     "<b>Sand</b> costs the normal price and blooms every land tile around it, but it cuts your <b>flow by 1</b> for the rest of the run.",
     "<b>Rock</b> can be crossed, but tiles touching it only bloom when you have <b>speed</b>. A waterfall (a 2-level drop) gives speed; flat tiles drain it.",
-    "<b>Boulders</b> block the river. <b>Springs</b> are free and add <b>+1 flow</b>.",
+    "<b>Mountains</b> block the river. <b>Springs</b> are free and add <b>+1 flow</b>.",
     "<b>Lakes</b> (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim, adds +1 flow and blooms the shore."]
 };
 </script>
