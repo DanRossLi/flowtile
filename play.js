@@ -25,6 +25,10 @@ const SHOW_SPEED = M.showSpeed ?? M.speedRule === "perLevel";
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
 const TRIB = !!M.tributaries, STORE = M.storage ?? 0, PLANT_COST = M.plantCost ?? 1, BLOOM_LABEL = M.bloomLabel ?? "Bloom";
 const NEW = STORE > 0, WIND = M.wind || null;
+// Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
+const CYCLE = !!M.cycle, WX = M.weather || null;
+// A fixed roll per map, turn and tile, so undo and replays give the same result.
+const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
 const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c"};
 const BANKS = true; // river drawn as a channel with banks; lakes get a shore
@@ -49,6 +53,7 @@ document.body.innerHTML = `
         </div>
         ${SHOW_SPEED ? `<div class="chip mini" id="cSpeed"><span>Speed</span><b id="hSpeed">0</b></div>` : ""}
         ${WIND ? `<div class="chip mini wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><span>Wind</span><b><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg></b></div>` : ""}
+        ${CYCLE || WX ? `<div class="chip mini sky" id="cSky"><span>Sky</span><b id="hSky">Clear</b></div>` : ""}
         <div class="chip mini" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
       </div>
       <div class="goals" id="goals"></div>
@@ -109,7 +114,7 @@ function fresh() {
       for (const n of nbrs(p)) { const nc = tiles[n[1]][n[0]]; if (nc.t === "lake" && nc.lake < 0) { nc.lake = id; st.push(n) } } }
     lakes.push({tiles:members, filled:false});
   }
-  return {tiles, lakes, rivers:[], active:0, phase:"pick", cap:STORE, water:0, income:0, combo:0, speed:0, turn:0, head:null, msg:M.startHint, warn:false};
+  return {tiles, lakes, rivers:[], active:0, phase:"pick", cap:STORE, water:0, income:0, combo:0, speed:0, turn:0, head:null, msg:M.startHint, warn:false, clouds:[], dry:0};
 }
 const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
 function nbrs([x, y]) { return [[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy]) => [x+dx, y+dy]).filter(([a,b]) => inside(a, b)) }
@@ -263,12 +268,36 @@ function build(mv) {
   if (sh) notes.push(sh); else if (!affordable() && !canPlant()) notes.push(`Out of water. End the turn for +${S.income} gal`);
   say(notes.length ? notes.join(". ") + "." : "Keep building, or end the turn.");
 }
-function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot(); S.turn++; S.water += S.income; bump("cWater"); wave = now();
+// What the next end of turn brings: flow, weather, and any cloud raining back.
+function forecast(turn = S.turn + 1) {
+  const wx = WX && WX[turn], rain = (S.clouds || []).filter(c => c.turn === turn).reduce((n, c) => n + c.gal, 0);
+  const dry = (S.dry > 0 || wx === "drought") ? 1 : 0, gain = Math.max(0, S.income - dry) + (wx === "rain" ? 2 : 0);
+  return {wx, rain, dry, gain};
+}
+function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
+  const f = forecast(), notes = []; S.turn++; S.clouds ||= [];
+  if (S.dry > 0) S.dry--; if (f.wx === "drought") S.dry = 1;
+  S.water += f.gain; bump("cWater"); wave = now();
   const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp;
-  const src = S.rivers[S.active] && S.rivers[S.active].src; if (src) float(src, `+${S.income - sp} gal`, "#bfe4ff");
-  if (sp) { const e = $("cWater"); if (e && !reduce) { e.classList.remove("spill"); void e.offsetWidth; e.classList.add("spill") } }
+  const src = S.rivers[S.active] && S.rivers[S.active].src; if (src) float(src, `+${f.gain - sp} gal`, "#bfe4ff");
+  if (f.wx === "rain") { notes.push("Rainstorm: +2 gal"); sky = {kind:"rain", t0:now()} }
+  if (f.dry) { notes.push(`Drought: flow −1 ${S.dry ? "this turn and next" : "this turn"}`); sky = {kind:"drought", t0:now()} }
+  // the water cycle: spill rises as a cloud and rains back two turns later
+  let up = 0; if (CYCLE && sp) { const to = rainTarget(); up = sp; S.clouds.push({gal:sp, turn:S.turn + 2, from:S.head, to}); }
+  if (f.rain) { S.clouds = S.clouds.filter(c => { if (c.turn !== S.turn) return true; rains.push({p:c.to || S.head, t0:now()}); return false });
+    const room = STORE ? Math.max(0, S.cap - S.water) : f.rain, got = Math.min(room, f.rain); S.water += got; float(S.head, `+${got} gal rain`, "#bfe4ff");
+    notes.push(`Your cloud rained back ${got} gal${got < f.rain ? ` (${f.rain - got} soaked into the ground)` : ""}`) }
+  if (sp && !reduce) { const e = $("cWater"); if (e) { e.classList.remove("spill"); void e.offsetWidth; e.classList.add("spill") } }
   for (const i of openRivers()) { const r = S.rivers[i]; r.water = STORE ? Math.min(r.cap, r.water + r.income) : r.water + r.income }
-  say(sp ? `Turn ${S.turn}: +${S.income - sp} gal. Storage is full at ${S.cap} gal, so ${sp} gal spilled.` : `Turn ${S.turn}: +${S.income} gal of water.`) }
+  for (const h of turnHooks) { const n = h(); if (n) notes.push(n) }
+  const head = sp ? (up ? `Turn ${S.turn}: +${f.gain - sp} gal. ${sp} gal spilled and rose as a cloud: it rains back on turn ${S.turn + 2}` : `Turn ${S.turn}: +${f.gain - sp} gal. Storage is full at ${S.cap} gal, so ${sp} gal spilled`) : `Turn ${S.turn}: +${f.gain} gal of water`;
+  say([head, ...notes].join(". ") + ".") }
+const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add themselves here
+// Where a cloud rains: the greenest tile beside the river.
+function rainTarget() { let best = null, bs = -1;
+  S.tiles.forEach((r, y) => r.forEach((c, x) => { const p = [x, y]; if (c.river || !(c.g || c.bloom) || !nbrs(p).some(n => at(n).river)) return;
+    const sc = nbrs(p).filter(n => at(n).g || at(n).bloom).length * 10 + c.g; if (sc > bs) { bs = sc; best = p } }));
+  return best || S.head }
 function pick(p) {
   const c = at(p); if (c.t !== "source" || (M.mainSource && p + "" !== M.mainSource + "")) { say(M.pickHint ?? M.startHint, true); return }
   snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield; S.phase = "play";
@@ -294,8 +323,9 @@ function sync() {
   $("cTurn").classList.toggle("over", S.turn > TURN_GOAL);
   goals();
   const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
-  if (play) { const g = STORE ? Math.min(S.income, Math.max(0, S.cap - S.water)) : S.income, sp = S.income - g;
-    gain.textContent = sp ? `+${g} · ${sp} spill` : `+${S.income} gal`; gain.classList.toggle("spill", sp > 0) }
+  if (play) { const f = forecast(), g = STORE ? Math.min(f.gain, Math.max(0, S.cap - S.water)) : f.gain, sp = f.gain - g;
+    gain.textContent = sp ? `+${g} · ${sp} ${CYCLE ? "to cloud" : "spill"}` : `+${f.gain} gal`; gain.classList.toggle("spill", sp > 0) }
+  if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); $("cSky").className = "chip mini sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
   if ((S.head || "") + "|" + S.active !== lastHead) { lastHead = (S.head || "") + "|" + S.active; follow() }
   $("cSpeed")?.classList.toggle("fast", S.speed >= 1);
   const me = $("msg"); if (me.textContent !== (S.msg || "")) { me.textContent = S.msg || ""; if (!reduce) { me.classList.remove("pop"); void me.offsetWidth; me.classList.add("pop") } }
@@ -391,6 +421,15 @@ function tapTile(p) {
   sel = p; renderCard(); draw();
 }
 
+// The sky chip: the next thing the weather or your clouds will do.
+function skyNext() {
+  const ev = [];
+  for (const c of S.clouds || []) ev.push({turn:c.turn, kind:"cloud", text:`☁ +${c.gal} T${c.turn}`, long:`A cloud with ${c.gal} gal rains back on turn ${c.turn}`});
+  if (WX) for (const [k, v] of Object.entries(WX)) if (+k > S.turn) ev.push({turn:+k, kind:v, text:`${{rain:"Rain", drought:"Drought", fire:"Lightning"}[v] || v} T${k}`, long:`${{rain:"Rainstorm: +2 gal", drought:"Drought: −1 flow for 2 turns", fire:"Lightning: dry trees catch fire"}[v] || v} on turn ${k}`});
+  if (S.dry > 0) ev.push({turn:S.turn, kind:"drought", text:"Drought", long:"Drought: −1 flow next turn"});
+  ev.sort((a, b) => a.turn - b.turn);
+  return ev[0] || {kind:"", text:"Clear", long:"Clear skies ahead"};
+}
 // The three star goals stay on screen while you play.
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
 function goals() {
@@ -415,7 +454,7 @@ function load() {
 
 // ---------- motion: animations live outside S (never saved), keyed by tile
 const now = () => performance.now();
-const anim = new Map(), fx = [], rings = []; let wave = -1e9;
+const anim = new Map(), fx = [], rings = [], rains = []; let wave = -1e9, sky = null;
 const DUR = 420, clamp01 = v => Math.max(0, Math.min(1, v));
 const easeBack = k => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2);
 function prog(key) { if (reduce) return 1; const s = anim.get(key); if (s == null) return 1; const k = (now() - s) / DUR; if (k >= 1) { anim.delete(key); return 1 } return Math.max(0, k) }
@@ -665,6 +704,18 @@ function draw() {
       ctx.globalAlpha = Math.sin(k * Math.PI) * .55; ctx.beginPath(); ctx.moveTo(x - ux * 34, y - uy * 34);
       ctx.quadraticCurveTo(x, y + 4, x + ux * 14 + px * 2, y + uy * 14 + py * 2); ctx.arc(x + ux * 14 + px * 8, y + uy * 14 + py * 8, 6, Math.atan2(-py, -px), Math.atan2(-py, -px) + 4.2);
       ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.stroke(); ctx.globalAlpha = 1 } }
+  // the water cycle: clouds drift from where they spilled to where they'll rain; rain falls in streaks
+  for (const c of S.clouds || []) { const k = clamp01(1 - (c.turn - S.turn - 1) / 2 + (reduce ? 0 : .08 * Math.sin(t * .8))), a = c.from || c.to, b = c.to || c.from; if (!a) continue;
+    const oa = iso(a[0], a[1], 0), ob = iso(b[0], b[1], 0), x = oa.x + (ob.x - oa.x) * k, y = oa.y + (ob.y - oa.y) * k - 92 + (reduce ? 0 : Math.sin(t * 1.3) * 3);
+    ctx.globalAlpha = .95; cloud(x, y, .5); ctx.globalAlpha = 1; ell(x + 26, y - 14, 15, 11, "#1f6fb0"); ctx.fillStyle = "#fff"; ctx.font = "700 13px Fredoka, Nunito, sans-serif"; ctx.fillText(`+${c.gal}`, x + 26, y - 13);
+    if (c.turn === S.turn + 1 && !reduce) { ctx.globalAlpha = .5; for (let i = 0; i < 5; i++) { const dx = -22 + i * 11, dy = ((t * 60 + i * 13) % 26); line([[x + dx, y + 12 + dy], [x + dx - 3, y + 20 + dy]], "#9fd4ff", 2) } ctx.globalAlpha = 1 } }
+  for (let i = rains.length - 1; i >= 0; i--) { const r = rains[i], k = (T - r.t0) / 1600; if (k >= 1 || reduce) { rains.splice(i, 1); continue }
+    const o = iso(r.p[0], r.p[1], drawLevel(r.p)); ctx.globalAlpha = Math.sin(k * Math.PI); cloud(o.x, o.y - 100, .6);
+    for (let j = 0; j < 9; j++) { const dx = -30 + j * 7.5, dy = ((k * 400 + j * 17) % 70); line([[o.x + dx, o.y - 86 + dy], [o.x + dx - 4, o.y - 74 + dy]], "#9fd4ff", 2.2) } ctx.globalAlpha = 1 }
+  if (sky && !reduce) { const k = (T - sky.t0) / 2200; if (k >= 1) sky = null; else { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const a = Math.sin(k * Math.PI);
+    if (sky.kind === "rain") { ctx.strokeStyle = `rgba(200,230,255,${.55 * a})`; ctx.lineWidth = 2 * lay.dpr; ctx.beginPath(); for (let j = 0; j < 70; j++) { const x = (hsh(j, 1) / 97) * cv.width, y = ((hsh(1, j) / 97) * cv.height + k * cv.height * 1.6) % cv.height; ctx.moveTo(x, y); ctx.lineTo(x - 6 * lay.dpr, y + 22 * lay.dpr) } ctx.stroke() }
+    else { ctx.fillStyle = `rgba(255,190,90,${.22 * a})`; ctx.fillRect(0, 0, cv.width, cv.height) }
+    ctx.restore() } }
   // floating numbers: what a move gave or cost
   for (let i = fx.length - 1; i >= 0; i--) { const f = fx[i], k = (T - f.t0) / 1300; if (k >= 1) { fx.splice(i, 1); continue } if (k < 0) continue;
     const o = iso(f.p[0], f.p[1], drawLevel(f.p)), y = o.y - 34 - 46 * (1 - Math.pow(1 - k, 2));

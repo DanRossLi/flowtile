@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 12</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 12 · Rain: spilled water rises as a cloud and rains back two turns later. A rainstorm and a drought are forecast.
+// Map key: _ bare ground  . meadow  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  id: "map-12-rain",
+  label: "Map 12 · Rain",
+  types: [
+    "____________~",
+    "___.____.___~",
+    "T___________~",
+    "___.____.___~",
+    "____________~"],
+  elev: [
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110"],
+  storage: 3,
+  cycle: true,
+  weather: {"2": "rain", "4": "drought"},
+  bloomGoal: 3,
+  bloomLabel: "Grass",
+  turnGoal: 5,
+  tileCost: 1,
+  lakeTileCost: 2,
+  showBloom: true,
+  startHint: "Tap the spring on the left to start.",
+  next: "../13/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> a turn, and you can <b>store 3 gal</b>.",
+    "Water over your storage <b>spills</b> at the end of the turn. Here it isn't lost: it rises as a <b>cloud</b>, drifts with the wind, and <b>rains back 2 turns later</b>. Rain that doesn't fit soaks into the ground.",
+    "The <b>Sky</b> chip shows what's coming: a <b>rainstorm</b> on turn 2 gives <b>+2 gal</b>, and a <b>drought</b> on turn 4 cuts your flow by 1 for 2 turns.",
+    "Plant grass by the stream to store more, so you can catch the rain."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>

@@ -17,6 +17,7 @@ Plain HTML/JS, no build step, no framework.
 - **Bare ground** (maps 4 and 4a): you start with a flow of 3 gal and can **store 3 gal**; water over that spills when you end the turn. Bare ground next to the stream shows a leaf: tap it to plant **grass** (1 gal, +1 storage), then **trees** (1 gal, +1 more). If the stream runs over grass or trees it washes them away, and you lose that storage.
 - **Tributaries** (map 6): tap a second source to start a separate river with its own water, flow and storage. Tap a river (or its pill at the top) to choose which one you build. Run it into another river and it merges: its flow is added there and its saved water pours in (anything over storage spills).
 - **Storage maps** (4 onward) also use the Nov 8 tile rules: **rock** costs 2 gal; **trees** (planted or wild forest) cost 3 gal to cut through; **sand** turns the bare ground next to it into grass (+1 storage each); **3+ trees in a row** (planted or wild) beside the river make a **grove** (+1 flow, +1 per extra tree); **4+ meadows in a row** beside the river make a **wildflower patch** (+1 flow, +1 per 2 more).
+- **Ideas** (Nov 10), each switched on by a map: the **water cycle** (spilled water rises as a cloud and rains back 2 turns later) and a **weather forecast** (a rainstorm gives +2 gal, a drought cuts flow by 1 for 2 turns), shown in the Sky chip.
 - **Wind** (map 10): rain runs off the windward side of each mountain into a pool. Run the river through or beside it for **+1 flow**. The far side is in rain shadow: nothing grows there.
 - Reach the sea. Stars for arriving, for blooming **10**+ tiles, and for arriving by turn **7** (all three are possible, but only just).
 
@@ -40,6 +41,7 @@ Controls: tap a tile to open a card showing what it does and what it costs, then
 | 9 · Wildflowers | https://danrossli.github.io/flowtile/9/ | Bend the river along a meadow strip for +1 or +2 flow |
 | 10 · Mountains | https://danrossli.github.io/flowtile/10/ | Wind: runoff on the windward side gives flow, the far side stays dry |
 | 11 · Forest | https://danrossli.github.io/flowtile/11/ | Trees cost 3 gal to cut through: count before you cut |
+| 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
 
 Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
