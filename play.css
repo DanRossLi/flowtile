@@ -354,7 +354,7 @@ button.act.rock:not(:disabled){background:#8d877c;box-shadow:0 4px 0 #625d55}
 button.act.boulder:not(:disabled){background:#9a6f3f;box-shadow:0 4px 0 #6b4b28}
 button.act.bare:not(:disabled){background:#a9784a;box-shadow:0 4px 0 #765230}
 
-/* ---------- LOU-270: full screen on desktop, tidier top bar, the water tank, muted Next Water Cycle */
+/* ---------- LOU-270: full screen on desktop, tidier top bar, water/storage, muted Next Water Cycle */
 @media (min-width:700px) and (min-height:541px){
   .app{max-width:none;padding:12px 12px 12px}
   .actions{justify-self:center;width:min(560px,100%);box-sizing:border-box}
@@ -366,11 +366,6 @@ button.act.bare:not(:disabled){background:#a9784a;box-shadow:0 4px 0 #765230}
 .stat b .cap{font-size:15px;color:#9fc6df;align-self:baseline;margin-left:-2px}
 .stat b .cap i{color:#9fc6df !important}
 .stat.water em{font-size:17px}
-.wtank{display:flex;gap:2px;justify-content:center;align-items:center;height:9px;margin:3px auto 0;max-width:132px;font-style:normal}
-.wtank i{flex:1 1 0;max-width:12px;min-width:3px;height:9px;border-radius:3px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
-.wtank i.f{background:var(--water);box-shadow:inset 0 -2px 0 #2a86c4}
-.wtank i.in{background:rgba(98,224,200,.35);box-shadow:inset 0 0 0 1.5px var(--flow)}
-.wtank b.sp{flex:none;margin-left:3px;font:800 10px var(--body);color:#2a1608;background:var(--warn);border-radius:999px;padding:0 5px;line-height:13px}
 .goal{padding:2px 8px 2px 6px;font-size:11.5px;background:rgba(10,26,40,.45);color:#dbe8f0}
 .goal svg{width:12px;height:12px}
 .obj{padding:5px 6px 5px 5px;border-radius:14px;max-width:400px}

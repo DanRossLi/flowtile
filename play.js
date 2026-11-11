@@ -64,7 +64,7 @@ document.body.innerHTML = `
       <div class="stats">
         <div class="stat" id="cScore"><span>Score</span><b id="hScore">0</b></div>
         <div class="stat" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
-        <button type="button" class="stat water" id="cWater"><span>Water</span><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.8 4.8 6.5 8.2 6.5 11.6a6.5 6.5 0 01-13 0c0-3.4 2.7-6.8 6.5-11.6z"/><path class="hl" d="M9 14.5a3 3 0 002.4 2.9"/></svg><i id="hWater">0</i>${STORE ? `<small class="cap">/<i id="hCap">0</i></small>` : ""}<em id="cFlow">(+<i id="hFlow">0</i>)</em></b>${STORE ? `<i class="wtank" id="wTank" aria-hidden="true"></i>` : ""}</button>
+        <button type="button" class="stat water" id="cWater"><span>Water</span><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.8 4.8 6.5 8.2 6.5 11.6a6.5 6.5 0 01-13 0c0-3.4 2.7-6.8 6.5-11.6z"/><path class="hl" d="M9 14.5a3 3 0 002.4 2.9"/></svg><i id="hWater">0</i>${STORE ? `<small class="cap">/<i id="hCap">0</i></small>` : ""}<em id="cFlow">(+<i id="hFlow">0</i>)</em></b></button>
       </div>
       <div class="subrow">
         <div class="goals" id="goals"></div>
@@ -521,17 +521,10 @@ let bannerT = 0, toastT = 0;
 function showBanner(t, sub) { if (quiet) return; const b = $("banner"); tx("bTurn", t); tx("bSub", sub); b.hidden = false; b.classList.remove("go"); void b.offsetWidth; b.classList.add("go");
   clearTimeout(bannerT); bannerT = setTimeout(() => { b.hidden = true; b.classList.remove("go") }, reduce ? 1200 : 1700) }
 function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump") }
-// The water tank (LOU-270): one cell per gallon of storage. Blue = water now, teal = what next cycle's flow adds,
-// an orange end = that much will spill.
-function tank() { const el = $("wTank"); if (!el) return;
-  const f = S.phase === "play" ? forecast().gain : 0, cap = S.cap, w = Math.min(S.water, cap), add = Math.max(0, Math.min(f, cap - w)), sp = Math.max(0, S.water + f - cap);
-  const key = [cap, w, add, sp].join(); if (el.dataset.k === key) return; el.dataset.k = key;
-  let s = ""; for (let i = 0; i < cap; i++) s += `<i class="${i < w ? "f" : i < w + add ? "in" : ""}"></i>`;
-  el.innerHTML = s + (sp ? `<b class="sp">+${sp}</b>` : ""); el.classList.toggle("full", w >= cap) }
 // Next Water Cycle (LOU-270): muted while you can still afford something, bright and pulsing once you can't.
 const nothingLeft = () => LAND ? S.water < 1 : !affordable() && !canPlant();
 function sync() {
-  tx("hWater", S.water); tx("hCap", S.cap); tank(); tx("hFlow", S.income); tx("hTurn", S.turn); tx("hScore", PERF ? score().total : bloomCount());
+  tx("hWater", S.water); tx("hCap", S.cap); tx("hFlow", S.income); tx("hTurn", S.turn); tx("hScore", PERF ? score().total : bloomCount());
   $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons. Flow: +${S.income} per water cycle. Tap for details`);
   $("cTurn").classList.toggle("over", S.turn > TURN_GOAL);
   goals();
