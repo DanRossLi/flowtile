@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Tutorial</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<style>
+  :root{--sea:#2b68b0;--deep:#1f4f8c;--paper:#f4f1e8;--ink:#13222e;--gold:#ffd166;--gold-d:#d9a93c;--green:#7cc94c;--muted:#6c7b83;--blue:#2f9be8;--blue-d:#1d6aa6}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100dvh;background:radial-gradient(120% 80% at 50% 0%,#3a7cc4 0%,var(--sea) 45%,var(--deep) 100%);color:#fff;font-family:Nunito,system-ui,sans-serif}
+  main{max-width:560px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
+  h1{font-family:Fredoka,Nunito,sans-serif;font-size:30px;margin:6px 0 2px;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+  h1 span{color:#8fdcff}
+  .sub{margin:0 0 14px;opacity:.9;font-weight:700}
+  .bar{height:12px;border-radius:999px;background:rgba(0,0,0,.22);overflow:hidden;margin:0 0 6px}
+  .bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:999px;transition:width .6s cubic-bezier(.3,1.2,.5,1)}
+  .count{font-weight:800;font-size:13px;opacity:.85;margin:0 0 14px}
+  a.go{display:block;text-align:center;text-decoration:none;font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:19px;color:#fff;background:var(--blue);border-radius:16px;padding:14px;box-shadow:0 5px 0 var(--blue-d);margin:0 0 18px}
+  a.go:active{transform:translateY(3px);box-shadow:0 2px 0 var(--blue-d)}
+  a.go small{display:block;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;opacity:.9}
+  ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  ol a{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);background:var(--paper);border-radius:16px;padding:10px 12px;box-shadow:0 4px 0 #b9b19c}
+  ol a:active{transform:translateY(3px);box-shadow:0 1px 0 #b9b19c}
+  ol a:focus-visible,a.go:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+  .n{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#e2ddd0;font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:16px;color:#4c5c65;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
+  .done .n{background:var(--green);color:#fff}
+  .next{box-shadow:0 4px 0 #b9b19c,0 0 0 3px var(--gold) !important}
+  .t{flex:1;min-width:0}
+  .t b{display:block;font-family:Fredoka,Nunito,sans-serif;font-size:17px;line-height:1.15}
+  .t small{display:block;color:var(--muted);font-weight:700;font-size:13px;line-height:1.3}
+  .tick{flex:none;width:22px;height:22px}
+  .tick path{fill:none;stroke:#3f8a4a;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+  footer{margin-top:22px;font-size:13px;opacity:.85}
+  footer a{color:#fff}
+  @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Flow <span>Tile</span> tutorial</h1>
+  <p class="sub">Twelve short islands, one new rule each.</p>
+  <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+  <p class="count" id="count"></p>
+  <a class="go" id="go" href="1/"></a>
+  <ol id="list"></ol>
+  <footer>Finished? Try the <a href="../daily/">Daily island</a>, or see <a href="../world/">all islands</a>.</footer>
+</main>
+<script>
+// The tutorial (LOU-261): each step is /tutorial/N/. A step counts as finished once it has a star (reached the sea).
+const STEPS = [
+  ["map-1-flat", "First stream", "Move your stream, water and flow, Next Water Cycle"],
+  ["map-4-grass", "Grass", "Plant grass to store more water; storage and spill"],
+  ["tut-3-meadow", "Meadow", "Grow grass into a meadow"],
+  ["map-4a-trees", "Trees", "Grow a meadow into trees"],
+  ["map-8-grove", "Groves", "3 trees in a row: +1 flow"],
+  ["map-9-pollinators", "Pollinators", "A meadow beside a grove: +1 flow"],
+  ["map-1a-sand-v2", "Sand", "Free to cross, −1 flow, greens the land"],
+  ["map-5-desert", "Oases", "Plan a route that keeps your flow"],
+  ["map-7-rock", "Rock", "Rock costs 2 gal; mountains block the way"],
+  ["map-3-lake", "Lakes", "Fill all at once; plant 2 tiles out"],
+  ["map-6-tributary", "Tributaries", "Connect to the main river to earn"],
+  ["map-10-mountains", "Mountains", "Runoff on the windward side, rain shadow behind"],
+];
+const stars = id => { try { return +localStorage.getItem("flowtile.stars." + id) || 0 } catch (_) { return 0 } };
+const TICK = '<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+const done = STEPS.map(s => stars(s[0]) > 0), n = done.filter(Boolean).length, first = done.indexOf(false);
+document.getElementById("list").innerHTML = STEPS.map(([id, name, what], i) =>
+  `<li><a class="${done[i] ? "done" : ""}${i === first ? " next" : ""}" href="${i + 1}/" aria-label="Step ${i + 1}, ${name}: ${what}${done[i] ? ". Finished" : ""}"><span class="n">${i + 1}</span><span class="t"><b>${name}</b><small>${what}</small></span>${done[i] ? TICK : ""}</a></li>`).join("");
+document.getElementById("count").textContent = `${n} of ${STEPS.length} finished`;
+document.getElementById("fill").style.width = (n / STEPS.length * 100) + "%";
+const go = document.getElementById("go");
+if (first < 0) { go.href = "../daily/"; go.innerHTML = "All done! Play the Daily island<small>A new island every day</small>" }
+else { go.href = `${first + 1}/`; go.innerHTML = `${n ? "Continue" : "Start the tutorial"}<small>${first + 1}. ${STEPS[first][1]}: ${STEPS[first][2]}</small>` }
+try { localStorage.setItem("flowtile.tutorial.seen", "1") } catch (_) {}
+</script>
+</body>
+</html>

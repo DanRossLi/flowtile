@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Tutorial 6</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Tutorial 6 · Pollinators: a grove already stands by the route. Grow a meadow next to it for bees: +1 flow.
+window.MAP = {
+  id: "map-9-pollinators",
+  label: "Tutorial 6 · Pollinators",
+  tutorial: 6,
+  lesson: "<b>Pollinators.</b> Each <b>meadow</b> next to a grove brings bees: <b>+1 flow</b> per meadow.",
+  types: [
+    "___________~",
+    "_ttt_______~",
+    "S__________~",
+    "___________~",
+    "___________~"],
+  elev: [
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110"],
+  storage: 3,
+  bloomKind: "bees",
+  bloomLabel: "Bees",
+  showBloom: true,
+  bloomGoal: 1,
+  turnGoal: 5,
+  tileCost: 1,
+  startHint: "Tap the spring on the left to start.",
+  next: "../7/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle. Three trees already stand by the route.",
+    "Run your stream beside the trees and they make a <b>grove</b>: <b>+1 flow</b>.",
+    "<b>Pollinators:</b> grow a <b>meadow</b> (grass, then meadow) on ground that touches the grove: <b>+1 more flow</b> for each one.",
+    "Keep your route beside the grove: a stream over a tree washes it away."]
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

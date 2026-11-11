@@ -13,8 +13,8 @@ Plain HTML/JS, no build step, no framework.
 - **Sand** is **free** to enter and blooms the land around it (on storage maps, it turns the bare ground next to it into grass), but it cuts your **flow by 1** for the rest of the run.
 - **Rock** costs **2 gal** to cross, and tiles touching it don't turn green. **Mountains** block the river. **Springs** are free and add **+1 flow**.
 - **Lakes** cost **2 gal a tile** and fill all at once. A full lake lets the river leave from any side, and on storage maps you can plant up to **2 tiles** from it (reach).
-- **Bare ground** (maps 4 onward): you can **store 3 gal** at the start; water over that spills at the next water cycle. Plant **grass** on bare ground next to the river (1 gal, +1 storage), then **trees** (1 gal, +1 more). A river running over grass or trees washes them away, and you lose that storage.
-- **Groves:** 3+ **trees in a row** (planted or wild forest) beside the river give **+1 flow**, +1 per extra tree. **Pollinators:** each **meadow** touching a grove adds **+1 flow** more. Trees cost the normal price to cross; they're for storage and groves, not defense.
+- **Bare ground** (maps 4 onward): you can **store 3 gal** at the start; water over that spills at the next water cycle. Plant **grass** on bare ground next to the river (1 gal, +1 storage), grow it into a **meadow** (1 gal, +1 more), then **trees** (1 gal, +1 more): one tile stores up to 3 extra gal. A river running over grass or trees washes them away, and you lose that storage.
+- **Groves:** 3+ **trees in a row** (planted or wild forest) beside the river give **+1 flow**, +1 per extra tree. **Pollinators:** each **meadow** (wild or grown) touching a grove adds **+1 flow** more. Trees cost the normal price to cross; they're for storage and groves, not defense.
 - **Tributaries** (map 6): tap a second source to start a tributary. It has no water, flow or storage of its own: you build it with the main river's water, and it earns nothing until it connects. Once it reaches the main river (or the main river reaches it), its source and anything it picked up join your flow. Tap a river, or its pill at the top, to choose which one you build.
 - **Ideas** (Nov 10), each switched on by a map: the **water cycle** (spilled water rises as a cloud and rains back 2 turns later) and a **weather forecast** (a rainstorm gives +2 gal, a drought cuts flow by 1 for 2 turns), shown in the Sky chip; **living spread** (grass beside the river greens a bare bank tile next to it at the next water cycle, always when a meadow is next to it, and every 3rd turn a bird carries a seed from each grove); the **floodplain** (at full storage the spill floods a bare bank tile and greens it); **harvests** (collect a rain pool beside the river for +2 gal, snowmelt gives +3 gal the first time you reach a mountain's water side, moss turns rock beside the river into soil for 1 gal); **wildlife** (beavers dam a pond for +1 flow when your river runs through their colony with trees next to it; deer graze a grass tile with no trees beside it every 3rd turn; fish come to long rivers); **nature pushes back** (lightning on a forecast turn sets dry trees alight and fire spreads from tiles with no water beside them; salt stops land next to the sea from greening).
 - **Wind** (map 10): rain runs off the windward side of each mountain into a pool. Run the river through or beside it for **+1 flow**. The far side is in rain shadow: nothing grows there.
@@ -24,22 +24,30 @@ Every map opens on a **goal card**: what the map teaches and its three star goal
 
 Controls: tap your stream's **end** to select it, then tap a glowing tile to move the stream there; the end stays selected so you can keep going, and tapping it again (or empty space) lets go. Tapping any other tile opens a card showing what it does and what it costs, then choose an action (tap the same tile again to do the first one; a tile with only one option and nothing to warn about acts on the first tap). Tapping land never moves the stream. **Undo** steps back one action, **Restart** resets the map, **Next Water Cycle** (or Space on a keyboard) adds your **flow** to your **water**; its badge shows what you will get, and warns when some would spill. Water is blue and flow is teal everywhere. A finished run isn't restored: the next visit starts the map fresh. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
 
-## Maps
+## Tutorial
+
+New players start at https://danrossli.github.io/flowtile/tutorial/: twelve short islands, one new rule each, each opening on its goal card and ending with **Next lesson**. The index shows a tick for each finished step and a **Continue** button. A first-time visitor to the site root is offered the tutorial. The old lesson links (`/1/`, `/1a/`, `/3/`, `/4/`, `/4a/`, `/5/` … `/10/`) redirect to their step.
+
+| Step | URL | Teaches |
+|---|---|---|
+| 1 · First stream | https://danrossli.github.io/flowtile/tutorial/1/ | Move your stream (tap its end, then a tile), water vs flow, Next Water Cycle |
+| 2 · Grass | https://danrossli.github.io/flowtile/tutorial/2/ | Plant grass to store more water; storage and spill |
+| 3 · Meadow | https://danrossli.github.io/flowtile/tutorial/3/ | Grow grass into a meadow for more storage on the same tile |
+| 4 · Trees | https://danrossli.github.io/flowtile/tutorial/4/ | Grow a meadow into trees: one tile stores 3 extra gal |
+| 5 · Groves | https://danrossli.github.io/flowtile/tutorial/5/ | 3 trees in a row beside the river: +1 flow |
+| 6 · Pollinators | https://danrossli.github.io/flowtile/tutorial/6/ | A meadow touching a grove: +1 flow |
+| 7 · Sand | https://danrossli.github.io/flowtile/tutorial/7/ | Free to cross, −1 flow, greens the land around it |
+| 8 · Oases | https://danrossli.github.io/flowtile/tutorial/8/ | Plan a route from oasis to oasis that keeps your flow |
+| 9 · Rock | https://danrossli.github.io/flowtile/tutorial/9/ | Rock costs 2 gal; the way around the mountains costs more |
+| 10 · Lakes | https://danrossli.github.io/flowtile/tutorial/10/ | Fill all at once for 2 gal a tile; plant up to 2 tiles out |
+| 11 · Tributaries | https://danrossli.github.io/flowtile/tutorial/11/ | Build a tributary; it earns only once it connects |
+| 12 · Mountains | https://danrossli.github.io/flowtile/tutorial/12/ | Runoff on the windward side, rain shadow behind |
+
+## More maps
 
 | Map | URL | Teaches |
 |---|---|---|
 | Spring Hill | https://danrossli.github.io/flowtile/ | The original test map, now flat |
-| 1 · Flat | https://danrossli.github.io/flowtile/1/ | Running a stream: 1 gal a tile, left to right |
-| 1a · Sand | https://danrossli.github.io/flowtile/1a/ | Sand: free, blooms the tiles around it, but costs 1 flow |
-| 3 · Lake | https://danrossli.github.io/flowtile/3/ | Lakes: 2 gal a tile, filled all at once; carry on from any side |
-| 4 · Grass | https://danrossli.github.io/flowtile/4/ | Storage: plant grass by the stream to store enough for a lake |
-| 4a · Trees | https://danrossli.github.io/flowtile/4a/ | Trees: grow grass into trees when there's no room for more grass |
-| 5 · Desert | https://danrossli.github.io/flowtile/5/ | Sand bands and bare corridors: every sand tile cuts flow by 1, so go oasis to oasis |
-| 6 · Tributary | https://danrossli.github.io/flowtile/6/ | Build a tributary with the main river's water; once connected, its source adds to your flow |
-| 7 · Rock | https://danrossli.github.io/flowtile/7/ | Rock costs 2 gal, but it's a shortcut through the mountains |
-| 8 · Grove | https://danrossli.github.io/flowtile/8/ | Plant 3 trees in a row along the river for +1 flow, to save up for the lake |
-| 9 · Pollinators | https://danrossli.github.io/flowtile/9/ | Grow a grove beside meadows: each meadow touching it adds +1 flow |
-| 10 · Mountains | https://danrossli.github.io/flowtile/10/ | Wind: runoff on the windward side gives flow, the far side stays dry |
 | 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest where the trees left beside you become groves |
 | 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
 | 13 · Spread | https://danrossli.github.io/flowtile/13/ | Grass spreads along the bank; plant next to meadows to make it certain |
@@ -51,7 +59,7 @@ Controls: tap your stream's **end** to select it, then tap a glowing tile to mov
 | Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
 
-Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
+Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill; tutorial steps live in `tutorial/N/`) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
 
 ## Modes
 

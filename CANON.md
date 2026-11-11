@@ -42,7 +42,8 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Map 1a** introduces **sand**. ~~Sand costs 1 to enter~~ *(superseded Nov 10: sand is free to enter)* but takes away 1 flow. On the desert map with storage (5), sand also turns the bare ground next to it into grass.
 - **Bare ground:** a stream through it costs 1 gal.
   - **Grass:** 1 gal turns bare ground next to the river into grass, for +1 storage.
-  - **Trees:** 1 more gal turns grass into trees, for +1 more storage.
+  - ~~**Trees:** 1 more gal turns grass into trees, for +1 more storage.~~ *Superseded Nov 10 by the meadow chain below.*
+  - **Grass → meadow → trees** (Dan, Nov 10, LOU-261, on every map): 1 gal turns grass into a meadow, then 1 more gal turns the meadow into trees, +1 storage each step, so one tile stores up to 3 extra gal. A grown meadow counts as a meadow for pollinators.
   - Start at **3 flow and 3 storage**.
   - A river can flow through grass or trees, but washes them away.
   - Water over storage **spills** at the end of the turn.
@@ -72,6 +73,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Beavers** (Nov 10): you have to route your river THROUGH a beaver colony to get its bonus (with trees next to it). Running beside it isn't enough.
 - **No oxbow lakes** (Nov 10): Dan said "do not make oxbow lakes". The river never cuts a bend off into a lake, and Map 14 is now Floodplain. Don't bring them back.
 - **New maps:** one new map per new rule.
+- **Tutorial** (LOU-261): the lesson maps are one ordered tutorial at `/tutorial/1/` … `/tutorial/12/`, one new rule per step, each ending in **Next lesson** (the last goes to the Daily island). `/tutorial/` shows progress and Continue. A first-time visitor to the site root is offered the tutorial. The old lesson URLs redirect to their step.
 
 ## Look and feel
 

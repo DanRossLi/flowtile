@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Tutorial 3</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Tutorial 3 · Meadow: room for only two plants by the stream, and the lake needs 6 gal. Grow one grass into a meadow.
+window.MAP = {
+  id: "tut-3-meadow",
+  label: "Tutorial 3 · Meadow",
+  tutorial: 3,
+  lesson: "<b>Meadow.</b> Grass grows into a <b>meadow</b> for 1 more gal: <b>+1 storage</b> again, on the same tile. There's only room for two plants here, so you'll need one.",
+  types: [
+    "BBBBBBBB~",
+    "BB_BBBBB~",
+    "T___LLL_~",
+    "BBB_BBBB~",
+    "BBBBBBBB~"],
+  elev: [
+    "111111110",
+    "111111110",
+    "111100010",
+    "111111110",
+    "111111110"],
+  storage: 3,
+  
+  bloomGoal: 0,
+  turnGoal: 5,
+  tileCost: 1,
+  startHint: "Tap the spring on the left to start.",
+  next: "../4/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
+    "The <b>lake</b> costs <b>6 gal</b> all at once, so you need to store 6. There is room for only <b>two plants</b> beside the stream.",
+    "Tap bare ground by the stream: <b>Plant grass</b> for 1 gal (+1 storage). Tap the grass again: <b>Grow a meadow</b> for 1 more gal (+1 storage again).",
+    "If the stream runs over a plant it washes it away, and you lose that storage."]
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

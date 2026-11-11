@@ -195,6 +195,8 @@ dialog.goalcard .aims li:nth-child(2){animation-delay:.12s}dialog.goalcard .aims
 dialog.goalcard .aims svg{width:22px;height:22px;flex:none;fill:#ffcf3a;stroke:#c9961a;stroke-width:1.5;stroke-linejoin:round}
 @keyframes aimin{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){dialog.goalcard .aims li{animation:none}}
+dialog .orow2{display:grid;gap:8px}
+dialog .orow2 a.btn{text-decoration:none;text-align:center}
 /* ---------- help dialog */
 dialog{background:var(--paper);color:#4c5c65;border:0;border-radius:20px;padding:18px 18px;font-size:15px;line-height:1.45;
   width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;box-sizing:border-box;box-shadow:0 6px 0 #b9b19c}

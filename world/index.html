@@ -40,6 +40,7 @@
   .lock{position:absolute;top:8px;right:8px;background:var(--ink);color:#fff;border-radius:999px;font-size:11px;font-weight:800;padding:2px 8px}
   .isle.next{box-shadow:0 5px 0 #b9b19c,0 0 0 3px var(--gold)}
   .best{position:absolute;top:8px;right:8px;background:#2f9be8;color:#fff;border-radius:999px;font-size:11px;font-weight:800;padding:2px 8px}
+  .biome a{color:#fff;font-weight:800}
   footer{margin-top:26px;font-size:13px;opacity:.8}
   footer a{color:#fff}
   @media (prefers-reduced-motion:reduce){a.isle{transition:none}}
@@ -55,12 +56,12 @@
 <script>
 // The campaign: a world of islands, one biome each. An island opens when the one before it has a star.
 const WORLD = [
-  {name:"Green Valley", note:"First streams: flat ground, sand and lakes.", col:"#a3d977", isles:[
-    ["1", "map-1-flat", "Flat"], ["1a", "map-1a-sand-v2", "Sand"], ["3", "map-3-lake", "Lake"]]},
-  {name:"Grassland", note:"Plant grass and trees to store more water.", col:"#7cc94c", isles:[
-    ["4", "map-4-grass", "Grass"], ["4a", "map-4a-trees", "Trees"], ["5", "map-5-desert", "Desert"], ["6", "map-6-tributary", "Tributary"]]},
-  {name:"Highlands", note:"Rock, groves, pollinators, mountains and forest.", col:"#b0aa9f", isles:[
-    ["7", "map-7-rock", "Rock"], ["8", "map-8-grove", "Grove"], ["9", "map-9-pollinators", "Pollinators"], ["10", "map-10-mountains", "Mountains"], ["11", "map-11-forest", "Forest"]]},
+  {name:"Tutorial", note:"Twelve short islands, one new rule each. <a href=\"../tutorial/\">Your progress</a>", col:"#a3d977", isles:[
+    ["tutorial/1", "map-1-flat", "First stream"], ["tutorial/2", "map-4-grass", "Grass"], ["tutorial/3", "tut-3-meadow", "Meadow"], ["tutorial/4", "map-4a-trees", "Trees"],
+    ["tutorial/5", "map-8-grove", "Groves"], ["tutorial/6", "map-9-pollinators", "Pollinators"], ["tutorial/7", "map-1a-sand-v2", "Sand"], ["tutorial/8", "map-5-desert", "Oases"],
+    ["tutorial/9", "map-7-rock", "Rock"], ["tutorial/10", "map-3-lake", "Lakes"], ["tutorial/11", "map-6-tributary", "Tributaries"], ["tutorial/12", "map-10-mountains", "Mountains"]]},
+  {name:"Highlands", note:"Old forest that counts toward groves.", col:"#b0aa9f", isles:[
+    ["11", "map-11-forest", "Forest"]]},
   {name:"Wild Coast", note:"Weather, living land, wildlife and fire.", col:"#58b6e6", isles:[
     ["12", "map-12-rain", "Rain"], ["13", "map-13-spread", "Spread"], ["14", "map-14-floodplain", "Floodplain"], ["15", "map-15-harvest", "Harvest"], ["16", "map-16-wildlife", "Wildlife"], ["17", "map-17-wildfire", "Wildfire"]]},
   {name:"Challenge", note:"Score as much as you can in 20 turns.", col:"#ffd166", isles:[
