@@ -73,6 +73,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Oases (springs)** (Nov 10): an oasis just adds +1 flow and doesn't green the ground around it. The oasis tile itself can still bloom when sand next to it blooms, and it counts toward the bloom goal. Sand keeps blooming the sand around it and greening the bare ground beside it.
 - **Beavers** (Nov 10): you have to route your river THROUGH a beaver colony to get its bonus (with trees next to it). Running beside it isn't enough.
 - **No oxbow lakes** (Nov 10): Dan said "do not make oxbow lakes". The river never cuts a bend off into a lake, and Map 14 is now Floodplain. Don't bring them back.
+- **Place your source anywhere** (Dan, Nov 11, LOU-263): on Big, Daily, Perfection and Custom, tap any allowed land tile at the start to place your source there; it becomes your source and the start of your main river, with 3 flow. Allowed: bare ground, grass, meadow or sand, at least 4 tiles from the sea (not sea, mountains, lakes, rock or a source). Pre-placed sources stay as a choice. Tutorial steps keep their fixed sources.
 - **New maps:** one new map per new rule.
 - **Tutorial** (LOU-261): the lesson maps are one ordered tutorial at `/tutorial/1/` … `/tutorial/12/`, one new rule per step, each ending in **Next lesson** (the last goes to the Daily island). `/tutorial/` shows progress and Continue. A first-time visitor to the site root is offered the tutorial. The old lesson URLs redirect to their step.
 
