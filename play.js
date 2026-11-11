@@ -890,24 +890,71 @@ const gp = (x, y, u, v, lv) => { const o = iso(x + u, y + v, lv); return [o.x, o
 const same = (q, p) => !!q && q + "" === p + "";
 const linked = (a, b) => { const A = at(a), B = at(b); return A.river && B.river && (same(B.from, a) || same(A.from, b) || same(A.to, b) || same(B.to, a)) };
 // Water flows in: a new tile first fills the arm of the tile it comes from, then its own arm to the centre.
-function channel(p, lv, top, t) {
+// The river (LOU-268): a channel cut into the land (banks in the tile's own colour), light water at the edges and deep blue
+// down the middle, rounded at the bends, with ripples drifting downstream (faster with more flow) and glints on the surface.
+const RW = {bank:31, edge:22, deep:11}, RCOL = {edge:"#62b9f0", deep:"#2f86c9", foam:"rgba(255,255,255,.85)"};
+// The shape of the river on one tile. All river tiles are drawn together in layers after the land (banks, then water,
+// then ripples), so one tile's bank never covers the next tile's water: no seams at tile edges.
+function chanGeom(p, lv, top) {
   const [x, y] = p, me = at(p), kp = prog(p + "");
   const arms = nbrs(p).filter(n => linked(p, n)).map(n => { const down = same(at(n).from, p) || same(me.to, n);
-    return {dx:n[0] - x, dy:n[1] - y, down, k:down ? clamp01(prog(n + "") * 2) : clamp01(kp * 2 - 1)} });
+    return {n, dx:n[0] - x, dy:n[1] - y, down, sea:at(n).t === "ocean", k:down ? clamp01(prog(n + "") * 2) : clamp01(kp * 2 - 1)} });
   const up = arms.some(a => !a.down), kc = up ? clamp01(kp * 2 - 1) : 1;
-  const quad = (a, s0, s1, w, fill) => { const px = -a.dy, py = a.dx; if (s1 <= s0) return;
-    poly([gp(x, y, a.dx * s0 + px * w, a.dy * s0 + py * w, lv), gp(x, y, a.dx * s1 + px * w, a.dy * s1 + py * w, lv), gp(x, y, a.dx * s1 - px * w, a.dy * s1 - py * w, lv), gp(x, y, a.dx * s0 - px * w, a.dy * s0 - py * w, lv)], fill) };
-  const span = (a, k) => a.down ? [0, .5 * k] : [.5 * (1 - k), .5];
-  const centre = (w, fill, k) => { if (k <= 0) return; const v = w * Math.min(1, k * 1.4); poly([gp(x, y, -v, -v, lv), gp(x, y, v, -v, lv), gp(x, y, v, v, lv), gp(x, y, -v, v, lv)], fill) };
-  const bank = shade(top, .45);
-  for (const a of arms) { const [s0, s1] = span(a, Math.min(1, a.k * 1.6)); quad(a, s0, s1, .27, bank) } centre(.27, bank, Math.min(1, kc * 1.6 + (up ? 0 : 1)));
-  for (const a of arms) { const [s0, s1] = span(a, a.k); quad(a, s0, s1, .18, "#2f86c9") } centre(.18, "#2f86c9", kc);
-  for (const a of arms) { const [s0, s1] = span(a, a.k); quad(a, s0, s1, .09, "#4aa3e8") } centre(.09, "#4aa3e8", kc);
-  ctx.save(); ctx.setLineDash([5, 9]); ctx.lineDashOffset = reduce ? 0 : -t * 26;
-  for (const a of arms) { if (a.k < 1) continue; const e = gp(x, y, a.dx * .5, a.dy * .5, lv), c0 = gp(x, y, 0, 0, lv);
-    line(a.down ? [c0, e] : [e, c0], "rgba(220,240,255,.85)", 2) }
-  ctx.restore();
+  const P = (u, v) => gp(x, y, u, v, lv), C = P(0, 0);
+  const full = !arms.some(a => a.sea) && arms.length === 2 && arms.every(a => a.k >= 1) && kc >= 1;
+  const ups = arms.filter(a => !a.down), downs = arms.filter(a => a.down);
+  const curve = full ? (() => { const a = ups[0] || arms[0], b = downs.find(d => d !== a) || arms.find(d => d !== a);
+    return [P(a.dx * .5, a.dy * .5), C, P(b.dx * .5, b.dy * .5)] })() : null;
+  // each arm runs upstream -> downstream: an upstream arm edge -> centre, a downstream one centre -> edge
+  const segs = arms.map(a => { if (a.down) { const s = .5 * a.k; return s > 0 ? Object.assign([C, P(a.dx * s, a.dy * s)], {sea:a.sea && a.k >= 1}) : null }
+    const s = .5 * (1 - a.k); return a.k > 0 ? [P(a.dx * .5, a.dy * .5), P(a.dx * s, a.dy * s)] : null }).filter(Boolean);
+  return {p, me, arms, kc, P, C, curve, segs, top};
 }
+function chanStroke(g, w, col, dash) {
+  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col; ctx.lineWidth = w;
+  if (dash) { ctx.setLineDash(dash.d); ctx.lineDashOffset = dash.o }
+  ctx.beginPath();
+  if (g.curve) { ctx.moveTo(...g.curve[0]); ctx.quadraticCurveTo(...g.curve[1], ...g.curve[2]) }
+  else { for (const s of g.segs) { if (s.sea && !dash) continue; ctx.moveTo(...s[0]); ctx.lineTo(...s[1]) }
+    if (!dash && g.kc > 0) { ctx.moveTo(g.C[0] + .01, g.C[1]); ctx.lineTo(g.C[0], g.C[1]) } } // a round dot joins the arms at the centre
+  ctx.stroke();
+  if (!dash && g.segs.some(s => s.sea)) { ctx.lineCap = "butt"; ctx.beginPath(); for (const s of g.segs) if (s.sea) { ctx.moveTo(...s[0]); ctx.lineTo(...s[1]) } ctx.stroke() } // flat where it pours into the sea
+  ctx.restore() }
+function drawRivers(list, t) {
+  const gs = list.map(([p, lv, top]) => chanGeom(p, lv, top));
+  for (const g of gs) chanStroke(g, RW.bank, shade(g.top, .42));
+  for (const g of gs) chanStroke(g, RW.bank - 5, shade(g.top, .6));
+  for (const g of gs) chanStroke(g, RW.edge, RCOL.edge);
+  for (const g of gs) chanStroke(g, RW.deep, RCOL.deep);
+  for (const g of gs) { const [x, y] = g.p, f = Math.min(6, flowOf(g.me.rid >= 0 ? g.me.rid : S.active)); // ripples drift downstream; more flow, faster and brighter
+    chanStroke(g, 2.2, `rgba(225,244,255,${.55 + .06 * f})`, {d:[6, 13], o:reduce ? 0 : -t * (14 + 5 * f) - hsh(x, y) * .4}) }
+  for (const g of gs) { const [x, y] = g.p, {arms, P, me} = g;
+    // glints that come and go on the surface
+    if (g.kc >= 1 && arms.length) { const hh = hsh(x, y); for (let i = 0; i < 2; i++) { const k = reduce ? .5 : (t * .55 + hh * .13 + i * .5) % 1, a = Math.pow(Math.sin(k * Math.PI), 6);
+      if (a < .05) continue; const arm = arms[i % arms.length], s = .12 + .22 * ((hh + i * 3) % 5) / 5, [gx, gy] = P(arm.dx * s + (i ? .05 : -.05), arm.dy * s);
+      ctx.globalAlpha = a; poly([[gx, gy - 3.2], [gx + 1, gy - 1], [gx + 3.2, gy], [gx + 1, gy + 1], [gx, gy + 3.2], [gx - 1, gy + 1], [gx - 3.2, gy], [gx - 1, gy - 1]], "#ffffff"); ctx.globalAlpha = 1 } }
+    // joins: a foam line where the river meets a full lake or another river
+    for (const a of arms) { if (a.k < 1) continue; const n = at(a.n), other = n.river && n.rid >= 0 && me.rid >= 0 && root(n.rid) !== root(me.rid);
+      if (n.t !== "lake" && !other && !(n.river && n.rid !== me.rid && a.down)) continue;
+      const [ex, ey] = P(a.dx * .44, a.dy * .44), w = reduce ? 0 : Math.sin(t * 3 + x + y) * 1.2; ctx.globalAlpha = .8;
+      ell(ex - 3, ey + w * .5, 3.2, 1.8, "#ffffff"); ell(ex + 4, ey - 1 - w * .5, 2.6, 1.5, "#ffffff"); ell(ex, ey + 2, 2, 1.2, "#e6f6ff"); ctx.globalAlpha = 1 }
+    const o = iso(x, y, drawLevel(g.p));
+    if (me.t === "source") source(o, t); else if (me.beaver) lodge(o.x, o.y, me.beaver === 2, t, hsh(x, y)) }
+}
+// The river's mouth at the sea: the water fans out and foams instead of stopping at a hard edge.
+function mouth(p, t) { const [x, y] = p, from = nbrs(p).find(n => linked(p, n)); if (!from) return;
+  const dx = from[0] - x, dy = from[1] - y, P = (u, v) => gp(x, y, u, v, 0), px = -dy, py = dx, k = prog(p + "");
+  if (k <= 0) return; ctx.globalAlpha = k;
+  // a short waterfall from the land's edge down to the sea
+  const lv = drawLevel(from), top = topColor(at(from)), U = (u, v) => gp(x, y, u, v, lv);
+  const strip = (w, fill) => poly([U(dx * .5 + px * w, dy * .5 + py * w), U(dx * .5 - px * w, dy * .5 - py * w), P(dx * .5 - px * w, dy * .5 - py * w), P(dx * .5 + px * w, dy * .5 + py * w)], fill);
+  if (lv > 0) { strip(.29, shade(top, .42)); strip(.2, RCOL.edge); strip(.1, RCOL.deep);
+    ctx.save(); ctx.setLineDash([3, 5]); ctx.lineDashOffset = reduce ? 0 : -t * 30; const [ax, ay] = U(dx * .5, dy * .5), [bx, by] = P(dx * .5, dy * .5); line([[ax, ay], [bx, by]], "rgba(230,246,255,.9)", 2); ctx.restore() }
+  poly([P(dx * .5 + px * .2, dy * .5 + py * .2), P(dx * .5 - px * .2, dy * .5 - py * .2), P(dx * .05 - px * .42, dy * .05 - py * .42), P(dx * .05 + px * .42, dy * .05 + py * .42)], "rgba(124,200,245,.75)");
+  poly([P(dx * .5 + px * .1, dy * .5 + py * .1), P(dx * .5 - px * .1, dy * .5 - py * .1), P(dx * .15 - px * .25, dy * .15 - py * .25), P(dx * .15 + px * .25, dy * .15 + py * .25)], "rgba(74,163,232,.85)");
+  for (let i = 0; i < 5; i++) { const s = -.36 + i * .18, w = reduce ? 0 : Math.sin(t * 2.4 + i * 1.3) * .03, [fx, fy] = P(dx * (.06 + w) + px * s, dy * (.06 + w) + py * s);
+    ell(fx, fy, 3.4 - Math.abs(s) * 2, 1.7, RCOL.foam) }
+  ctx.globalAlpha = 1 }
 function shore(p, lv) {
   const [x, y] = p, me = at(p);
   for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const n = [x + dx, y + dy];
@@ -928,7 +975,8 @@ function draw() {
   const T = now(), t = (T - t0) / 1000, mv = moves(), aim = objAim();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#2b68b0"; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(scale, 0, 0, scale, off.x, off.y);
-  const badges = [], wd = T - wave < 4000 ? riverDist() : null;
+  const badges = [], wd = T - wave < 4000 ? riverDist() : null, riv = [], mouths = [];
+  // three passes: the land, then the river on top of it (so it runs as one piece), then everything standing on the land
   for (const p of CELLS) {
     if (!inside(...p)) { seaCell(p, t); continue }
     const c = at(p), lv = drawLevel(p), d = diamond(p, lv), filling = c.t === "lake" && c.river && prog(p + "") < 1;
@@ -936,12 +984,17 @@ function draw() {
     prism(d, c.t === "ocean" ? 6 : lv * ZH + 14, base);
     if (filling) { ctx.globalAlpha = prog(p + ""); poly(d, COL.river); ctx.globalAlpha = 1 }
     if (c.t !== "ocean") foam(p, d, lv, t);
+    if (c.river && c.t === "lake") { shore(p, lv); if (h % 3 === 0 && !filling) { ell(o.x - 6, o.y + 3, 8, 4, "#4caf50"); ell(o.x + 12, o.y - 5, 4, 2, "#7fd36b") } }
+    else if (c.river && c.t !== "ocean") riv.push([p, lv, base]);
+    else if (c.river && c.t === "ocean") mouths.push(p);
+  }
+  drawRivers(riv, t); for (const q of mouths) mouth(q, t);
+  for (const p of ORDER) {
+    const c = at(p), lv = drawLevel(p), d = diamond(p, lv), o = iso(p[0], p[1], lv), h = hsh(...p);
     const kg = prog("g:" + p), s = kg < 1 ? easeBack(kg) : 1;
     if (s !== 1) { ctx.save(); ctx.translate(o.x, o.y); ctx.scale(s, s); ctx.translate(-o.x, -o.y) }
     deco(p, c, o, t, h);
     if (s !== 1) ctx.restore();
-    if (c.river && c.t === "lake") { shore(p, lv); if (h % 3 === 0 && !filling) { ell(o.x - 6, o.y + 3, 8, 4, "#4caf50"); ell(o.x + 12, o.y - 5, 4, 2, "#7fd36b") } }
-    else if (c.river && c.t !== "ocean") { channel(p, lv, base, t); if (c.t === "source") source(o, t) }
     if (aim && !aim.has(p + "")) poly(d, "rgba(8,20,32,.2)"); // the objective's target stays bright, the rest dims a little
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .45; poly(d, "#e6f6ff"); ctx.globalAlpha = 1 } }
     const m = hsel && S.phase === "play" ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
@@ -1025,9 +1078,10 @@ function badge(b, t) {
   if (b.sand) { ctx.fillStyle = "#62e0c8"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x - 27, y + 15, 54, 20, 10) : ctx.rect(o.x - 27, y + 15, 54, 20); ctx.fill();
     ctx.fillStyle = "#0b3a32"; ctx.font = "700 12px Fredoka, Nunito, sans-serif"; ctx.fillText("−1 flow", o.x, y + 26) }
 }
-function source(o, t) { // a fountain at the source
+function source(o, t) { // a bubbling spring at the source: a stone ring, rings of water spreading out, and a little fountain
   const b = reduce ? 0 : Math.sin(t * 5) * 2;
   ell(o.x, o.y + 2, 21, 10.5, "#7d8a93"); ell(o.x, o.y, 16, 8, "#4aa3e8"); ell(o.x - 3, o.y - 1, 9, 4, "#8fd0ff");
+  if (!reduce) for (let i = 0; i < 2; i++) { const k = (t * .7 + i * .5) % 1; ctx.globalAlpha = (1 - k) * .8; ctx.beginPath(); ctx.ellipse(o.x, o.y, 4 + k * 11, 2 + k * 5.5, 0, 0, 7); ctx.strokeStyle = "#e6f6ff"; ctx.lineWidth = 1.4; ctx.stroke(); ctx.globalAlpha = 1 }
   ctx.beginPath(); ctx.moveTo(o.x, o.y - 2); ctx.quadraticCurveTo(o.x - 9, o.y - 13 - b, o.x, o.y - 30 - b); ctx.quadraticCurveTo(o.x + 9, o.y - 13 - b, o.x, o.y - 2); ctx.fillStyle = "#dff3ff"; ctx.fill();
   ell(o.x - 8, o.y - 13 + b, 2, 2, "#ffffff"); ell(o.x + 8, o.y - 18 - b, 1.6, 1.6, "#ffffff");
 }
@@ -1038,7 +1092,7 @@ function lodge(cx, cy, pond, t, h) { // a beaver lodge on the bank of a river ti
   for (let i = 0; i < 4; i++) line([[x - 9 + i * 5, y], [x - 6 + i * 4, y - 6 - (i % 2) * 2]], "#5a3a20", 1.6); ell(x, y - 1, 2.5, 2, "#2a1a0e") }
 function deco(p, c, o, t, h) {
   const {x: cx, y: cy} = o, sway = reduce ? 0 : Math.sin(t * 1.6 + h) * 1.2;
-  if (c.river) { if (c.beaver) lodge(cx, cy, c.beaver === 2, t, h); return }
+  if (c.river) return; // river tiles are drawn with the river (drawRivers)
   if (c.t === "ocean") { const w = reduce ? 0 : Math.sin(t * 2 + p[0] + p[1]) * 3; if (h % 3 === 0) line([[cx - 10 + w, cy - 2], [cx + 6 + w, cy - 2]], "rgba(255,255,255,.6)", 2);
     ctx.globalAlpha = .5 + .3 * Math.sin(t * 2 + h); line([[cx - 16, cy + 6], [cx - 8, cy + 3], [cx, cy + 6], [cx + 8, cy + 3]], "#ffffff", 1.8); ctx.globalAlpha = 1; return }
   if (c.t === "source") { source(o, t); return }
