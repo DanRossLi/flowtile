@@ -376,3 +376,9 @@ button.oskip{font-size:11px;padding:4px 8px;border-radius:9px;background:transpa
 .rb.go.muted>span{color:var(--muted)}
 .rb.go.muted .gain{background:#3b6683;color:#e6f4ff}
 .rb.go.ready>i{background:var(--blue)}
+/* LOU-271: the Flow / Stop button in Landscape mode */
+.rb.go.land .ico-play{fill:currentColor;stroke:currentColor;stroke-width:1.5}
+.rb.go.land .ico-stop{display:none;stroke-width:3.4}
+.rb.go.land.flowing .ico-play{display:none}
+.rb.go.land.flowing .ico-stop{display:block}
+.rb.go.land.flowing>i{background:#e2794a;box-shadow:0 5px 0 #a8502a,0 0 0 4px var(--panel),0 8px 16px rgba(0,0,0,.3);animation:none}

@@ -45,7 +45,7 @@ New players start at https://danrossli.github.io/flowtile/tutorial/: twelve shor
 
 ## Landscape mode
 
-The river flows on its own and you shape the land. Each water cycle it moves as many tiles as its flow, always to the cheapest next tile (the sea first, then sand and springs, then ground, then rock), with ties going toward the sea. Tap land to change it, paid in water. Numbered circles show where the river goes next cycle. The list is at https://danrossli.github.io/flowtile/landscape/.
+The river flows on its own and you shape the land. Each water cycle it moves as many tiles as its flow, always to the cheapest next tile (the sea first, then sand and springs, then ground, then rock), with ties going toward the sea. Build first: while you build, the river waits, and a dashed line shows its whole run, with a number where each water cycle ends and a red ✕ where it would get stuck. Tap land to change it, paid in water. Then tap **Flow** and it runs on its own until it reaches the sea or gets stuck; **Stop** pauses it. The list is at https://danrossli.github.io/flowtile/landscape/.
 
 | Level | URL | Goal |
 |---|---|---|
