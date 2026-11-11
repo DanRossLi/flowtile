@@ -76,6 +76,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Place your source anywhere** (Dan, Nov 11, LOU-263): on Big, Daily, Perfection and Custom, tap any allowed land tile at the start to place your source there; it becomes your source and the start of your main river, with 3 flow. Allowed: bare ground, grass, meadow or sand, at least 4 tiles from the sea (not sea, mountains, lakes, rock or a source). Pre-placed sources stay as a choice. Tutorial steps keep their fixed sources.
 - **New maps:** one new map per new rule.
 - **Tutorial** (LOU-261): the lesson maps are one ordered tutorial at `/tutorial/1/` … `/tutorial/12/`, one new rule per step, each ending in **Next lesson** (the last goes to the Daily island). `/tutorial/` shows progress and Continue. A first-time visitor to the site root is offered the tutorial. The old lesson URLs redirect to their step.
+- **Tutorial objectives** (Dan, Nov 11, LOU-264): every tutorial step teaches through in-map objectives, one at a time in a small bar at the top, checked by the game (never by tapping OK). Its target tile or button is highlighted with a pulsing gold ring and the rest of the board dims a little. Dots show progress, and reaching the sea completes the lesson. **Skip lesson** marks the step as seen (skipped) and goes to the next one. Objectives are data in `window.MAP.objectives`.
 
 ## Look and feel
 

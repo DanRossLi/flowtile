@@ -44,6 +44,12 @@ window.MAP = {
   showBloom: true,
   startHint: "Tap the spring on the left to start.",
   next: "../10/",
+  // In-map objectives (LOU-264): one at a time, checked by the game
+  objectives: [
+    {text: "Tap the spring on the left to start", target: "source", done: g => g.phase !== "pick"},
+    {text: "Tap a rock tile to see its cost", target: "rock", done: g => (g.sel && g.sel.t === "rock") || g.river("rock") > 0},
+    {text: "Cross the rock (2 gal) between the mountains", target: "rock", done: g => g.river("rock") >= 1},
+    {text: "Reach the sea", target: "sea", done: g => g.won}],
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
     "<b>Rock</b> is hard ground: it costs <b>2 gal</b> to cross instead of 1. Going around the mountains is free of rock, but much longer.",

@@ -45,6 +45,12 @@ window.MAP = {
   startHint: "Tap the spring on the left to start your main river.",
   pickHint: "Start with the spring on the left. The big one between the mountains is for a tributary.",
   next: "../12/",
+  // In-map objectives (LOU-264): one at a time, checked by the game
+  objectives: [
+    {text: "Tap your main source on the left to start", target: "source", done: g => g.phase !== "pick"},
+    {text: "Tap the source at the top: start a tributary", target: "source", done: g => g.rivers >= 2},
+    {text: "Bring the tributary down to your main river", target: "main", done: g => g.joined},
+    {text: "Reach the sea", target: "sea", done: g => g.won}],
   help: [
     "Start your <b>main river</b> at the spring on the left: <b>2 gal</b> per water cycle, and you can store 3 gal.",
     "Any time after that, tap the big spring between the mountains to start a <b>tributary</b>. It has <b>no water of its own</b>: you build it with your main river's water. Tap a river, or its pill at the top, to choose which one you're building.",

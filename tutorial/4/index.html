@@ -42,6 +42,14 @@ window.MAP = {
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../5/",
+  // In-map objectives (LOU-264): one at a time, checked by the game
+  objectives: [
+    {text: "Tap the spring on the left to start", target: "source", done: g => g.phase !== "pick"},
+    {text: "Plant grass beside your river", target: "plantable", done: g => g.grass >= 1},
+    {text: "Grow the grass into a meadow", target: "grass", done: g => g.meadows >= 1},
+    {text: "Grow the meadow into trees", target: "meadow", done: g => g.trees >= 1},
+    {text: "Store 6 gal and fill the lake", target: "lake", done: g => g.lakes >= 1},
+    {text: "Reach the sea", target: "sea", done: g => g.won}],
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
     "The <b>lake</b> costs <b>6 gal</b>, and there is only <b>one</b> tile of ground beside the stream.",

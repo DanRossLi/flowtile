@@ -324,3 +324,25 @@ button.act:disabled .aico svg{stroke:#8a979e}
 button.act:disabled .atext small.awarn{color:#8a3a00}
 .acost{flex:none;font-size:14px;background:rgba(0,0,0,.18);border-radius:999px;padding:3px 9px}
 button.act:disabled .acost{background:rgba(0,0,0,.06)}
+
+/* ---------- tutorial objectives (LOU-264): one at a time, a tick when done, dots for progress */
+.obj{display:flex;align-items:center;gap:8px;margin:2px auto 0;max-width:420px;width:100%;box-sizing:border-box;padding:7px 8px 7px 7px;border-radius:16px;
+  background:var(--paper);color:var(--paper-ink);box-shadow:0 4px 0 #b9b19c,0 8px 16px rgba(0,0,0,.25);pointer-events:auto}
+.ock{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--gold);box-shadow:inset 0 -3px 0 var(--gold-d)}
+.ock svg{width:16px;height:16px;fill:none;stroke:#3a2600;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.obj.all .ock{background:#5cb844;box-shadow:inset 0 -3px 0 #3f8a2e}.obj.all .ock svg{opacity:1;stroke:#fff}
+.otext{flex:1;min-width:0;font-weight:800;font-size:14px;line-height:1.25}
+.odots{flex:none;display:flex;gap:3px}
+.odots i{width:7px;height:7px;border-radius:50%;background:#d9d3c4}
+.odots i.d{background:#5cb844}.odots i.c{background:var(--gold-d)}
+button.oskip{flex:none;font:800 11px var(--body);padding:6px 8px;border-radius:10px;background:#e2ddd0;color:#4c5c65;box-shadow:0 2px 0 #c4bca7}
+.obj.tick .ock{animation:otick .7s cubic-bezier(.3,1.6,.5,1)}
+.obj.tick .ock svg{animation:ockon .7s both}
+.obj.tick .otext{animation:oin .45s .25s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes otick{0%{background:#5cb844;transform:scale(1.35)}60%{background:#5cb844}100%{transform:none}}
+@keyframes ockon{0%,60%{opacity:1;stroke:#fff}100%{opacity:0}}
+@keyframes oin{from{opacity:0;transform:translateX(12px)}}
+/* a button the objective is about gets a pulsing gold ring */
+.rb.aim>i,.stat.aim{animation:aim 1.2s ease-in-out infinite}
+@keyframes aim{50%{box-shadow:0 0 0 5px rgba(255,209,102,.9),0 0 18px rgba(255,209,102,.6)}}
+@media (prefers-reduced-motion:reduce){.obj.tick .ock,.obj.tick .ock svg,.obj.tick .otext{animation:none}.rb.aim>i,.stat.aim{animation:none;box-shadow:0 0 0 4px var(--gold)}}

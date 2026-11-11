@@ -44,6 +44,13 @@ window.MAP = {
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../7/",
+  // In-map objectives (LOU-264): one at a time, checked by the game
+  objectives: [
+    {text: "Tap the spring on the left to start", target: "source", done: g => g.phase !== "pick"},
+    {text: "Run your stream beside the trees: a grove", target: "trees", done: g => g.groves >= 1},
+    {text: "Plant grass touching the grove", target: "plantable", done: g => g.besideGrove >= 1 || g.bees >= 1},
+    {text: "Grow it into a meadow: bees, +1 flow", target: "grass", done: g => g.bees >= 1},
+    {text: "Reach the sea", target: "sea", done: g => g.won}],
   help: [
     "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle. Three trees already stand by the route.",
     "Run your stream beside the trees and they make a <b>grove</b>: <b>+1 flow</b>.",

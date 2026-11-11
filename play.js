@@ -14,6 +14,8 @@
 //   tutorial: step number on /tutorial/N/ (the win card says "Next lesson"); nextLabel: text for the win card's next button
 //   bloomKind: "trees" or "bees" to count planted trees or pollinating meadows for the bloom goal
 //   offerTutorial: offer the tutorial to a first-time visitor (site root)
+//   objectives: [{text, target, done: g => …}] (tutorial, LOU-264): one at a time on the map; done is tested after every action
+//     with the helpers in G below; target names what to highlight (see objAim)
 //   placeSource: true lets you place your source on any bare ground, grass, meadow or sand tile at least 4 tiles from the sea (LOU-263)
 // Map codes g, m, t: bare ground that starts as grass, meadow or trees (counted in storage); bloomLabel: name of the bloom chip (default "Bloom")
 //   wind: [dx, dy], the side the wind comes from. The tile on that side of each mountain is runoff (+1 flow when the
@@ -63,6 +65,7 @@ document.body.innerHTML = `
         ${WIND ? `<div class="wx wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg>Wind</div>` : ""}
         ${CYCLE || WX ? `<div class="wx sky" id="cSky"><span id="lSky">Sky</span> <b id="hSky">Clear</b></div>` : ""}
       </div>
+      ${M.objectives ? `<div class="obj" id="obj" role="status"><i class="ock" id="oTick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><span class="otext" id="oText"></span><span class="odots" id="oDots" aria-hidden="true"></span>${M.next ? `<button type="button" class="oskip" id="oSkip">Skip lesson</button>` : ""}</div>` : ""}
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
     <div class="overlay bottom" id="bottom"><div class="msg" id="msg" role="status"></div></div>
@@ -439,7 +442,7 @@ function start(p, placed) { const c = at(p); closeCard();
 const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
-  const used = (S.undos || 0) + (hard() ? 1 : 0); closeCard(); S = JSON.parse(history.pop()); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
+  const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0; closeCard(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
 function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); zoomTo(1); showGoal() }
 
 // ---------- UI
@@ -595,7 +598,7 @@ function renderInfo() {
     `<div class="wline"><span>Flow</span><b class="flw">+${S.income} gal per water cycle</b></div>${S.phase === "play" ? `<div class="wline"><span>Next Water Cycle</span><b>+${Math.min(f.gain, STORE ? Math.max(0, S.cap - S.water) : f.gain)} gal${STORE && f.gain > S.cap - S.water ? `, ${f.gain - Math.max(0, S.cap - S.water)} spills` : ""}${f.dry ? " (drought)" : ""}</b></div>` : ""}${rv}`;
   el.className = "tcard"; el.style.top = ""; el.hidden = false;
 }
-$("cWater").onclick = () => { if (info) { closeCard(); return } closeCard(); hsel = false; info = true; renderInfo(); draw() };
+$("cWater").onclick = () => { if (info) { closeCard(); return } closeCard(); hsel = false; info = true; renderInfo(); sync() };
 function runAct(a) { closeCard(); a.run() }
 // Moving the stream (LOU-258, replaces LOU-255's quick tap): tap the stream's end to select it, then tap a glowing tile.
 // The end stays selected so you can keep extending. Tap the end again, or empty space, to let go. With nothing selected,
@@ -620,6 +623,45 @@ function tapTile(p, hold = false) {
   if (acts.length === 1 && canDo(acts[0]) && !acts[0].warn) { closeCard(); acts[0].run(); return }
   sel = p; renderCard(); draw();
 }
+
+// ---------- tutorial objectives (LOU-264): one at a time, checked by the game after every action, target highlighted
+const OBJ = M.objectives || [];
+const G = { // what an objective's done(g) can ask
+  get phase() { return S.phase }, get won() { return S.phase === "won" }, get selected() { return hsel }, get turn() { return S.turn },
+  get sel() { return sel ? at(sel) : null }, get selPlantable() { return !!sel && plantable(sel) }, get info() { return info },
+  count(f) { return S.tiles.flat().filter(f).length },
+  get built() { return G.count(c => c.river && c.rid >= 0 && !["source", "ocean"].includes(c.t)) },
+  get grass() { return G.count(c => !c.river && !c.wild && c.g >= 1) }, get meadows() { return G.count(c => !c.river && c.g >= MEADOW) },
+  get trees() { return G.count(c => !c.river && !c.wild && c.g >= TREES && c.pr !== 0) }, get groves() { return combos().length },
+  get bees() { return combos().reduce((n, k) => n + k.bees.length, 0) }, get lakes() { return S.lakes.filter(L => L.filled).length },
+  get rivers() { return S.rivers.length }, get joined() { return S.rivers.some(r => r.joined) }, get runoff() { return G.count(c => c.ro === 2) },
+  river(t) { return G.count(c => c.river && c.t === t) },
+  beside(f) { return S.tiles.flatMap((r, y) => r.map((c, x) => [x, y])).filter(p => { const c = at(p); return !c.river && f(c) && nbrs(p).some(n => at(n).river && at(n).rid >= 0) }).length },
+  get besideGrove() { const g = combos().flatMap(k => k.tiles); return S.tiles.flatMap((r, y) => r.map((c, x) => [x, y])).filter(p => { const c = at(p); return !c.river && c.g >= 1 && c.g < TREES && nbrs(p).some(n => g.some(q => same(q, n))) }).length },
+};
+const objDone = o => { try { return !!o.done(G) } catch (_) { return false } };
+const objNow = () => S && OBJ.length && (S.obj || 0) < OBJ.length ? OBJ[S.obj || 0] : null;
+// Tiles to highlight for the current objective (null: none). Buttons get a ring instead (see objCheck).
+function objAim() { const o = objNow(); if (!o || !o.target || o.target === "end" || o.target === "water") return null;
+  const all = S.tiles.flatMap((r, y) => r.map((c, x) => [x, y])), t = o.target;
+  const pick = Array.isArray(t) ? [t] : t === "head" ? (S.phase === "play" ? headTiles(S.active) : []) : t === "moves" ? [...moves().values()].map(m => m.p)
+    : t === "plantable" ? all.filter(plantable) : all.filter(p => { const c = at(p); return {
+      source:c.t === "source" && !c.river && (!M.mainSource || S.phase !== "pick" || same(M.mainSource, p)), sea:c.t === "ocean" && !c.river, lake:c.t === "lake" && !c.river,
+      sand:c.t === "sand" && !c.river, rock:c.t === "rock" && !c.river, spring:c.t === "spring" && !c.river, runoff:c.ro === 1, main:c.river && c.rid >= 0 && onMain(c.rid) && c.t !== "source",
+      grass:!c.river && c.g === 1, meadow:!c.river && c.g === MEADOW, trees:!c.river && c.g >= TREES, grove:combos().some(k => k.tiles.some(q => same(q, p))) }[t] });
+  return pick.length ? new Set(pick.map(p => p + "")) : null }
+let objShown = -1;
+function objCheck() { if (!OBJ.length || !S) return; let moved = false;
+  if (S.phase === "won" && (S.obj || 0) < OBJ.length) { S.obj = OBJ.length; moved = true } // reaching the sea finishes the lesson whatever the route
+  while ((S.obj || 0) < OBJ.length && objDone(OBJ[S.obj || 0])) { S.obj = (S.obj || 0) + 1; moved = true }
+  const i = S.obj || 0, o = OBJ[Math.min(i, OBJ.length - 1)];
+  if (i !== objShown) { const el = $("obj"); tx("oText", i >= OBJ.length ? "Lesson complete!" : o.text);
+    $("oDots").innerHTML = OBJ.map((_, k) => `<i class="${k < i ? "d" : k === i ? "c" : ""}"></i>`).join("");
+    el.classList.toggle("all", i >= OBJ.length);
+    if (objShown >= 0 && moved && !reduce) { el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick") }
+    objShown = i; if (moved) save() }
+  const tg = objNow() && objNow().target; $("end").classList.toggle("aim", tg === "end"); $("cWater").classList.toggle("aim", tg === "water") }
+if (OBJ.length && $("oSkip")) $("oSkip").onclick = () => { lsSet("flowtile.seen." + M.id, "skipped"); location.href = M.next };
 
 // ---------- Perfection score
 function score() {
@@ -882,8 +924,8 @@ function riverDist() {
     for (const n of nbrs(p)) if (!dist.has(n + "") && at(n).river && (linked(p, n) || (at(n).t === "lake" && at(p).t === "lake" && at(n).lake === at(p).lake))) { dist.set(n + "", d + 1); q.push(n) } }
   return dist }
 function draw() {
-  if (!S) return;
-  const T = now(), t = (T - t0) / 1000, mv = moves();
+  if (!S) return; objCheck();
+  const T = now(), t = (T - t0) / 1000, mv = moves(), aim = objAim();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#2b68b0"; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.setTransform(scale, 0, 0, scale, off.x, off.y);
   const badges = [], wd = T - wave < 4000 ? riverDist() : null;
@@ -900,6 +942,7 @@ function draw() {
     if (s !== 1) ctx.restore();
     if (c.river && c.t === "lake") { shore(p, lv); if (h % 3 === 0 && !filling) { ell(o.x - 6, o.y + 3, 8, 4, "#4caf50"); ell(o.x + 12, o.y - 5, 4, 2, "#7fd36b") } }
     else if (c.river && c.t !== "ocean") { channel(p, lv, base, t); if (c.t === "source") source(o, t) }
+    if (aim && !aim.has(p + "")) poly(d, "rgba(8,20,32,.2)"); // the objective's target stays bright, the rest dims a little
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .45; poly(d, "#e6f6ff"); ctx.globalAlpha = 1 } }
     const m = hsel && S.phase === "play" ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
     if (m || pk) {
@@ -931,6 +974,8 @@ function draw() {
     if (on) { const o = iso(q[0], q[1], drawLevel(q)), s = 1.04 + .05 * k, dd = d.map(([x, y]) => [o.x + (x - o.x) * s, o.y + (y - o.y) * s]);
       poly(dd, "rgba(98,224,200,.18)"); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6; ctx.stroke(); poly(dd, "rgba(0,0,0,0)"); ctx.strokeStyle = "#62e0c8"; ctx.lineWidth = 2.5; ctx.stroke() }
     else { ctx.save(); ctx.setLineDash([7, 6]); ctx.lineDashOffset = reduce ? 0 : -t * 10; poly(d, "rgba(0,0,0,0)"); ctx.strokeStyle = `rgba(255,255,255,${.45 + .4 * k})`; ctx.lineWidth = 3; ctx.stroke(); ctx.restore() } }
+  if (aim) { const k = reduce ? 1 : .55 + .45 * Math.sin(t * 4.5); for (const key of aim) { const q = key.split(",").map(Number), d = diamond(q, drawLevel(q)), o = iso(q[0], q[1], drawLevel(q)), s = 1.02 + .06 * k;
+    poly(d.map(([x, y]) => [o.x + (x - o.x) * s, o.y + (y - o.y) * s]), "rgba(0,0,0,0)"); ctx.strokeStyle = `rgba(255,209,102,${.5 + .5 * k})`; ctx.lineWidth = 4; ctx.stroke() } }
   if (sel) { const d = diamond(sel); poly(d, "rgba(255,209,102,.22)"); ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 4.5; ctx.stroke() }
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
     const d = diamond(r.p), o = iso(r.p[0], r.p[1], drawLevel(r.p)), s = 1 + k * .25;
@@ -1105,7 +1150,7 @@ sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resiz
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get lay() { return lay }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score,
+window.FT = {get lay() { return lay }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, selectHead() { hsel = true }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const d = diamond(p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;
