@@ -52,7 +52,9 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - ~~**Quick tap and hold** (Nov 10): a quick tap on a tile the stream can reach extends the stream. Press and hold opens the menu (the tile card).~~ *Superseded by LOU-258 (playtest, Nov 10): see "Moving the stream".*
 - **Moving the stream** (LOU-258): tap the stream's **end** to select it, then tap a glowing tile to move it there; the end stays selected. Tap the end again or empty space to let go. Tapping land never moves the stream; it opens the tile card. Tapping a tributary's end selects that river.
 - **Water vs flow** (LOU-258): water is blue, flow is teal (`#62e0c8`), everywhere. Green means grass, never flow. ~~Flow has its own chip, "per water cycle".~~ *Superseded Nov 11 by the top bar (LOU-267): flow shows in teal brackets next to water.*
-- **Top bar** (Dan, Nov 11, LOU-267): like Polytopia, three stats straight on the map with no panels: **Score · Turn · Water (+flow)**, a small label over a big number. Water has a blue drop, the amount in blue, the flow in teal brackets, and "(of N)" storage in the label. Tap Water for the Water card (storage cells, flow, next cycle, and each river on tributary maps).
+- **Top bar** (Dan, Nov 11, LOU-267): like Polytopia, three stats straight on the map with no panels: **Score · Turn · Water (+flow)**, a small label over a big number. Water has a blue drop, the amount in blue, the flow in teal brackets, ~~and "(of N)" storage in the label~~ *(superseded by LOU-270: see "Water tank")*. Tap Water for the Water card (storage cells, flow, next cycle, and each river on tributary maps).
+- **Water tank** (Dan, Nov 11, LOU-270: "I need a better way to see Water, storage and flow"): water reads **water/storage (+flow)**, with a small tank under it on storage maps: one cell per gallon of storage, blue = water now, teal = what next cycle's flow adds, an orange "+N" tag = what will spill. The star chips are quieter and the turn chip says "By turn N" (it doesn't repeat the Turn stat). Keep iterating on it.
+- **Next Water Cycle muted or active** (Dan, Nov 11, LOU-270): the button is muted (grey-blue) while you can still afford something, and bright blue and pulsing once you can't.
 - **Next Water Cycle** (LOU-258): the End turn button is now **Next Water Cycle**. No "End turn" text anywhere. The counter stays "Turn".
 - **Can't afford = grey** (LOU-258): unaffordable buttons and tiles are grey, not orange or brown.
 - **Fresh start** (LOU-258): a finished run (won, scored or stuck) is never restored; an in-progress run older than 12 hours starts fresh too.
@@ -88,6 +90,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - ~~**One screen:** everything fits on one screen, inside the game window.~~ *Superseded Nov 11 by "Play zoom" (LOU-262).*
 - ~~**Opening view:** the game opens on the whole island.~~ *Superseded Nov 11 by "Play zoom" (LOU-262).*
 - **Play zoom** (Dan, Nov 11, LOU-262): the game opens on the whole island (to pick a source), then plays zoomed in like Polytopia: a tile is about 118px wide, so 3–4 fit across a phone, and the camera follows the stream's end. The whole-island view stays available as an overview on the corner zoom button, which toggles back to play zoom. The message is a short toast that fades.
+- **Full screen on desktop** (Dan, Nov 11, LOU-270): on a desktop window the board fills the screen; the stats and the button bar stay centred at phone width.
 - **Big map:** there's a big test map at `/big/`, 18×18.
 - **No water border** around the map (Nov 10). Don't put the ring of sea tiles back. The goal sea tiles (`~`) stay.
 
