@@ -4,7 +4,7 @@
    Look: bright, flat and chunky (Polytopia-style): solid panels with a darker bottom edge, bold rounded type. */
 :root{
   --night:#13222e; --panel:#1e3a4e; --panel-2:#2a4d66; --ink:#eef6fb; --muted:#a9c3d3;
-  --water:#5cc0ff; --blue:#2f9be8; --blue-d:#1d6aa6; --gold:#ffd166; --gold-d:#c98f1e; --warn:#ff9f5a; --green:#7cc94c;
+  --water:#5cc0ff; --flow:#62e0c8; --blue:#2f9be8; --blue-d:#1d6aa6; --gold:#ffd166; --gold-d:#c98f1e; --warn:#ff9f5a; --green:#7cc94c;
   --paper:#f4f1e8; --paper-ink:#23323b; --paper-line:#e2ddd0;
   --glass:rgba(14,32,48,.82); --edge:inset 0 -3px 0 rgba(0,0,0,.28);
   --display:"Fredoka","Nunito",system-ui,sans-serif; --body:"Nunito",system-ui,sans-serif;
@@ -56,6 +56,15 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-to
 .chip.spill{animation:spill .5s ease-out}
 @keyframes spill{20%,60%{transform:translateX(-3px)}40%,80%{transform:translateX(3px)}}
 .chip.mini{flex:none;width:70px}
+/* flow: its own teal chip (LOU-258). Water is blue, flow is teal, green means grass */
+.chip.flow{width:84px;padding-bottom:4px}
+.chip.flow span{color:var(--flow)}
+.chip.flow b{color:var(--flow);display:flex;align-items:center;justify-content:center;gap:3px}
+.chip.flow b svg{width:17px;height:17px;fill:none;stroke:var(--flow);stroke-width:2.6;stroke-linecap:round;flex:none}
+.chip.flow b i{font-style:normal}
+.chip.flow .per{display:block;margin:0;font-size:9px;line-height:1.1;color:var(--muted);white-space:nowrap}
+.hud.many .chip.flow{width:58px}
+.hud.many .chip.flow .per{display:none}
 .chip.mini.over b{color:var(--warn)}
 .chip.wind{width:56px}
 .chip.sky{width:72px;padding-left:4px;padding-right:4px}
@@ -76,6 +85,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-to
 .goal.got{color:#3a2600;background:var(--gold);box-shadow:inset 0 -3px 0 var(--gold-d)}
 .goal.got svg{fill:#fff6d6;stroke:#3a2600}
 .goal.live{color:var(--gold)}
+dialog b.wtr{color:#1d6aa6}dialog b.flw{color:#178a76}
 .goal.live svg{stroke:var(--gold)}
 .goal.miss{color:var(--warn)}
 .goal.miss svg{stroke:var(--warn)}
@@ -135,7 +145,7 @@ button:active:not(:disabled),a.btn:active{transform:translateY(3px);box-shadow:0
 .end:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 var(--blue-d) !important}
 button:disabled{opacity:.45}
 button:focus-visible,a.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.end{display:flex;align-items:center;justify-content:center;gap:8px}
+.end{display:flex;align-items:center;justify-content:center;gap:4px 8px;flex-wrap:wrap;line-height:1.15}
 .gain{font-size:14px;padding:2px 9px;border-radius:999px;background:rgba(6,35,58,.28);text-shadow:none}
 .gain[hidden]{display:none}
 .gain.spill{background:var(--warn);color:#2a1608}
@@ -225,7 +235,7 @@ button.act.plant{background:#4caf3f;box-shadow:0 4px 0 #2f7a2a}
 button.act.trib{background:#3fb6c9;box-shadow:0 4px 0 #23818f}
 button.act.collect{background:#2f9be8;box-shadow:0 4px 0 #1d6aa6}
 button.act.moss{background:#7a9a4a;box-shadow:0 4px 0 #55702f}
-button.act:disabled{opacity:1;background:#e2ddd0;color:#6c7b83;box-shadow:0 4px 0 #c4bca7}
+button.act:disabled{opacity:1;background:#d5d9dc;color:#6c7b83;box-shadow:0 4px 0 #b3b9be}
 .atext{flex:1;min-width:0}
 .atext b{display:block;font-weight:700;font-size:16px;line-height:1.2}
 .atext small{display:block;font-family:var(--body);font-weight:800;font-size:12px;line-height:1.3;opacity:.92}

@@ -50,9 +50,10 @@ document.body.innerHTML = `
       <div class="rivers" id="rivers" hidden></div>
       <div class="hud${WIND && (CYCLE || WX) ? " many" : ""}">
         <div class="chip tank" id="cWater">
-          <div class="tline"><span>Water</span><b id="hWater">0</b><small id="hCap">gal</small><em id="cFlow">+0 a turn</em></div>
+          <div class="tline"><span>Water</span><b id="hWater">0</b><small id="hCap">gal</small></div>
           ${STORE ? `<div class="cells" id="cells" aria-hidden="true"></div>` : ""}
         </div>
+        <div class="chip mini flow" id="cFlow"><span>Flow</span><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c3-2 6-2 9 0s6 2 9 0M3 15c3-2 6-2 9 0s6 2 9 0"/></svg>+<i id="hFlow">0</i></b><small class="per">per water cycle</small></div>
         ${WIND ? `<div class="chip mini wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><span>Wind</span><b><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg></b></div>` : ""}
         ${CYCLE || WX ? `<div class="chip mini sky" id="cSky"><span id="lSky">Sky</span><b id="hSky">Clear</b></div>` : ""}
         <div class="chip mini" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
@@ -76,7 +77,7 @@ document.body.innerHTML = `
   <div class="actions">
     <button id="undo" class="sq" aria-label="Undo" title="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
     <button id="restart" class="sq" aria-label="Restart" title="Restart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5"/></svg></button>
-    <button id="end" class="end">End turn <span class="gain" id="gain" hidden></span></button>
+    <button id="end" class="end">Next Water Cycle <span class="gain" id="gain" hidden></span></button>
   </div>
 </div>
 <dialog id="goal" class="goalcard" aria-labelledby="goalTitle">
@@ -90,9 +91,9 @@ document.body.innerHTML = `
 <dialog id="help" aria-labelledby="helpTitle">
   <h2 id="helpTitle">How to play</h2>
   <ul>
-    <li><b>Water</b> is what you have, in gallons. <b>Flow</b> is how many gallons you get each turn.</li>
+    <li><b class="wtr">Water</b> (blue) is what you have right now, in gallons. Every cost is paid in water. <b class="flw">Flow</b> (teal) is how much water each water cycle brings.</li>
     ${M.lesson ? `<li><b>This map:</b> ${M.lesson}</li>` : ""}
-    <li><b>Tap</b> a glowing tile to extend the stream. <b>Press and hold</b> any tile to see what it does and what it costs, then choose.</li>
+    <li>To move the stream, tap its <b>end</b> (it gets a white ring), then a glowing tile. The number is its cost in water. Tap any other tile to see what it does and what it costs, then choose.</li>
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
     <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, green tile and fish, 3 per grove, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
   </ul>
@@ -227,11 +228,11 @@ function startTributary(p) {
   const i = S.rivers.length; S.rivers.push({src:p, joined:false, head:p, grp:i, pend:c.yield, combo:0});
   c.river = true; c.rid = i; S.active = i; S.head = p; anim.set(p + "", now()); wave = now();
   const ro = claimRunoff([p]);
-  say(`${riverName(i)} started. It runs on your main river's water and earns nothing yet: once it reaches the main river, its +${S.rivers[i].pend} gal a turn${ro ? " (with mountain runoff)" : ""} joins your flow.`);
+  say(`${riverName(i)} started. It runs on your main river's water and earns nothing yet: once it reaches the main river, its +${S.rivers[i].pend} gal per water cycle${ro ? " (with mountain runoff)" : ""} joins your flow.`);
 }
 function plant(p) {
   const c = at(p), what = c.g ? "Trees" : "Grass";
-  if (S.water < PLANT_COST) { say(`${what} costs ${PLANT_COST} gal and you have ${S.water} gal. End the turn to collect your flow.`, true); return }
+  if (S.water < PLANT_COST) { say(`${what} costs ${PLANT_COST} gal and you have ${S.water} gal. Tap Next Water Cycle to collect your flow.`, true); return }
   snapshot(); S.water -= PLANT_COST; c.g++; c.bloom = true; c.pr = S.active; S.cap++; bump("cWater"); bump("cBloom");
   anim.set("g:" + p, now()); float(p, "+1 storage", "#b6f08a");
   const cb = recombo(), bv = beavers(), sh = storageHint();
@@ -263,7 +264,7 @@ function storageHint() { if (!STORE || S.phase !== "play") return "";
 
 function snapshot() { history.push(JSON.stringify(S)) }
 function build(mv) {
-  if (S.water < mv.cost) { say(`That tile costs ${mv.cost} gal and you have ${S.water} gal. End the turn to collect your flow of ${S.income} gal.`, true); return }
+  if (S.water < mv.cost) { say(`That tile costs ${mv.cost} gal and you have ${S.water} gal. Tap Next Water Cycle to collect your flow of ${S.income} gal.`, true); return }
   snapshot();
   S.water -= mv.cost;
   if (at(mv.p).river) { // ran into another river: merge into it
@@ -275,8 +276,8 @@ function build(mv) {
     S.rivers[g].combo = (S.rivers[g].combo || 0) + (S.rivers[other].combo || 0); S.rivers[other].combo = 0;
     const next = liveOf(g); S.active = next; S.head = S.rivers[next].head; anim.set("m:" + mv.from, now()); wave = now(); bump("cFlow");
     if (gave) float(mv.p, `+${gave} flow`, "#62e0c8"); const cb = recombo();
-    say(g === 0 ? `${me === 0 ? `Your main river reached the ${riverName(t).toLowerCase()}` : `${riverName(me)} joined the main river`}: flow now +${S.income} gal a turn${S.income > was ? ` (+${S.income - was})` : ""}. Now building the ${riverName(next).toLowerCase()}.${cb ? " " + cb + "." : ""}`
-      : `The tributaries joined: +${S.rivers[g].pend} gal a turn waits until they reach the main river.${cb ? " " + cb + "." : ""}`); return }
+    say(g === 0 ? `${me === 0 ? `Your main river reached the ${riverName(t).toLowerCase()}` : `${riverName(me)} joined the main river`}: flow now +${S.income} gal per water cycle${S.income > was ? ` (+${S.income - was})` : ""}. Now building the ${riverName(next).toLowerCase()}.${cb ? " " + cb + "." : ""}`
+      : `The tributaries joined: +${S.rivers[g].pend} gal per water cycle waits until they reach the main river.${cb ? " " + cb + "." : ""}`); return }
   const b = at(mv.p);
   const notes = []; let bl = 0, gr = 0, t1 = now(), placed = [mv.p];
   if (mv.cost) float(mv.p, `−${mv.cost} gal`, "#bfe4ff");
@@ -288,11 +289,11 @@ function build(mv) {
     if (b.g) { const wild = b.wild; if (!wild) capAdd(b.pr, -b.g); const sp = Math.max(0, S.water - S.cap); S.water -= sp;
       notes.push(wild ? "You cut through the forest" : `The river washed away the ${b.g > 1 ? "trees" : "grass"}: storage down to ${S.cap} gal${sp ? `, ${sp} gal spilled` : ""}`);
       if (!wild) float(mv.p, `−${b.g} storage`, "#ffb27a"); b.g = 0; b.wild = false; bump("cWater") }
-    if (b.t === "spring") { flowAdd(S.active, 1); notes.push(onMain(S.active) ? "Spring joined: flow +1 gal a turn" : "Spring joined: +1 flow once this tributary reaches the main river"); float(mv.p, "+1 flow", "#62e0c8"); bump("cFlow") }
+    if (b.t === "spring") { flowAdd(S.active, 1); notes.push(onMain(S.active) ? "Spring joined: flow +1 gal per water cycle" : "Spring joined: +1 flow once this tributary reaches the main river"); float(mv.p, "+1 flow", "#62e0c8"); bump("cFlow") }
     if (b.t === "sand") { for (const n of nbrs(mv.p)) { const d = 350 + 110 * (bl + gr); if (NEW) gr += sandGrass(n, d); if (!at(n).bloom || !NEW) bl += tryBloom(n, d) }
       const was = flowOf(S.active); flowAdd(S.active, -1); const now1 = flowOf(S.active);
-      notes.push(was > now1 ? (onMain(S.active) ? `Sand soaked up 1 flow: now +${now1} gal a turn` : `Sand soaked up 1 of this tributary's flow: +${now1} once it joins`) : "Sand soaked the ground"); if (was > now1) float(mv.p, "−1 flow", "#ffb27a"); bump("cFlow") } }
-  const ro = claimRunoff(placed); if (ro) notes.push(`Mountain runoff: flow +${ro} gal a turn${MELT ? `, and ${melted} gal of snowmelt${melted < 3 * ro ? ` (${3 * ro - melted} ran off: storage is full)` : ""}` : ""}`);
+      notes.push(was > now1 ? (onMain(S.active) ? `Sand soaked up 1 flow: now +${now1} gal per water cycle` : `Sand soaked up 1 of this tributary's flow: +${now1} once it joins`) : "Sand soaked the ground"); if (was > now1) float(mv.p, "−1 flow", "#ffb27a"); bump("cFlow") } }
+  const ro = claimRunoff(placed); if (ro) notes.push(`Mountain runoff: flow +${ro} gal per water cycle${MELT ? `, and ${melted} gal of snowmelt${melted < 3 * ro ? ` (${3 * ro - melted} ran off: storage is full)` : ""}` : ""}`);
   if (b.pool) { b.pool = false; const got = addWater(2); notes.push(`The stream took in the rain pool: +${got} gal`) }
   if (gr) { notes.push(`Sand grew ${gr} grass: you can store ${S.cap} gal`); bump("cWater") }
   if (bl) notes.push(`${bl} tile${bl > 1 ? "s" : ""} bloomed`);
@@ -305,8 +306,8 @@ function build(mv) {
   if (!moves().size) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
   if (S.income === 0 && !affordable()) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
   const sh = storageHint();
-  if (sh) notes.push(sh); else if (!affordable() && !canPlant()) notes.push(`Out of water. End the turn for +${S.income} gal`);
-  say(notes.length ? notes.join(". ") + "." : "Keep building, or end the turn.");
+  if (sh) notes.push(sh); else if (!affordable() && !canPlant()) notes.push(`Out of water. Tap Next Water Cycle for +${S.income} gal`);
+  say(notes.length ? notes.join(". ") + "." : "Keep building, or tap Next Water Cycle.");
 }
 // What the next end of turn brings: flow, weather, and any cloud raining back.
 function forecast(turn = S.turn + 1) {
@@ -342,7 +343,7 @@ function beavers() { let n = 0;
   S.tiles.forEach((r, y) => r.forEach((c, x) => { const p = [x, y]; if (c.beaver !== 1 || !c.river || !nbrs(p).some(q => at(q).g >= 2 && !at(q).river)) return;
     c.beaver = 2; flowAdd(c.rid, 1);
     anim.set("g:" + p, now() + 200); float(p, "+1 flow", "#62e0c8"); n++ }));
-  if (n) bump("cFlow"); return n ? `Beavers dammed a pond on your river: flow +${n} gal a turn` : "" }
+  if (n) bump("cFlow"); return n ? `Beavers dammed a pond on your river: flow +${n} gal per water cycle` : "" }
 // Deer: every 3rd turn they graze one grass tile with no trees next to it.
 function deerTurn() { if (S.turn % 3) return "";
   const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(q => { const c = at(q); return c.g === 1 && !c.river && !nbrs(q).some(n => at(n).g >= 2) })
@@ -399,16 +400,16 @@ function rainTarget() { let best = null, bs = -1;
 function pick(p) {
   const c = at(p); if (c.t !== "source" || (M.mainSource && p + "" !== M.mainSource + "")) { say(M.pickHint ?? M.startHint, true); return }
   snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield; S.phase = "play";
-  anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal a turn`, "#bfe4ff");
+  anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal per water cycle`, "#bfe4ff");
   const ro = claimRunoff([p]);
-  say(`Your source has a flow of ${S.income} gal a turn${ro ? " (with mountain runoff)" : ""}. Tap a glowing tile to build.`);
+  say(`Your source's flow is ${S.income} gal per water cycle${ro ? " (with mountain runoff)" : ""}. Tap your stream's end, then where it should go.`);
   zoomTo(lay.zAuto);
 }
 const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0); closeCard(); S = JSON.parse(history.pop()); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { closeCard(); S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); zoomTo(1); showGoal() }
+function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); zoomTo(1); showGoal() }
 
 // ---------- UI
 let quiet = false; // set by the test solver: skip the screen
@@ -417,10 +418,10 @@ function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remov
 function sync() {
   const rv = $("rivers"), multi = TRIB && S.rivers && S.rivers.length > 1; rv.hidden = !multi;
   if (multi) rv.innerHTML = S.rivers.map((r, i) => { const on = i === S.active;
-    return `<button data-r="${i}" class="${on ? "on" : ""}" ${r.joined ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : onMain(i) ? `+${S.income} a turn` : `+${flowOf(i)} once joined`}</small></button>` }).join("");
-  tx("hWater", S.water); tx("hCap", STORE ? `of ${S.cap} gal` : "gal"); tx("cFlow", `+${S.income} a turn`); tx("hTurn", S.turn);
+    return `<button data-r="${i}" class="${on ? "on" : ""}" ${r.joined ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : onMain(i) ? `+${S.income} flow` : `+${flowOf(i)} flow once joined`}</small></button>` }).join("");
+  tx("hWater", S.water); tx("hCap", STORE ? `of ${S.cap} gal` : "gal"); tx("hFlow", S.income); $("cFlow").setAttribute("aria-label", `Flow: +${S.income} gal of water per water cycle`); tx("hTurn", S.turn);
   if (STORE) { const cells = $("cells"); let h = ""; for (let i = 0; i < S.cap; i++) h += `<i class="${i < S.water ? "f" : ""}${i >= prevW && i < S.water ? " new" : ""}" style="--d:${Math.max(0, i - prevW) * 70}ms"></i>`; cells.innerHTML = h; prevW = S.water }
-  $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons, flow +${S.income} a turn`);
+  $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons`);
   $("cTurn").classList.toggle("over", S.turn > TURN_GOAL);
   goals();
   const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
@@ -456,7 +457,7 @@ function sync() {
 }
 
 // ---------- tile card: tap a tile to see what it does and choose an action
-let sel = null, cardActs = [];
+let sel = null, cardActs = [], hsel = false; // hsel: the stream's end is selected (LOU-258)
 function tileName(c) {
   if (c.river && c.beaver) return c.beaver === 2 ? "Beaver pond" : "Beaver colony";
   if (c.river) return {lake:"Full lake", ocean:"The sea", source:"Source"}[c.t] || (c.rid >= 0 && c.rid !== S.active ? riverName(c.rid) : "Your stream");
@@ -482,7 +483,7 @@ function tileText(p) {
   if (c.g) return `Stores ${c.g} extra gal. ${NEW && c.g > 1 ? "3 trees in a row along the river make a grove: +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= 2) ? " Deer may graze it: no trees next to it." : ""}${c.g >= 2 && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
   if (c.beaver === 1) return "Beavers live here. Run your stream through the colony and grow trees next to it, and they dam a pond: +1 flow. Running beside it isn't enough.";
   if (c.beaver === 2) return "The beavers' pond. It adds +1 flow to your river.";
-  if (c.fire) return wet(p) ? "Burning. It burns out at the end of the turn. Water is next to it, so the fire stops here." : "Burning. It burns out at the end of the turn and spreads to the trees next to it, because no water is next to it.";
+  if (c.fire) return wet(p) ? "Burning. It burns out at the next water cycle. Water is next to it, so the fire stops here." : "Burning. It burns out at the next water cycle and spreads to the trees next to it, because no water is next to it.";
   if (c.ash && !c.g) return "Burnt ground. You can plant here again.";
   if (salty(p) && c.t === "bare" && !c.g) return "Salty ground by the sea. Nothing grows here.";
   if (c.pool) return "A puddle of rain. Bring your stream next to it and collect +2 gal, once.";
@@ -518,13 +519,13 @@ function actions(p) {
       warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)}) }
   if (c.pool && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.unshift({k:"collect", name:"Collect the rain pool", cost:0, sub:`+2 gal at once${STORE && S.water + 2 > S.cap ? ` (only ${Math.max(0, S.cap - S.water)} fit)` : ""}`, warn:"", run:() => collect(p)});
   if (MOSS && c.t === "rock" && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.push({k:"moss", name:"Grow moss", cost:1, sub:"Breaks the rock into soil you can plant", warn:"", run:() => moss(p)});
-  if (TRIB && c.t === "source" && !c.river) out.push({k:"trib", name:"Start a tributary", cost:0, sub:`Build it with your main river's water. Its +${c.yield} gal a turn joins your flow once it reaches the main river`, warn:"", run:() => startTributary(p)});
+  if (TRIB && c.t === "source" && !c.river) out.push({k:"trib", name:"Start a tributary", cost:0, sub:`Build it with your main river's water. Its +${c.yield} gal per water cycle joins your flow once it reaches the main river`, warn:"", run:() => startTributary(p)});
   return out;
 }
 const canDo = a => S.water >= a.cost;
-function shortBy(a) { return STORE && a.cost > S.cap ? `You can only store ${S.cap} gal. Plant to store more` : `You have ${S.water} gal. End the turn for +${S.income}` }
+function shortBy(a) { return STORE && a.cost > S.cap ? `You can only store ${S.cap} gal. Plant to store more` : `You have ${S.water} gal. Next Water Cycle brings +${S.income}` }
 function renderCard() {
-  const c = at(sel), el = $("tcard"); cardActs = actions(sel);
+  const c = at(sel), el = $("tcard"); cardActs = actions(sel).filter(a => a.k !== "stream"); // the stream moves only from its selected end
   el.innerHTML = `<div class="thead"><i class="swatch" style="background:${topColor(c)}"></i><div class="tname"><b>${tileName(c)}</b>${cardActs.length ? "" : `<small>${tileText(sel)}</small>`}</div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>` +
     cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.cost ? a.cost + " gal" : "Free"}</span></button>`).join("");
   el.hidden = false; placeCard();
@@ -538,15 +539,26 @@ function placeCard() {
 }
 function closeCard() { if (!sel) return; sel = null; cardActs = []; $("tcard").hidden = true; draw() }
 function runAct(a) { closeCard(); a.run() }
-// A quick tap on a tile the stream can reach extends it straight away; press and hold opens the card (Dan, Nov 10).
+// Moving the stream (LOU-258, replaces LOU-255's quick tap): tap the stream's end to select it, then tap a glowing tile.
+// The end stays selected so you can keep extending. Tap the end again, or empty space, to let go. With nothing selected,
+// tapping land opens its card, and tapping next to the river never moves the stream.
+function headTiles(i) { const h = i === S.active ? S.head : S.rivers[i] && S.rivers[i].head; if (!h) return []; const c = at(h); return c.t === "lake" && c.lake >= 0 ? S.lakes[c.lake].tiles : [h] }
+function liveRivers() { return S.phase !== "play" ? [] : TRIB ? S.rivers.map((_, i) => i).filter(i => !S.rivers[i].joined) : [S.active] }
+function headRiver(p) { for (const i of liveRivers()) if (headTiles(i).some(q => same(q, p))) return i; return -1 }
 function tapTile(p, hold = false) {
-  const c = at(p), m = moves().get(p + "");
-  if (hold) { ring(p); sel = p; renderCard(); draw(); return }
-  if (TRIB && c.river && c.rid >= 0 && root(c.rid) !== root(S.active) && !m) { const i = liveOf(root(c.rid)); if (i >= 0) { closeCard(); activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`); return } }
-  if (sel && sel + "" === p + "") { const a = cardActs.find(canDo); if (a) runAct(a); else closeCard(); return }
-  const st = m && actions(p).find(a => a.k === "stream"); if (st && canDo(st)) { closeCard(); runAct(st); return }
+  if (hold) { hsel = false; ring(p); sel = p; renderCard(); draw(); return }
+  const hr = headRiver(p);
+  if (hr >= 0) { closeCard(); if (hsel && hr === S.active) { hsel = false; draw(); return }
+    if (hr !== S.active) activate(hr);
+    hsel = true; ring(p); const who = TRIB && S.rivers.length > 1 ? `the ${riverName(hr).toLowerCase()}` : "your stream";
+    const mvs = [...moves().values()], can = mvs.some(m => S.water >= m.cost);
+    say(!mvs.length ? `${who[0].toUpperCase() + who.slice(1)} has nowhere to go from here.` : can ? `Now tap a glowing tile to move ${who} there.` : `Out of water: the grey tiles cost more than your ${S.water} gal. Tap Next Water Cycle for +${S.income} gal.`, !can); return }
+  if (hsel) { const m = moves().get(p + "");
+    if (m) { const st = actions(p).find(a => a.k === "stream"); if (st && canDo(st)) { runAct(st); return } if (st) { ring(p); say(shortBy(st), true); return } }
+    hsel = false }
+  if (sel && same(sel, p)) { const a = cardActs.find(canDo); if (a) runAct(a); else closeCard(); return }
   ring(p);
-  const acts = actions(p); // one clear choice with nothing to warn about: just do it
+  const acts = actions(p).filter(a => a.k !== "stream"); // one clear choice with nothing to warn about: just do it
   if (acts.length === 1 && canDo(acts[0]) && !acts[0].warn) { closeCard(); acts[0].run(); return }
   sel = p; renderCard(); draw();
 }
@@ -585,11 +597,12 @@ function goals() {
 
 // ---------- persistence: keep the current run across app close/reopen
 const SAVE_KEY = "flowtile.run.v3." + M.id; // v3: Nov 10 terrain rules (tributaries share the main river's water)
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({S, history})) } catch (_) {} }
+function save() { try { if (S.phase === "won" || S.phase === "stuck") localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, JSON.stringify({S, history, at:Date.now()})) } catch (_) {} }
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
     if (!d || !d.S || !Array.isArray(d.S.tiles) || d.S.tiles.length !== H || d.S.tiles[0].length !== W || !Array.isArray(d.history)) return false;
+    if (d.S.phase === "won" || d.S.phase === "stuck" || (d.at && Date.now() - d.at > 12 * 3600e3)) { localStorage.removeItem(SAVE_KEY); return false } // finished or stale: start fresh (LOU-258)
     S = d.S; history = d.history; S.rivers ||= []; S.active ||= 0; return true;
   } catch (_) { return false }
 }
@@ -687,7 +700,7 @@ function topColor(c) {
   if (c.river) return COL[c.t];
   if (c.g >= 2) return COL.trees; if (c.g) return COL.grass;
   if (c.rs) return COL.shadow;
-  if (c.bloom) return COL.bloom; return COL[c.t] }
+  if (c.bloom && c.t !== "meadow") return COL.bloom; return COL[c.t] }
 function pine(x, y, s, dark) {
   ell(x + 3 * s, y + 1, 10 * s, 3.5 * s, "rgba(0,0,0,.2)");
   poly([[x - 1.8 * s, y - 5 * s], [x + 1.8 * s, y - 5 * s], [x + 1.8 * s, y + 1], [x - 1.8 * s, y + 1]], "#6b4a2b");
@@ -707,6 +720,11 @@ function flowers(cx, cy, h) {
   [[-16, 0, "#ffe066"], [-5, -9, "#ffffff"], [10, -4, "#c9a2ff"], [3, 8, "#ffe066"], [17, 4, "#ffffff"], [-8, 7, "#ff9fb8"]].forEach(([a, b, f], i) => {
     if ((h + i) % 6 === 5) return; const x = cx + a, y = cy + b;
     line([[x, y + 3], [x, y]], "#4e9a3c", 1.5); ell(x, y - 1, 2.6, 2.2, f); ell(x, y - 1, 1, 1, "#f2a93b") });
+}
+// Meadow (LOU-258): soft pale patches and wildflowers on short stems, no grass tufts. A bloomed meadow is fuller.
+function meadow(cx, cy, h, full) {
+  [[-11, 1, 9, 4], [9, -5, 8, 3.6], [2, 8, 7, 3]].forEach(([a, b, rx, ry], i) => { if ((h + i) % 4 !== 3) ell(cx + a, cy + b, rx, ry, "#c3e89e") });
+  flowers(cx, cy, h); if (full) flowers(cx + 4, cy - 3, h + 3);
 }
 function stones(cx, cy) {
   [[-13, 3, 1], [9, -6, .8], [-1, 10, .6]].forEach(([a, b, s]) => { const x = cx + a, y = cy + b;
@@ -824,11 +842,11 @@ function draw() {
     if (c.river && c.t === "lake") { shore(p, lv); if (h % 3 === 0 && !filling) { ell(o.x - 6, o.y + 3, 8, 4, "#4caf50"); ell(o.x + 12, o.y - 5, 4, 2, "#7fd36b") } }
     else if (c.river && c.t !== "ocean") { channel(p, lv, base, t); if (c.t === "source") source(o, t) }
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .45; poly(d, "#e6f6ff"); ctx.globalAlpha = 1 } }
-    const m = mv.get(p + ""), pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
+    const m = hsel && S.phase === "play" ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
     if (m || pk) {
       const ok = pk || S.water >= m.cost, pulse = reduce ? 1 : .6 + .4 * Math.sin(t * 4);
-      poly(d, ok ? `rgba(255,255,255,${.12 + .1 * pulse})` : "rgba(255,159,90,.12)");
-      ctx.strokeStyle = ok ? `rgba(255,255,255,${pulse})` : "rgba(255,159,90,.9)"; ctx.lineWidth = 3.5; ctx.stroke();
+      poly(d, ok ? `rgba(255,255,255,${.12 + .1 * pulse})` : "rgba(150,160,168,.28)");
+      ctx.strokeStyle = ok ? `rgba(255,255,255,${pulse})` : "rgba(205,212,217,.85)"; ctx.lineWidth = 3.5; ctx.stroke();
       badges.push({o, pk, ok, text: pk ? `+${c.yield}` : m.cost, sand: !!m && c.t === "sand"});
     } else if (plantable(p)) {
       ctx.save(); ctx.setLineDash([5, 6]); ctx.strokeStyle = S.water >= PLANT_COST ? "rgba(214,255,170,.6)" : "rgba(255,255,255,.2)"; ctx.lineWidth = 2; poly(d, "rgba(0,0,0,0)"); ctx.stroke(); ctx.restore();
@@ -847,6 +865,11 @@ function draw() {
     const o = iso(d.p[0], d.p[1], drawLevel(d.p)); ctx.globalAlpha = Math.min(1, Math.sin(k * Math.PI) * 2); deerSprite(o.x + 8 - k * 20, o.y - 4, Math.sin(t * 6) * 2); ctx.globalAlpha = 1 }
   for (let i = bolts.length - 1; i >= 0; i--) { const b = bolts[i], k = (T - b.t0) / 700; if (k >= 1 || reduce) { bolts.splice(i, 1); continue }
     const o = iso(b.p[0], b.p[1], drawLevel(b.p)); ctx.globalAlpha = 1 - k; line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#fff6b0", 5); line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#ffffff", 2); ctx.globalAlpha = 1 }
+  // the end of each stream: a soft pulse says "tap me"; selected, it gets a bold white ring with a teal edge
+  for (const i of liveRivers()) for (const q of headTiles(i)) { const d = diamond(q, drawLevel(q)), on = hsel && i === S.active, k = reduce ? 1 : .5 + .5 * Math.sin(t * (on ? 6 : 3));
+    if (on) { const o = iso(q[0], q[1], drawLevel(q)), s = 1.04 + .05 * k, dd = d.map(([x, y]) => [o.x + (x - o.x) * s, o.y + (y - o.y) * s]);
+      poly(dd, "rgba(98,224,200,.18)"); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6; ctx.stroke(); poly(dd, "rgba(0,0,0,0)"); ctx.strokeStyle = "#62e0c8"; ctx.lineWidth = 2.5; ctx.stroke() }
+    else { ctx.save(); ctx.setLineDash([7, 6]); ctx.lineDashOffset = reduce ? 0 : -t * 10; poly(d, "rgba(0,0,0,0)"); ctx.strokeStyle = `rgba(255,255,255,${.45 + .4 * k})`; ctx.lineWidth = 3; ctx.stroke(); ctx.restore() } }
   if (sel) { const d = diamond(sel); poly(d, "rgba(255,209,102,.22)"); ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 4.5; ctx.stroke() }
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
     const d = diamond(r.p), o = iso(r.p[0], r.p[1], drawLevel(r.p)), s = 1 + k * .25;
@@ -890,11 +913,11 @@ function badge(b, t) {
   if (b.plant) { const x = o.x, y = o.y + 1; ell(x, y + 2, 12, 12, "rgba(0,0,0,.25)"); ell(x, y, 12, 12, b.ok ? "#3f9a3f" : "rgba(8,24,38,.55)");
     ctx.fillStyle = b.ok ? "#d6ffaa" : "#9bb6c6"; ctx.beginPath(); ctx.moveTo(x - 5, y + 5); ctx.quadraticCurveTo(x - 6, y - 6, x + 6, y - 6); ctx.quadraticCurveTo(x + 6, y + 5, x - 5, y + 5); ctx.fill(); return }
   const r = b.pk ? 19 : 15, bob = reduce ? 0 : Math.sin(t * 3 + o.x * .05) * 1.5, y = o.y - 4 + bob;
-  ell(o.x, y + 3, r, r, "rgba(0,0,0,.3)"); ell(o.x, y, r, r, b.pk ? "#ffffff" : b.ok ? "#1f6fb0" : "#7a4a2a");
+  ell(o.x, y + 3, r, r, "rgba(0,0,0,.3)"); ell(o.x, y, r, r, b.pk ? "#ffffff" : b.ok ? "#1f6fb0" : "#7d8a93");
   ctx.lineWidth = 2.5; ctx.strokeStyle = "#ffffff"; ctx.stroke();
   ctx.fillStyle = b.pk ? "#13222e" : "#fff"; ctx.font = `700 ${b.pk ? 16 : 18}px Fredoka, Nunito, sans-serif`; ctx.fillText(b.text, o.x, y + 1);
-  if (b.sand) { ctx.fillStyle = "#ff9f5a"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x - 27, y + 15, 54, 20, 10) : ctx.rect(o.x - 27, y + 15, 54, 20); ctx.fill();
-    ctx.fillStyle = "#2a1608"; ctx.font = "700 12px Fredoka, Nunito, sans-serif"; ctx.fillText("−1 flow", o.x, y + 26) }
+  if (b.sand) { ctx.fillStyle = "#62e0c8"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x - 27, y + 15, 54, 20, 10) : ctx.rect(o.x - 27, y + 15, 54, 20); ctx.fill();
+    ctx.fillStyle = "#0b3a32"; ctx.font = "700 12px Fredoka, Nunito, sans-serif"; ctx.fillText("−1 flow", o.x, y + 26) }
 }
 function source(o, t) { // a fountain at the source
   const b = reduce ? 0 : Math.sin(t * 5) * 2;
@@ -919,7 +942,8 @@ function deco(p, c, o, t, h) {
       ctx.beginPath(); ctx.moveTo(fx0 - 3, fy + 7); ctx.quadraticCurveTo(fx0 - 3, fy - 3 * fl, fx0, fy - 10 * fl); ctx.quadraticCurveTo(fx0 + 3, fy - 3 * fl, fx0 + 3, fy + 7); ctx.fillStyle = "#ffe066"; ctx.fill() }
     ctx.globalAlpha = .35; ell(cx + 4, cy - 40 - (t * 20 % 20), 10, 7, "#555"); ctx.globalAlpha = 1; return }
   if (c.g >= 2) { tufts(cx, cy, h + 2, sway); pine(cx - 15, cy + 1, .75, c.wild); pine(cx + 13, cy - 4, .85, c.wild); pine(cx - 1, cy + 9, 1, c.wild); if (c.wild) pine(cx + 2, cy - 12, .7, true); return }
-  if (c.g === 1 || (c.bloom && c.t !== "spring")) { tufts(cx, cy, h, sway); if (c.t === "meadow") flowers(cx + 2, cy + 2, h + 3); return }
+  if (c.t === "meadow" && !c.g) { meadow(cx, cy, h, c.bloom); return }
+  if (c.g === 1 || (c.bloom && c.t !== "spring")) { tufts(cx, cy, h, sway); return }
   if (c.ro) { // runoff: a small pool fed by the mountain
     ell(cx, cy + 1, 15, 7.5, c.ro === 2 ? "#2f86c9" : "#3e7fb3"); ell(cx - 2, cy, 9, 4.5, "#7ccbf7");
     if (c.ro === 1) { const a = reduce ? 1 : .6 + .4 * Math.sin(t * 3 + h); ctx.globalAlpha = a; ell(cx + 9, cy - 8, 2, 2, "#ffffff"); ell(cx - 8, cy - 4, 1.5, 1.5, "#ffffff"); ctx.globalAlpha = 1 } }
@@ -934,7 +958,6 @@ function deco(p, c, o, t, h) {
   if (M.salt && salty(p) && c.t === "bare" && !c.g) { for (let i = 0; i < 6; i++) ell(cx - 16 + (hsh(i, h) % 32), cy - 7 + (hsh(h, i) % 15), 2.2, 1.2, "#f4f1e8") }
   if (c.t === "bare" && !c.ro) { line([[cx - 15, cy - 2], [cx - 6, cy + 2], [cx + 2, cy - 1]], shade(topColor(c), .25), 1.5); ell(cx + 12, cy + 6, 3, 2, shade(topColor(c), .3)); ell(cx - 6, cy - 10, 2.4, 1.6, mix(topColor(c), .25));
     if (c.rs) { line([[cx + 4, cy - 8], [cx + 10, cy - 3], [cx + 18, cy - 5]], "rgba(70,45,20,.45)", 1.5); line([[cx - 4, cy + 6], [cx + 2, cy + 10]], "rgba(70,45,20,.45)", 1.5) } }
-  if (c.t === "meadow") flowers(cx, cy, h);
   if (c.t === "sand") { const hi = mix(COL.sand, .5); ctx.beginPath(); ctx.moveTo(cx - 20, cy + 2); ctx.quadraticCurveTo(cx - 10, cy - 4, cx, cy + 2); ctx.moveTo(cx - 4, cy + 10); ctx.quadraticCurveTo(cx + 6, cy + 4, cx + 16, cy + 10);
     ctx.strokeStyle = hi; ctx.lineWidth = 2; ctx.stroke(); ell(cx + 12, cy - 8, 2.6, 1.8, "#f39b6d") }
   if (c.t === "rock") stones(cx, cy);
@@ -982,7 +1005,7 @@ $("fitBtn").onclick = () => { if (view.z > 1.02) view.z = 1; else { view.z = Mat
 cv.addEventListener("pointerup", e => {
   unhold(); const wasDrag = dragged; lift(e); if (held) { held = false; return } if (wasDrag) { if (!ptrs.size) dragged = false; return }
   const p = tileAt(e.clientX, e.clientY);
-  if (!p) { closeCard(); return }
+  if (!p) { closeCard(); if (hsel) { hsel = false; draw() } return }
   if (S.phase === "pick") return pick(p);
   if (S.phase !== "play") return;
   tapTile(p);

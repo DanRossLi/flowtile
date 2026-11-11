@@ -48,7 +48,13 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - Water over storage **spills** at the end of the turn.
 - **Clicking tiles:** tiles are clickable. Tap one to see what it does, then choose. A tile with only one option builds on the first tap.
 - **Goal card** (Nov 10): every map starts with a prompt saying what the player is supposed to learn and accomplish (its lesson and star goals).
-- **Quick tap and hold** (Nov 10): a quick tap on a tile the stream can reach extends the stream. Press and hold opens the menu (the tile card).
+- ~~**Quick tap and hold** (Nov 10): a quick tap on a tile the stream can reach extends the stream. Press and hold opens the menu (the tile card).~~ *Superseded by LOU-258 (playtest, Nov 10): see "Moving the stream".*
+- **Moving the stream** (LOU-258): tap the stream's **end** to select it, then tap a glowing tile to move it there; the end stays selected. Tap the end again or empty space to let go. Tapping land never moves the stream; it opens the tile card. Tapping a tributary's end selects that river.
+- **Water vs flow** (LOU-258): water is blue, flow is teal (`#62e0c8`), everywhere. Green means grass, never flow. Flow has its own chip, "per water cycle".
+- **Next Water Cycle** (LOU-258): the End turn button is now **Next Water Cycle**. No "End turn" text anywhere. The counter stays "Turn".
+- **Can't afford = grey** (LOU-258): unaffordable buttons and tiles are grey, not orange or brown.
+- **Fresh start** (LOU-258): a finished run (won, scored or stuck) is never restored; an in-progress run older than 12 hours starts fresh too.
+- **Meadow** (LOU-258): its own soft light-green tile with pale patches and wildflowers, never grass tufts.
 - **Banks** on rivers and lakes are only for looks.
 - **Tributaries:**
   - You start one by tapping a second source.
