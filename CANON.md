@@ -92,6 +92,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - ~~**Opening view:** the game opens on the whole island.~~ *Superseded Nov 11 by "Play zoom" (LOU-262).*
 - **Play zoom** (Dan, Nov 11, LOU-262): the game opens on the whole island (to pick a source), then plays zoomed in like Polytopia: a tile is about 118px wide, so 3–4 fit across a phone, and the camera follows the stream's end. The whole-island view stays available as an overview on the corner zoom button, which toggles back to play zoom. The message is a short toast that fades.
 - **Full screen on desktop** (Dan, Nov 11, LOU-270): on a desktop window the board fills the screen; the stats and the button bar stay centred at phone width.
+- **Landscape view** (Dan, Nov 11, LOU-272: "Yes, whole island"): Landscape mode stays on the whole-island view while you build and while it flows, so the river's whole run is visible. The corner zoom button still zooms in. River mode and the tutorial keep Play zoom.
 - **Big map:** there's a big test map at `/big/`, 18×18.
 - **No water border** around the map (Nov 10). Don't put the ring of sea tiles back. The goal sea tiles (`~`) stay.
 

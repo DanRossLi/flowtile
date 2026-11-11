@@ -521,7 +521,7 @@ function start(p, placed) { const c = at(p); closeCard();
   if (!placed) snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield; S.phase = "play";
   anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal per water cycle`, "#bfe4ff");
   const ro = claimRunoff([p]);
-  if (LAND) { S.water += M.budget || 0; preview = landPreview(); say(`The river waits here. Reshape the land with your water, then tap Flow: it runs ${S.income} tiles each water cycle to the cheapest ground. ${previewNote()}`); zoomTo(lay.zAuto); return }
+  if (LAND) { S.water += M.budget || 0; preview = landPreview(); say(`The river waits here. Reshape the land with your water, then tap Flow: it runs ${S.income} tiles each water cycle to the cheapest ground. ${previewNote()}`); zoomTo(1); return } // Landscape stays on the whole island (Dan, LOU-272)
   say(`${placed ? "Source placed. " : ""}Your source's flow is ${S.income} gal per water cycle${ro ? " (with mountain runoff)" : ""}. Tap your stream's end, then where it should go.`);
   zoomTo(lay.zAuto);
 }
@@ -868,7 +868,7 @@ function focusPoint() {
   const o = iso(p[0], p[1], +ELEV[p[1]][p[0]]); return {x:o.x, y:o.y};
 }
 function follow(force) {
-  if (view.z === null || !lay.w) return;
+  if (view.z === null || !lay.w || (LAND && view.z <= 1.02)) return; // Landscape's whole-island view stays put
   const f = focusPoint(), s = lay.fit * view.z, hw = lay.w / s / 2, hh = lay.availH / s / 2;
   if (force || Math.abs(f.x - view.cx) > hw * .55 || Math.abs(f.y - view.cy) > hh * .55) {
     tgt = {x:f.x, y:f.y, n:0}; if (reduce) { view.cx = f.x; view.cy = f.y; tgt = null; applyView() } }
