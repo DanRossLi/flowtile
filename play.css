@@ -102,6 +102,8 @@ dialog b.wtr{color:#1d6aa6}dialog b.flw{color:#178a76}
 .msg{background:var(--paper);color:var(--paper-ink);border-radius:16px;padding:9px 13px;
   font-weight:800;font-size:14px;line-height:1.35;box-shadow:0 4px 0 #b9b19c,0 8px 18px rgba(0,0,0,.25);
   min-height:calc(1.35em + 18px);box-sizing:border-box}
+.msg{transition:opacity .5s,transform .5s}
+.msg.fade{opacity:0;transform:translateY(6px)}
 .msg.warn{background:#ffe2c6;color:#6b2c00;box-shadow:0 4px 0 #d79a66,0 8px 18px rgba(0,0,0,.25)}
 .msg.pop{animation:msgpop .32s cubic-bezier(.3,1.5,.5,1)}
 @keyframes msgpop{from{transform:translateY(8px) scale(.97);opacity:.4}}

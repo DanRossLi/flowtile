@@ -78,8 +78,9 @@ These are the instructions Dan has given for this project, kept in one place. Th
 ## Look and feel
 
 - **Style:** Flow Tile's own look, styled like **Polytopia**, chunky and animated. Rivers animate as they're added, and the whole game has motion. Use no outside design system.
-- **One screen:** everything fits on one screen, inside the game window.
-- **Opening view:** the game opens on the whole island.
+- ~~**One screen:** everything fits on one screen, inside the game window.~~ *Superseded Nov 11 by "Play zoom" (LOU-262).*
+- ~~**Opening view:** the game opens on the whole island.~~ *Superseded Nov 11 by "Play zoom" (LOU-262).*
+- **Play zoom** (Dan, Nov 11, LOU-262): the game opens on the whole island (to pick a source), then plays zoomed in like Polytopia: a tile is about 118px wide, so 3–4 fit across a phone, and the camera follows the stream's end. The whole-island view stays available as an overview on the corner zoom button, which toggles back to play zoom. The message is a short toast that fades.
 - **Big map:** there's a big test map at `/big/`, 18×18.
 - **No water border** around the map (Nov 10). Don't put the ring of sea tiles back. The goal sea tiles (`~`) stay.
 
@@ -89,3 +90,8 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Conflicts:** when Linear's spec decisions (Nov 9) conflict with what's built, **Linear wins**. Those decisions sit in Terrain Features, so apply them once Dan's review is done. Examples: trees no longer defend (sediment does), meadows next to a grove give +1 flow, sand is free to enter, lakes cost 2 gal a tile, and Map 2 · Slope is retired.
 - **Rivals:** skip them for now. No rival rivers, capture or stealing, and leave out the rival parts of any Idea.
 - **Tracking:** one new Initial Prototype issue per piece of work, linking the Idea it builds.
+
+## Nov 11 answers
+
+- **Landscape mode** (LOU-266): both a puzzle mode and a map builder (sandbox + puzzle levels, and a finished landscape copies as a map code for River mode). Terrain is paid for with **water**. The map **shows the river's path** for the next water cycle.
+- **Place your source anywhere** (LOU-263): use the draft defaults: bare ground, grass, meadow or sand only; at least 4 tiles from the sea; a placed source gives 3 flow; only on Big, Daily, Perfection and Custom; tutorial steps keep their fixed sources.

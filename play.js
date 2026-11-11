@@ -39,6 +39,7 @@ const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add 
 // A fixed roll per map, turn and tile, so undo and replays give the same result.
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
+const PLAY_TILE = 118; // LOU-262: a tile's width in px at play zoom, so 3–4 fit across a 390px phone (and stand ~59px tall)
 const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c"};
 const BANKS = true; // river drawn as a channel with banks; lakes get a shore
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -433,7 +434,7 @@ function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.
 let quiet = false; // set by the test solver: skip the screen
 function say(t, warn = false) { S.msg = t; S.warn = warn; if (!quiet) sync() }
 // A big "Turn N" banner sweeps across the board at each water cycle (LOU-260)
-let bannerT = 0;
+let bannerT = 0, toastT = 0;
 function showBanner(t, sub) { if (quiet) return; const b = $("banner"); tx("bTurn", t); tx("bSub", sub); b.hidden = false; b.classList.remove("go"); void b.offsetWidth; b.classList.add("go");
   clearTimeout(bannerT); bannerT = setTimeout(() => { b.hidden = true; b.classList.remove("go") }, reduce ? 1200 : 1700) }
 function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump") }
@@ -451,7 +452,10 @@ function sync() {
     gain.textContent = sp ? `+${g} · ${sp} ${CYCLE ? "to cloud" : "spill"}` : `+${f.gain} gal`; gain.classList.toggle("spill", sp > 0) }
   if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); tx("lSky", nx.turn > S.turn ? `Sky · T${nx.turn}` : "Sky"); $("cSky").className = "chip mini sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
   if ((S.head || "") + "|" + S.active !== lastHead) { lastHead = (S.head || "") + "|" + S.active; follow() }
-  const me = $("msg"); if (me.textContent !== (S.msg || "")) { me.textContent = S.msg || ""; if (!reduce) { me.classList.remove("pop"); void me.offsetWidth; me.classList.add("pop") } }
+  // the message is a short toast that fades (LOU-262); warnings stay a little longer
+  const me = $("msg"); if (me.textContent !== (S.msg || "")) { me.textContent = S.msg || ""; me.classList.remove("fade"); clearTimeout(toastT);
+    if (S.msg) toastT = setTimeout(() => me.classList.add("fade"), S.warn ? 6500 : 4200); else me.classList.add("fade");
+    if (!reduce) { me.classList.remove("pop"); void me.offsetWidth; me.classList.add("pop") } }
   me.classList.toggle("warn", !!S.warn);
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length || (hard() && (S.undos || 0) >= UNDOS);
   $("end").classList.toggle("ready", S.phase === "play" && !affordable() && !canPlant());
@@ -666,14 +670,15 @@ function bounds() { let a = 1e9, b = 1e9, c = -1e9, d = -1e9;
   return {x:a - 8, y:b, w:c - a + 16, h:d - b + 8} }
 const B = bounds();
 // Fit the map into the part of the game window not covered by the top bar and the message.
-// Before a source is picked the whole island shows; after, zoom so tiles are at least 72px wide and follow the stream.
+// Before a source is picked the whole island shows (the overview); after, play zoomed in like Polytopia (LOU-262):
+// a tile is PLAY_TILE px wide and the camera follows the stream's end. The message is a toast over the map, so it takes no room.
 function resize() {
   const box = $("board"), w = box.clientWidth, h = box.clientHeight, dpr = Math.min(devicePixelRatio || 1, 3);
   if (!w || !h) return;
-  const topH = $("top").offsetHeight, botH = $("bottom").hidden ? 0 : $("bottom").offsetHeight;
+  const topH = $("top").offsetHeight, botH = 0;
   const key = [w, h, topH, botH, dpr].join(); if (key === lastSize) return; lastSize = key;
   const availH = Math.max(40, h - topH - botH), fit = Math.min(w / B.w, availH / B.h);
-  Object.assign(lay, {w, h, topH, availH, dpr, fit, zAuto:Math.min(4, Math.max(1, 72 / (TW * fit), Math.min(2, .85 * availH / B.h / fit)))});
+  Object.assign(lay, {w, h, topH, availH, dpr, fit, zAuto:Math.max(1, PLAY_TILE / (TW * fit))});
   if (view.z === null) { view.z = S.phase === "pick" ? 1 : lay.zAuto; const f = S.phase === "pick" ? {x:B.x + B.w / 2, y:B.y + B.h / 2} : focusPoint(); view.cx = f.x; view.cy = f.y }
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   $("fitBtn").style.top = topH + 6 + "px";
@@ -685,7 +690,7 @@ function clampView() {
   view.cy = vh >= B.h ? B.y + B.h / 2 : Math.min(B.y + B.h - vh / 2, Math.max(B.y + vh / 2, view.cy));
 }
 function applyView() {
-  view.z = Math.min(5, Math.max(1, view.z)); clampView();
+  view.z = Math.min(Math.max(5, lay.zAuto * 1.6), Math.max(1, view.z)); clampView();
   scale = lay.fit * view.z * lay.dpr;
   off = {x:lay.w / 2 * lay.dpr - view.cx * scale, y:(lay.topH + lay.availH / 2) * lay.dpr - view.cy * scale};
   const zoomed = view.z > 1.02, fb = $("fitBtn");
@@ -1032,7 +1037,7 @@ const lift = e => { ptrs.delete(e.pointerId); if (!ptrs.size) drag = null };
 cv.addEventListener("pointercancel", e => { unhold(); held = false; lift(e); dragged = false });
 cv.addEventListener("contextmenu", e => e.preventDefault()); // a long press opens the tile card, not the browser menu
 cv.addEventListener("wheel", e => { e.preventDefault(); view.z *= Math.exp(-e.deltaY * .0015); tgt = null; applyView() }, {passive:false});
-$("fitBtn").onclick = () => { if (view.z > 1.02) view.z = 1; else { view.z = Math.max(lay.zAuto, 1.8); follow(true) } applyView() };
+$("fitBtn").onclick = () => zoomTo(view.z > 1.02 ? 1 : lay.zAuto); // overview <-> play zoom
 cv.addEventListener("pointerup", e => {
   unhold(); const wasDrag = dragged; lift(e); if (held) { held = false; return } if (wasDrag) { if (!ptrs.size) dragged = false; return }
   const p = tileAt(e.clientX, e.clientY);
@@ -1076,7 +1081,7 @@ sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resiz
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, score,
+window.FT = {get lay() { return lay }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, score,
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const d = diamond(p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;
