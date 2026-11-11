@@ -76,7 +76,7 @@
 const get = k => { try { return localStorage.getItem(k) } catch (_) { return null } };
 const num = k => +get(k) || 0;
 const TUT = ["tut-1-first-stream","tut-2-grass","tut-3-meadow","tut-4-trees","tut-5-groves","tut-6-pollinators","tut-7-sand","tut-8-oases","tut-9-rock","tut-10-lakes","tut-11-tributaries","tut-12-mountains"];
-const RIVER = ["map-1-flat","map-1a-sand-v2","map-3-lake","map-4-grass","map-4a-trees","map-5-desert","map-6-tributary","map-7-rock","map-8-grove","map-9-pollinators","map-10-mountains","map-11-forest","map-12-rain","map-13-spread","map-14-floodplain","map-15-harvest","map-16-wildlife","map-17-wildfire","map-18-fertile"];
+const RIVER = ["map-1-flat","map-1a-sand-v2","map-3-lake","map-4-grass","map-4a-trees","map-5-desert","map-6-tributary","map-7-rock","map-8-grove","map-9-pollinators","map-10-mountains","map-11-forest","map-12-rain","map-13-spread","map-14-floodplain","map-15-harvest","map-16-wildlife","map-17-wildfire","map-18-fertile","map-19-marsh"];
 const tDone = TUT.filter(id => num("flowtile.stars." + id) > 0).length, rDone = RIVER.filter(id => num("flowtile.stars." + id) > 0).length;
 document.getElementById("tTut").textContent = tDone ? `${tDone} of 12 finished` : "Start here";
 document.getElementById("tRiver").textContent = `${rDone} of ${RIVER.length} maps · ${RIVER.reduce((s, id) => s + num("flowtile.stars." + id), 0)} stars`;
