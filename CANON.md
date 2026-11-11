@@ -67,13 +67,14 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - **Groves:** 3 or more trees in a row beside the river.
   - ~~**Wildflower patches:** 4 or more meadows in a row.~~ *Superseded Nov 10 by pollinators: a meadow next to a grove adds +1 flow.*
   - **Sand** greens its neighbours.
-  - **Mountain runoff** on the windward side, with a rain shadow on the other.
+  - **Mountain runoff** on the windward side, with a rain shadow on the other. Since Nov 11 (LOU-269) this is each mountain's **water side**: see below.
   - ~~**Trees as defense:** trees cost 3 gal to cut through~~, rock 2. *Superseded Nov 10: trees no longer defend; sediment is the defense tile.*
 - **Wild forest** counts toward groves (Nov 10).
 - **Oases (springs)** (Nov 10): an oasis just adds +1 flow and doesn't green the ground around it. The oasis tile itself can still bloom when sand next to it blooms, and it counts toward the bloom goal. Sand keeps blooming the sand around it and greening the bare ground beside it.
 - **Beavers** (Nov 10): you have to route your river THROUGH a beaver colony to get its bonus (with trees next to it). Running beside it isn't enough.
 - **No oxbow lakes** (Nov 10): Dan said "do not make oxbow lakes". The river never cuts a bend off into a lake, and Map 14 is now Floodplain. Don't bring them back.
 - **Place your source anywhere** (Dan, Nov 11, LOU-263): on Big, Daily, Perfection and Custom, tap any allowed land tile at the start to place your source there; it becomes your source and the start of your main river, with 3 flow. Allowed: bare ground, grass, meadow or sand, at least 4 tiles from the sea (not sea, mountains, lakes, rock or a source). Pre-placed sources stay as a choice. Tutorial steps keep their fixed sources.
+- **Mountain water side** (Dan, Nov 11, LOU-269): each mountain has exactly one water side, one face with water running down it and **one runoff tile** in front of it (+1 flow when your river reaches it, through or beside). The side is set per mountain in the map data (`waterSides: {"x,y": [dx, dy]}`); otherwise it comes from the map's wind. The runoff tile shows a pool and a teal "+1" drop until claimed; the other faces are dry and the far tile is a cracked rain shadow. Tapping a mountain or its runoff tile explains it.
 - **New maps:** one new map per new rule.
 - **Tutorial** (LOU-261): the lesson maps are one ordered tutorial at `/tutorial/1/` … `/tutorial/12/`, one new rule per step, each ending in **Next lesson** (the last goes to the Daily island). `/tutorial/` shows progress and Continue. A first-time visitor to the site root is offered the tutorial. ~~The old lesson URLs redirect to their step.~~ *Superseded Nov 11 by River mode (LOU-265).*
 - **River mode** (Dan, Nov 11, LOU-265): River mode = Dan's original maps in original order (1, 1a, 3, 4, 4a, 5 … 17), free control, no objectives; the tutorial is separate and guided. **Never redirect one into the other.** Each keeps its own progress (tutorial steps have their own `tut-N-…` ids). River maps link with **Next map** in the original order. Map 2 · Slope stays retired (/2/ points to Map 3).

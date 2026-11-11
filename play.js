@@ -20,6 +20,8 @@
 // Map codes g, m, t: bare ground that starts as grass, meadow or trees (counted in storage); bloomLabel: name of the bloom chip (default "Bloom")
 //   wind: [dx, dy], the side the wind comes from. The tile on that side of each mountain is runoff (+1 flow when the
 //     river runs through or beside it); the tile on the far side is in rain shadow (can't turn green).
+//   waterSides: {"x,y": [dx, dy]} sets one mountain's water side (LOU-269); others take it from the wind. Each mountain has
+//     exactly one water side: one face with water on it and one runoff tile in front of it.
 // Tile costs (Nov 9): sand is free, rock costs +1, trees cost the normal price (they don't defend). Storage maps also: sand grows
 // grass on the bare ground around it, 3+ trees in a row along the river make a grove (+1 flow, +1 per extra tree)
 // and each meadow touching a grove adds +1 flow to it (pollinators, Nov 9). Map code F = wild forest.
@@ -139,9 +141,12 @@ function fresh() {
     const t = {"_":"bare",F:"bare",g:"bare",m:"bare",t:"bare",p:"bare",v:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
     tiles[y].push({t, e:+ELEV[y][x], river:false, g:ch==="F"?TREES:{g:1,m:MEADOW,t:TREES}[ch]||0, bloom:"gmt".includes(ch), wild:ch==="F", pool:ch==="p", beaver:ch==="v" ? 1 : 0, ro:0, rs:false, rid:-1, pr:"gmt".includes(ch) ? 0 : -1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
   }}
-  // Mountains: the tile facing the wind is runoff (ro 1 = waiting, 2 = claimed), the far side is rain shadow.
-  if (WIND) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (TYPES[y][x] !== "B") continue;
-    const a = [x + WIND[0], y + WIND[1]], b = [x - WIND[0], y - WIND[1]], land = p => inside(...p) && !["boulder","ocean","source"].includes(tiles[p[1]][p[0]].t);
+  // Mountains (LOU-269): each has exactly one water side, set per mountain (waterSides) or by the wind. The tile on that
+  // face is its runoff tile (ro 1 = waiting, 2 = claimed); the tile on the far side is rain shadow.
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (TYPES[y][x] !== "B") continue;
+    const side = (M.waterSides && M.waterSides[x + "," + y]) || WIND; if (!side) continue;
+    const a = [x + side[0], y + side[1]], b = [x - side[0], y - side[1]], land = p => inside(...p) && !["boulder","ocean","source"].includes(tiles[p[1]][p[0]].t);
+    tiles[y][x].ws = side;
     if (land(a)) tiles[a[1]][a[0]].ro = 1;
     if (land(b) && !["lake","spring"].includes(tiles[b[1]][b[0]].t)) tiles[b[1]][b[0]].rs = true }
   const lakes = [];
@@ -505,7 +510,7 @@ function tileName(c) {
   if (c.fire) return "Trees on fire";
   if (c.g === 0 && c.ash) return "Ash";
   if (c.moss && !c.g) return "Mossy ground";
-  if (c.ro === 1) return "Mountain runoff";
+  if (c.ro === 1) return "Water side: runoff";
   if (c.rs) return "Rain shadow";
   return {bare:"Bare ground", meadow:"Meadow", sand:"Sand", rock:"Rock", boulder:"Mountain", spring:"Spring", lake:"Empty lake", ocean:"The sea", source:"Source"}[c.t];
 }
@@ -524,13 +529,14 @@ function tileText(p) {
   if (c.ash && !c.g) return "Burnt ground. You can plant here again.";
   if (salty(p) && c.t === "bare" && !c.g) return "Salty ground by the sea. Nothing grows here.";
   if (c.pool) return "A puddle of rain. Bring your stream next to it and collect +2 gal, once.";
-  if (c.ro === 1) return MELT ? "Rain and snowmelt run off the mountain here. Reach it for +1 flow and +3 gal of snowmelt." : "Rain runs off the mountain here. Run your stream through or beside it for +1 flow.";
+  if (c.ro === 1) return `Water side: +1 flow when your river reaches this tile (through or beside it).${MELT ? " Snowmelt adds +3 gal once." : ""} It's the only tile at this mountain that gives flow.`;
+  if (c.ro === 2) return "Water side: your river already took this mountain's runoff (+1 flow).";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
   const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
   return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Grass next to a meadow always spreads along the bank. A meadow next to a grove adds +1 flow to it." : NEW ? "Pollinators: a meadow next to a grove (3 trees in a row by the river) adds +1 flow to it." : "Open ground the stream can cross.",
     sand:NEW ? "Free to cross, but cuts flow by 1. Grows grass on the bare ground around it." : "Free to cross, but cuts flow by 1. Blooms the land around it.",
     rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your stream, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "Hard ground: costs 1 gal more to cross. Tiles touching rock don't bloom.",
-    boulder:WIND ? "Blocks the stream. Its windward side catches rain: runoff there gives +1 flow." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal (2 a tile). The stream can then leave from any side${STORE ? `, and you can plant up to ${REACH} tiles from it` : ""}.`,
+    boulder:c.ws ? "Blocks the stream. Water side: rain runs down one face to the tile in front of it (marked +1). That tile gives +1 flow when your river reaches it; the other sides are dry." : "Blocks the stream.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal (2 a tile). The stream can then leave from any side${STORE ? `, and you can plant up to ${REACH} tiles from it` : ""}.`,
     ocean:"Bring a stream here to finish the map.", source:"Where a river starts."}[c.t];
 }
 function actions(p) {
@@ -801,6 +807,7 @@ function topColor(c) {
   if (c.river) return COL[c.t];
   if (c.g >= TREES) return COL.trees; if (c.g === MEADOW) return COL.meadow; if (c.g) return COL.grass;
   if (c.rs) return COL.shadow;
+  if (c.ro && c.t === "bare") return c.ro === 1 ? "#6fa592" : "#7aa98c"; // wet green-blue ground at the foot of the water side
   if (c.bloom && c.t !== "meadow") return COL.bloom; return COL[c.t] }
 function pine(x, y, s, dark) {
   ell(x + 3 * s, y + 1, 10 * s, 3.5 * s, "rgba(0,0,0,.2)");
@@ -834,15 +841,18 @@ function stones(cx, cy) {
     poly([[x - 7 * s, y - 9 * s], [x + 5 * s, y - 11 * s], [x + s, y - 2 * s]], "#d3cdc2");
     poly([[x + 5 * s, y - 11 * s], [x + 12 * s, y + s], [x + s, y - 2 * s]], "#aaa499") });
 }
-function mountain(cx, cy, t) {
+function mountain(cx, cy, t, side) {
   ell(cx + 6, cy + 8, 32, 9, "rgba(0,0,0,.22)");
   poly([[cx + 10, cy + 8], [cx + 20, cy - 20], [cx + 32, cy + 5]], "#857f77");
   poly([[cx - 28, cy + 6], [cx - 5, cy - 48], [cx + 5, cy + 11]], "#6f6a64");
   poly([[cx + 5, cy + 11], [cx - 5, cy - 48], [cx + 27, cy + 4]], "#a29b92");
   poly([[cx - 5, cy - 48], [cx - 14, cy - 27], [cx - 7, cy - 31], [cx - 1, cy - 25]], "#e8eef4");
   poly([[cx - 5, cy - 48], [cx - 1, cy - 25], [cx + 4, cy - 30], [cx + 11, cy - 25]], "#ffffff");
-  if (WIND) { // a thin waterfall down the windward face
-    const sx = (WIND[0] - WIND[1]) * TW / 4, sy = (WIND[0] + WIND[1]) * TH / 4, x0 = cx + sx * .2, y0 = cy - 30, x1 = cx + sx * .75, y1 = cy + sy * .75;
+  if (side) { // the water side (LOU-269): a wet, darker strip of rock with moss, and a thin waterfall down that one face
+    const sx = (side[0] - side[1]) * TW / 4, sy = (side[0] + side[1]) * TH / 4, x0 = cx + sx * .2, y0 = cy - 30, x1 = cx + sx * .75, y1 = cy + sy * .75;
+    const nx = -(y1 - y0), ny = x1 - x0, nl = Math.hypot(nx, ny) || 1, wx = nx / nl * 7, wy = ny / nl * 7;
+    poly([[x0 - wx * .5, y0 - wy * .5], [x0 + wx * .5, y0 + wy * .5], [x1 + wx, y1 + wy], [x1 - wx, y1 - wy]], "rgba(40,52,60,.45)");
+    ell(x1 - wx * 1.1, y1 - wy * 1.1 - 2, 4.5, 2.6, "#5f9a40"); ell(x1 + wx * 1.2, y1 + wy * 1.2 - 3, 3.8, 2.2, "#6fa84a"); ell((x0 + x1) / 2 + wx * .8, (y0 + y1) / 2 + wy * .8, 2.6, 1.6, "#5f9a40");
     line([[x0, y0], [(x0 + x1) / 2 + 3, (y0 + y1) / 2], [x1, y1]], "#7ccbf7", 3.5);
     ctx.save(); ctx.setLineDash([4, 7]); ctx.lineDashOffset = -t * 30; line([[x0, y0], [(x0 + x1) / 2 + 3, (y0 + y1) / 2], [x1, y1]], "#ffffff", 1.6); ctx.restore();
     ell(x1, y1 + 2, 7, 3.5, "#4aa3e8") }
@@ -1003,6 +1013,7 @@ function draw() {
       poly(d, ok ? `rgba(255,255,255,${.12 + .1 * pulse})` : "rgba(150,160,168,.28)");
       ctx.strokeStyle = ok ? `rgba(255,255,255,${pulse})` : "rgba(205,212,217,.85)"; ctx.lineWidth = 3.5; ctx.stroke();
       badges.push({o, pk, ok, text: pk ? `+${c.yield}` : m.cost, sand: !!m && c.t === "sand"});
+    } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true});
     } else if (PLACE && S.phase === "pick" && placeable(p)) { // tiles you can place a source on glow softly (LOU-263)
       poly(d, `rgba(255,255,255,${.1 + (reduce ? 0 : .06 * Math.sin(t * 2.5 + h))})`);
     } else if (plantable(p)) {
@@ -1069,6 +1080,11 @@ function badge(b, t) {
   const {o} = b;
   if (b.combo) { ctx.fillStyle = "#ffd166"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x - 24, o.y - 12, 48, 24, 12) : ctx.rect(o.x - 24, o.y - 12, 48, 24); ctx.fill();
     ctx.fillStyle = "#3a2600"; ctx.font = "700 14px Fredoka, Nunito, sans-serif"; ctx.fillText(b.combo + " flow", o.x, o.y + 1); return }
+  if (b.drop) { const bob = reduce ? 0 : Math.sin(t * 2.6 + o.x * .05) * 2, x = o.x + 12, y = o.y - 22 + bob; // a teal "+1 flow" drop until the river claims it
+    ell(x, y + 14, 7, 2.5, "rgba(0,0,0,.2)");
+    ctx.beginPath(); ctx.moveTo(x, y - 13); ctx.bezierCurveTo(x + 4, y - 7, x + 10, y - 2, x + 10, y + 3); ctx.arc(x, y + 3, 10, 0, Math.PI); ctx.bezierCurveTo(x - 10, y - 2, x - 4, y - 7, x, y - 13);
+    ctx.fillStyle = "#62e0c8"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.stroke();
+    ctx.fillStyle = "#0b3a32"; ctx.font = "700 12px Fredoka, Nunito, sans-serif"; ctx.fillText("+1", x, y + 4); return }
   if (b.plant) { const x = o.x, y = o.y + 1; ell(x, y + 2, 12, 12, "rgba(0,0,0,.25)"); ell(x, y, 12, 12, b.ok ? "#3f9a3f" : "rgba(8,24,38,.55)");
     ctx.fillStyle = b.ok ? "#d6ffaa" : "#9bb6c6"; ctx.beginPath(); ctx.moveTo(x - 5, y + 5); ctx.quadraticCurveTo(x - 6, y - 6, x + 6, y - 6); ctx.quadraticCurveTo(x + 6, y + 5, x - 5, y + 5); ctx.fill(); return }
   const r = b.pk ? 19 : 15, bob = reduce ? 0 : Math.sin(t * 3 + o.x * .05) * 1.5, y = o.y - 4 + bob;
@@ -1117,11 +1133,13 @@ function deco(p, c, o, t, h) {
   if (c.ash && !c.g) { ell(cx - 8, cy + 2, 9, 4, "rgba(40,30,25,.45)"); ell(cx + 9, cy - 4, 7, 3, "rgba(40,30,25,.4)"); line([[cx - 4, cy + 6], [cx + 6, cy + 1]], "#3a2a20", 2) }
   if (M.salt && salty(p) && c.t === "bare" && !c.g) { for (let i = 0; i < 6; i++) ell(cx - 16 + (hsh(i, h) % 32), cy - 7 + (hsh(h, i) % 15), 2.2, 1.2, "#f4f1e8") }
   if (c.t === "bare" && !c.ro) { line([[cx - 15, cy - 2], [cx - 6, cy + 2], [cx + 2, cy - 1]], shade(topColor(c), .25), 1.5); ell(cx + 12, cy + 6, 3, 2, shade(topColor(c), .3)); ell(cx - 6, cy - 10, 2.4, 1.6, mix(topColor(c), .25));
-    if (c.rs) { line([[cx + 4, cy - 8], [cx + 10, cy - 3], [cx + 18, cy - 5]], "rgba(70,45,20,.45)", 1.5); line([[cx - 4, cy + 6], [cx + 2, cy + 10]], "rgba(70,45,20,.45)", 1.5) } }
+    if (c.rs) { const k = "rgba(70,45,20,.5)"; // dry, cracked ground in the rain shadow
+      line([[cx + 4, cy - 8], [cx + 10, cy - 3], [cx + 18, cy - 5]], k, 1.6); line([[cx + 10, cy - 3], [cx + 9, cy + 3]], k, 1.3); line([[cx - 4, cy + 6], [cx + 2, cy + 10], [cx + 9, cy + 9]], k, 1.6);
+      line([[cx - 18, cy], [cx - 11, cy - 3], [cx - 9, cy - 9]], k, 1.4); line([[cx - 11, cy - 3], [cx - 6, cy + 1]], k, 1.2) } }
   if (c.t === "sand") { const hi = mix(COL.sand, .5); ctx.beginPath(); ctx.moveTo(cx - 20, cy + 2); ctx.quadraticCurveTo(cx - 10, cy - 4, cx, cy + 2); ctx.moveTo(cx - 4, cy + 10); ctx.quadraticCurveTo(cx + 6, cy + 4, cx + 16, cy + 10);
     ctx.strokeStyle = hi; ctx.lineWidth = 2; ctx.stroke(); ell(cx + 12, cy - 8, 2.6, 1.8, "#f39b6d") }
   if (c.t === "rock") stones(cx, cy);
-  if (c.t === "boulder") mountain(cx, cy, t);
+  if (c.t === "boulder") mountain(cx, cy, t, c.ws);
   if (c.t === "spring") { ell(cx, cy + 1, 17, 8.5, "#2f86c9"); ell(cx - 2, cy, 11, 5, "#7ccbf7");
     const tw = reduce ? 1 : .55 + .45 * Math.sin(t * 3 + h); ctx.save(); ctx.globalAlpha = tw; ctx.translate(cx + 8, cy - 4); ctx.scale(tw, tw);
     poly([[0, -7], [2, -2], [7, 0], [2, 2], [0, 7], [-2, 2], [-7, 0], [-2, -2]], "#ffffff"); ctx.restore() }
