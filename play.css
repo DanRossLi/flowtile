@@ -24,7 +24,42 @@ body{position:fixed;inset:0;background:linear-gradient(180deg,#1a3346 0%,var(--n
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .overlay{position:absolute;left:0;right:0;pointer-events:none;padding:10px}
 .overlay button{pointer-events:auto}
-.top{top:0;display:grid;gap:7px;padding-bottom:9px;background:var(--panel);border-radius:0 0 20px 20px;box-shadow:0 4px 0 #10273a,0 8px 18px rgba(0,0,0,.22)}
+.top{top:0;display:grid;gap:4px;padding:8px 10px 6px;background:linear-gradient(180deg,rgba(9,24,38,.55) 0%,rgba(9,24,38,.25) 65%,rgba(9,24,38,0) 100%)}
+/* ---------- top bar like Polytopia (LOU-267): Score · Turn · Water (+flow), a small label over a big number, straight on the map */
+.stats{display:grid;grid-template-columns:1fr 1fr 1.35fr;align-items:end;text-align:center}
+.stats .stat{display:block;background:none;box-shadow:none;border-radius:12px;padding:2px 0;margin:0;color:#fff;font-family:var(--body);min-width:0}
+.stats button.stat{pointer-events:auto;cursor:pointer}
+.stats button.stat:active{transform:translateY(1px);box-shadow:none}
+.stat span{display:block;font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#eaf4fa;white-space:nowrap;
+  text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 6px rgba(0,0,0,.6)}
+.stat span small{font-size:11px;letter-spacing:.02em;text-transform:none;color:#cfe2ee}
+.stat b{display:flex;justify-content:center;align-items:baseline;gap:4px;font-family:var(--display);font-weight:700;font-size:26px;line-height:1.1;color:#fff;white-space:nowrap;
+  font-variant-numeric:tabular-nums;text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 8px rgba(0,0,0,.5)}
+.stat b i{font-style:normal}
+.stat b small{font-size:16px;color:#dbe8f0}
+.stat.over b{color:var(--warn)}
+.stat.water b i{color:var(--water)}
+.stat.water b svg{width:21px;height:21px;align-self:center;fill:var(--water);stroke:#0b3a5e;stroke-width:1.2;filter:drop-shadow(0 2px 0 rgba(0,0,0,.5))}
+.stat.water b svg .hl{fill:none;stroke:#e6f6ff;stroke-width:1.8;stroke-linecap:round}
+.stat.water em{display:inline-block;font-style:normal;color:var(--flow);font-size:20px}
+.stat.water em i{color:var(--flow) !important}
+.stat.bump,.stat em.bump{animation:bump .35s ease-out}
+.stat.spill{animation:spill .5s ease-out}
+.subrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px}
+.wx{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:rgba(10,26,40,.62);font-weight:800;font-size:12px;white-space:nowrap;color:#fff}
+.wx svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.wx span{color:var(--muted);font-size:11px}
+.wx.rain b,.wx.cloud b{color:#9fd4ff}.wx.drought b{color:#ffbe5a}.wx.fire b{color:#ff7a5a}
+/* the Water card */
+.cells.big{margin:0}
+.cells.big i{height:14px;border-radius:6px;background:#d9d3c4;box-shadow:inset 0 2px 0 rgba(0,0,0,.12)}
+.cells.big i.f{background:#2f9be8;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.wline{display:flex;justify-content:space-between;gap:10px;font-weight:800;font-size:14px;padding:2px 2px}
+.wline span{color:#6c7b83}
+.wline b.flw{color:#178a76}
+.tcard .rivers button{background:#ebe5d6;color:#4c5c65;box-shadow:none}
+.tcard .rivers button small{color:var(--paper-ink)}
+.tcard .rivers button.on{box-shadow:inset 0 0 0 2px #2f9be8}
 .bottom{bottom:0}
 
 .bar{display:flex;align-items:center;gap:10px;min-width:0}
@@ -83,7 +118,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-to
 .chip.wind svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:block;margin:1px auto 0}
 /* goals stay on screen */
 .goals{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
-.goal{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;background:#142d40;box-shadow:var(--edge);font-weight:800;font-size:12px;white-space:nowrap}
+.goal{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:rgba(10,26,40,.62);font-weight:800;font-size:12px;white-space:nowrap}
 .goal svg{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linejoin:round}
 .goal.got{color:#3a2600;background:var(--gold);box-shadow:inset 0 -3px 0 var(--gold-d)}
 .goal.got svg{fill:#fff6d6;stroke:#3a2600}
@@ -215,7 +250,7 @@ dialog .opts input{width:20px;height:20px;accent-color:#2f9be8}
 dialog .orow{display:flex;gap:8px}
 dialog .orow>*{flex:1;text-align:center;font-size:14px;padding:10px 8px}
 
-@media (prefers-reduced-motion:reduce){.chip.bump,.goal.bump,.end.ready,.cells i.new,.chip.spill,.msg.pop,.win,.card,.stars .st,.tcard,dialog[open]{animation:none}}
+@media (prefers-reduced-motion:reduce){.stat.bump,.stat em.bump,.stat.spill,.msg.fade,.chip.bump,.goal.bump,.end.ready,.cells i.new,.chip.spill,.msg.pop,.win,.card,.stars .st,.tcard,dialog[open]{animation:none}}
 /* short phones: tighten */
 @media (max-height:680px){
   :root{--gap:6px;--btn-pad:11px}

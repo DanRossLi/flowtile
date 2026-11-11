@@ -50,22 +50,17 @@ document.body.innerHTML = `
   <div class="board" id="board">
     <canvas id="cv" aria-label="Game board"></canvas>
     <div class="overlay top" id="top">
-      <div class="bar">
-        <div class="brand">Flow <span>Tiles</span></div>
-        <div class="lvl">${M.label}</div>
+      <!-- Polytopia-style top bar (LOU-267): three stats straight on the map, no panels. Water shows its income in brackets. -->
+      <div class="stats">
+        <div class="stat" id="cScore"><span>Score</span><b id="hScore">0</b></div>
+        <div class="stat" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
+        <button type="button" class="stat water" id="cWater"><span>Water${STORE ? ` <small id="hCap"></small>` : ""}</span><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.8 4.8 6.5 8.2 6.5 11.6a6.5 6.5 0 01-13 0c0-3.4 2.7-6.8 6.5-11.6z"/><path class="hl" d="M9 14.5a3 3 0 002.4 2.9"/></svg><i id="hWater">0</i><em id="cFlow">(+<i id="hFlow">0</i>)</em></b></button>
       </div>
-      <div class="rivers" id="rivers" hidden></div>
-      <div class="hud${WIND && (CYCLE || WX) ? " many" : ""}">
-        <div class="chip tank" id="cWater">
-          <div class="tline"><span>Water</span><b id="hWater">0</b><small id="hCap">gal</small></div>
-          ${STORE ? `<div class="cells" id="cells" aria-hidden="true"></div>` : ""}
-        </div>
-        <div class="chip mini flow" id="cFlow"><span>Flow</span><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c3-2 6-2 9 0s6 2 9 0M3 15c3-2 6-2 9 0s6 2 9 0"/></svg>+<i id="hFlow">0</i></b><small class="per">per water cycle</small></div>
-        ${WIND ? `<div class="chip mini wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><span>Wind</span><b><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg></b></div>` : ""}
-        ${CYCLE || WX ? `<div class="chip mini sky" id="cSky"><span id="lSky">Sky</span><b id="hSky">Clear</b></div>` : ""}
-        <div class="chip mini" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
+      <div class="subrow">
+        <div class="goals" id="goals"></div>
+        ${WIND ? `<div class="wx wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg>Wind</div>` : ""}
+        ${CYCLE || WX ? `<div class="wx sky" id="cSky"><span id="lSky">Sky</span> <b id="hSky">Clear</b></div>` : ""}
       </div>
-      <div class="goals" id="goals"></div>
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
     <div class="overlay bottom" id="bottom"><div class="msg" id="msg" role="status"></div></div>
@@ -106,7 +101,7 @@ document.body.innerHTML = `
 <dialog id="help" aria-labelledby="helpTitle">
   <h2 id="helpTitle">How to play</h2>
   <ul>
-    <li><b class="wtr">Water</b> (blue) is what you have right now, in gallons. Every cost is paid in water. <b class="flw">Flow</b> (teal) is how much water each water cycle brings.</li>
+    <li><b class="wtr">Water</b> (blue) is what you have right now, in gallons. Every cost is paid in water. <b class="flw">Flow</b> (teal, in brackets next to your water) is how much each water cycle brings. Tap <b>Water</b> at the top for your storage${TRIB ? " and each river" : ""}.</li>
     ${M.lesson ? `<li><b>This map:</b> ${M.lesson}</li>` : ""}
     <li>To move the stream, tap its <b>end</b> (it gets a white ring), then a glowing tile. The number is its cost in water. Tap any other tile to see what it does and what it costs, then choose.</li>
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
@@ -439,18 +434,14 @@ function showBanner(t, sub) { if (quiet) return; const b = $("banner"); tx("bTur
   clearTimeout(bannerT); bannerT = setTimeout(() => { b.hidden = true; b.classList.remove("go") }, reduce ? 1200 : 1700) }
 function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump") }
 function sync() {
-  const rv = $("rivers"), multi = TRIB && S.rivers && S.rivers.length > 1; rv.hidden = !multi;
-  if (multi) rv.innerHTML = S.rivers.map((r, i) => { const on = i === S.active;
-    return `<button data-r="${i}" class="${on ? "on" : ""}" ${r.joined ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : onMain(i) ? `+${S.income} flow` : `+${flowOf(i)} flow once joined`}</small></button>` }).join("");
-  tx("hWater", S.water); tx("hCap", STORE ? `of ${S.cap} gal` : "gal"); tx("hFlow", S.income); $("cFlow").setAttribute("aria-label", `Flow: +${S.income} gal of water per water cycle`); tx("hTurn", S.turn);
-  if (STORE) { const cells = $("cells"); let h = ""; for (let i = 0; i < S.cap; i++) h += `<i class="${i < S.water ? "f" : ""}${i >= prevW && i < S.water ? " new" : ""}" style="--d:${Math.max(0, i - prevW) * 70}ms"></i>`; cells.innerHTML = h; prevW = S.water }
-  $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons`);
+  tx("hWater", S.water); tx("hCap", `(of ${S.cap})`); tx("hFlow", S.income); tx("hTurn", S.turn); tx("hScore", PERF ? score().total : bloomCount());
+  $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons. Flow: +${S.income} per water cycle. Tap for details`);
   $("cTurn").classList.toggle("over", S.turn > TURN_GOAL);
   goals();
   const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
   if (play) { const f = forecast(), g = STORE ? Math.min(f.gain, Math.max(0, S.cap - S.water)) : f.gain, sp = f.gain - g;
     gain.textContent = sp ? `+${g} · ${sp} ${CYCLE ? "to cloud" : "spill"}` : `+${f.gain} gal`; gain.classList.toggle("spill", sp > 0) }
-  if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); tx("lSky", nx.turn > S.turn ? `Sky · T${nx.turn}` : "Sky"); $("cSky").className = "chip mini sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
+  if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); tx("lSky", nx.turn > S.turn ? `Sky · T${nx.turn}` : "Sky"); $("cSky").className = "wx sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
   if ((S.head || "") + "|" + S.active !== lastHead) { lastHead = (S.head || "") + "|" + S.active; follow() }
   // the message is a short toast that fades (LOU-262); warnings stay a little longer
   const me = $("msg"); if (me.textContent !== (S.msg || "")) { me.textContent = S.msg || ""; me.classList.remove("fade"); clearTimeout(toastT);
@@ -478,7 +469,7 @@ function sync() {
     $("wGoals").innerHTML = goals.map(([ok, t], i) => `<li class="${ok ? "got" : ""} g${i}"><i></i><span>${t}</span><b>${ok ? "★" : "☆"}</b></li>`).join("") + (trees ? `<li class="g3 extra"><i></i><span>Trees planted</span><b>${trees}</b></li>` : "");
   }
   save(); resize();
-  if (sel) { if (S.phase === "play") renderCard(); else closeCard() }
+  if (sel) { if (S.phase === "play") renderCard(); else closeCard() } else if (info) renderInfo();
   draw();
 }
 
@@ -560,6 +551,7 @@ const ICON = {
   trib:'<svg viewBox="0 0 24 24"><path d="M6 3v6c0 4 6 5 6 9v3"/><path d="M18 3v6c0 4-6 5-6 9"/></svg>',
 };
 function renderCard() {
+  info = false;
   const c = at(sel), el = $("tcard"); cardActs = actions(sel).filter(a => a.k !== "stream"); // the stream moves only from its selected end
   el.innerHTML = `<div class="thead"><i class="swatch" style="background:${topColor(c)}"></i><div class="tname"><b>${tileName(c)}</b>${cardActs.length ? "" : `<small>${tileText(sel)}</small>`}</div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>` +
     cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><i class="aico">${ICON[a.k === "plant" ? ["plant", "meadow", "trees"][at(sel).g] : a.k] || ""}</i><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.cost ? a.cost + " gal" : "Free"}</span></button>`).join("");
@@ -572,7 +564,18 @@ function placeCard() {
   el.className = "tcard " + (side ? (sx > lay.w / 2 ? "left" : "right") : up ? "up" : "");
   el.style.top = !side && up ? lay.topH + 6 + "px" : "";
 }
-function closeCard() { if (!sel) return; sel = null; cardActs = []; $("tcard").hidden = true; draw() }
+function closeCard() { if (!sel && !info) return; sel = null; info = false; cardActs = []; $("tcard").hidden = true; draw() }
+// The Water card (LOU-267): tap Water in the top bar for storage, flow and, on tributary maps, each river.
+let info = false;
+function renderInfo() {
+  const el = $("tcard"), f = forecast(); let cells = "";
+  if (STORE) { for (let i = 0; i < S.cap; i++) cells += `<i class="${i < S.water ? "f" : ""}"></i>`; cells = `<div class="cells big" aria-hidden="true">${cells}</div>` }
+  const rv = TRIB && S.rivers.length > 1 ? `<div class="rivers">${S.rivers.map((r, i) => `<button data-r="${i}" class="${i === S.active ? "on" : ""}" ${r.joined || S.phase !== "play" ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : onMain(i) ? `+${S.income} flow` : `+${flowOf(i)} flow once joined`}</small></button>`).join("")}</div>` : "";
+  el.innerHTML = `<div class="thead"><i class="swatch" style="background:#2f9be8"></i><div class="tname"><b>Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gal</b><small>${STORE ? "Water over storage spills at the next water cycle. Plant by the stream to store more." : "Every cost is paid in water."}</small></div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${cells}` +
+    `<div class="wline"><span>Flow</span><b class="flw">+${S.income} gal per water cycle</b></div>${S.phase === "play" ? `<div class="wline"><span>Next Water Cycle</span><b>+${Math.min(f.gain, STORE ? Math.max(0, S.cap - S.water) : f.gain)} gal${STORE && f.gain > S.cap - S.water ? `, ${f.gain - Math.max(0, S.cap - S.water)} spills` : ""}${f.dry ? " (drought)" : ""}</b></div>` : ""}${rv}`;
+  el.className = "tcard"; el.style.top = ""; el.hidden = false;
+}
+$("cWater").onclick = () => { if (info) { closeCard(); return } closeCard(); hsel = false; info = true; renderInfo(); draw() };
 function runAct(a) { closeCard(); a.run() }
 // Moving the stream (LOU-258, replaces LOU-255's quick tap): tap the stream's end to select it, then tap a glowing tile.
 // The end stays selected so you can keep extending. Tap the end again, or empty space, to let go. With nothing selected,
@@ -1048,13 +1051,12 @@ cv.addEventListener("pointerup", e => {
 });
 $("tcard").addEventListener("click", e => {
   if (e.target.closest("#tclose")) { closeCard(); return }
+  const rb = e.target.closest("button[data-r]"); if (rb && !rb.disabled && S.phase === "play") { const i = +rb.dataset.r; if (i !== S.active) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } return }
   const b = e.target.closest("button[data-a]"); if (b && !b.disabled) runAct(cardActs[+b.dataset.a]);
 });
 $("end").onclick = endTurn; $("undo").onclick = undo; $("restart").onclick = restart; $("again").onclick = restart;
 addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
 addEventListener("keydown", e => { if (e.key === " " && !$("help").open && !$("goal").open) { e.preventDefault(); endTurn() } });
-$("rivers").addEventListener("click", e => { const b = e.target.closest("button[data-r]"); if (!b || S.phase !== "play") return; const i = +b.dataset.r;
-  if (i !== S.active && !S.rivers[i].joined) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } });
 $("helpBtn").onclick = () => { $("hard").checked = hard(); $("help").showModal() };
 $("hard").onchange = e => { try { localStorage.setItem(HARD_KEY, e.target.checked ? "1" : "0") } catch (_) {} sync() };
 // Map codes: the map as a short text you can share; /custom/#<code> plays it.
