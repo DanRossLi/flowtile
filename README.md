@@ -72,7 +72,7 @@ Dan's original maps in their original order, with no guidance: you choose where 
 | 9 · Pollinators | https://danrossli.github.io/flowtile/9/ |
 | 10 · Mountains | https://danrossli.github.io/flowtile/10/ |
 
-Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–17 below carry on from Map 10.
+Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–18 below carry on from Map 10.
 
 ## More maps
 
@@ -86,6 +86,7 @@ Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–17 below carry on fro
 | 15 · Harvest | https://danrossli.github.io/flowtile/15/ | Rain pools, snowmelt and moss: make room in storage before you collect |
 | 16 · Wildlife | https://danrossli.github.io/flowtile/16/ | Route through a beaver colony and grow trees by it for a pond (+1 flow); trees keep deer off your grass |
 | 17 · Wildfire | https://danrossli.github.io/flowtile/17/ | Lightning sets dry forest alight; keep your trees away from it |
+| 18 · Fertile ground | https://danrossli.github.io/flowtile/18/ | Rich soil: green on it stores 1 more, its trees count double toward a grove |
 | Perfection island | https://danrossli.github.io/flowtile/perfection/ | Every rule on: the best score in 20 turns |
 | Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |

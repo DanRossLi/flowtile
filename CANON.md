@@ -73,6 +73,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - ~~**Trees as defense:** trees cost 3 gal to cut through~~, rock 2. *Superseded Nov 10: trees no longer defend; sediment is the defense tile.*
 - **Wild forest** counts toward groves (Nov 10).
 - **Oases (springs)** (Nov 10): an oasis just adds +1 flow and doesn't green the ground around it. The oasis tile itself can still bloom when sand next to it blooms, and it counts toward the bloom goal. Sand keeps blooming the sand around it and greening the bare ground beside it.
+- **Fertile ground** (Linear spec LOU-214, built as LOU-273, Nov 11): map code `f`, dark furrowed soil. Green on it stores 1 gal more (grass 2, meadow 3, trees 4), and its trees count double toward a grove. Map 18 teaches it.
 - **Beavers** (Nov 10): you have to route your river THROUGH a beaver colony to get its bonus (with trees next to it). Running beside it isn't enough.
 - **No oxbow lakes** (Nov 10): Dan said "do not make oxbow lakes". The river never cuts a bend off into a lake, and Map 14 is now Floodplain. Don't bring them back.
 - **Place your source anywhere** (Dan, Nov 11, LOU-263): on Big, Daily, Perfection and Custom, tap any allowed land tile at the start to place your source there; it becomes your source and the start of your main river, with 3 flow. Allowed: bare ground, grass, meadow or sand, at least 4 tiles from the sea (not sea, mountains, lakes, rock or a source). Pre-placed sources stay as a choice. Tutorial steps keep their fixed sources.

@@ -17,6 +17,7 @@
 //   objectives: [{text, target, done: g => …}] (tutorial, LOU-264): one at a time on the map; done is tested after every action
 //     with the helpers in G below; target names what to highlight (see objAim)
 //   placeSource: true lets you place your source on any bare ground, grass, meadow or sand tile at least 4 tiles from the sea (LOU-263)
+// Map code f (LOU-273): fertile ground. Green on it stores 1 gal more (grass 2, meadow 3, trees 4) and its trees count double toward a grove.
 // Map codes g, m, t: bare ground that starts as grass, meadow or trees (counted in storage); bloomLabel: name of the bloom chip (default "Bloom")
 //   wind: [dx, dy], the side the wind comes from. The tile on that side of each mountain is runoff (+1 flow when the
 //     river runs through or beside it); the tile on the far side is in rain shadow (can't turn green).
@@ -32,7 +33,7 @@ const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed n
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal;
 const ROOT = new URL("./", document.currentScript.src).href;
 // Green levels on bare ground (Dan, Nov 10, LOU-261): 0 bare, 1 grass, 2 meadow, 3 trees. 1 gal and +1 storage per step.
-const MEADOW = 2, TREES = 3, gName = g => ["bare ground", "grass", "meadow", "trees"][Math.min(g, TREES)];
+const MEADOW = 2, TREES = 3, stor = c => c.g ? c.g + (c.fert ? 1 : 0) : 0, gName = g => ["bare ground", "grass", "meadow", "trees"][Math.min(g, TREES)];
 const meadowy = c => !c.river && (c.g === MEADOW || (c.t === "meadow" && !c.g)); // the site root, where play.js lives
 const LAKE_TILE_COST = 2, REACH = 2; // lakes (Nov 9): 2 gal a tile; a full lake lets you plant up to 2 tiles from it
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
@@ -50,7 +51,7 @@ const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add 
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
 const PLAY_TILE = 118; // LOU-262: a tile's width in px at play zoom, so 3–4 fit across a 390px phone (and stand ~59px tall)
-const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c"};
+const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c",fertile:"#7a4f2e"};
 const BANKS = true; // river drawn as a channel with banks; lakes get a shore
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -144,8 +145,8 @@ function fresh() {
   const tiles = [];
   for (let y = 0; y < H; y++) { tiles.push([]); for (let x = 0; x < W; x++) {
     const ch = TYPES[y][x];
-    const t = {"_":"bare",F:"bare",g:"bare",m:"bare",t:"bare",p:"bare",v:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
-    tiles[y].push({t, e:+ELEV[y][x], river:false, g:ch==="F"?TREES:{g:1,m:MEADOW,t:TREES}[ch]||0, bloom:"gmt".includes(ch), wild:ch==="F", pool:ch==="p", beaver:ch==="v" ? 1 : 0, ro:0, rs:false, rid:-1, pr:"gmt".includes(ch) ? 0 : -1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
+    const t = {"_":"bare",f:"bare",F:"bare",g:"bare",m:"bare",t:"bare",p:"bare",v:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
+    tiles[y].push({t, e:+ELEV[y][x], river:false, g:ch==="F"?TREES:{g:1,m:MEADOW,t:TREES}[ch]||0, bloom:"gmt".includes(ch), wild:ch==="F", pool:ch==="p", beaver:ch==="v" ? 1 : 0, fert:ch==="f", ro:0, rs:false, rid:-1, pr:"gmt".includes(ch) ? 0 : -1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
   }}
   // Mountains (LOU-269): each has exactly one water side, set per mountain (waterSides) or by the wind. The tile on that
   // face is its runoff tile (ro 1 = waiting, 2 = claimed); the tile on the far side is rain shadow.
@@ -214,9 +215,10 @@ function combos() {
       const good = q => inside(...q) && ok(at(q)) && !!byRiver(q);
       if (!good([x, y]) || good([x - dx, y - dy])) continue;
       const run = []; for (let q = [x, y]; good(q); q = [q[0] + dx, q[1] + dy]) run.push(q);
-      if (run.length < min) continue;
+      const len = run.reduce((n, q) => n + (at(q).fert ? 2 : 1), 0); // fertile trees count double (LOU-273)
+      if (len < min) continue;
       const first = kind === "grove" && at(run[0]).pr >= 0 ? at(run[0]).pr : at(byRiver(run[0])).rid;
-      out.push({kind, tiles:run, rid:root(first), bonus:run.length - 2, bees:[]});
+      out.push({kind, tiles:run, len, rid:root(first), bonus:len - 2, bees:[]});
     }
   // pollinators: each meadow next to a grove adds +1 flow to it (a meadow counts once)
   const used = new Set();
@@ -261,8 +263,9 @@ function startTributary(p) {
 function plant(p) {
   const c = at(p), what = ["Grass", "Meadow", "Trees"][c.g];
   if (S.water < PLANT_COST) { say(`${what} costs ${PLANT_COST} gal and you have ${S.water} gal. Tap Next Water Cycle to collect your flow.`, true); return }
-  snapshot(); S.water -= PLANT_COST; c.g++; c.bloom = true; c.pr = S.active; S.cap++; bump("cWater"); bump("cBloom");
-  anim.set("g:" + p, now()); float(p, "+1 storage", "#b6f08a");
+  const gain = c.g === 0 && c.fert ? 2 : 1;
+  snapshot(); S.water -= PLANT_COST; c.g++; c.bloom = true; c.pr = S.active; S.cap += gain; bump("cWater"); bump("cBloom");
+  anim.set("g:" + p, now()); float(p, `+${gain} storage`, "#b6f08a");
   const cb = recombo(), bv = beavers(), sh = storageHint();
   say(`${what} ${c.g === 1 ? "planted" : "grown"}: you can now store ${S.cap} gal.${c.g === MEADOW && NEW ? " A meadow next to a grove adds +1 flow." : ""}${cb ? " " + cb + "." : ""}${bv ? " " + bv + "." : ""}${sh ? " " + sh + "." : ""}`);
 }
@@ -281,7 +284,7 @@ function tryBloom(p, delay = 0) { const c = at(p);
 // Sand on storage maps: bare ground next to it turns into real grass (+1 storage each).
 function sandGrass(p, delay) { const c = at(p);
   if (c.t !== "bare" || c.river || c.g || c.rs || c.beaver || salty(p) || touchesRock(p)) return 0;
-  c.g = 1; c.bloom = true; c.pr = S.active; S.cap++; anim.set("g:" + p, now() + delay); return 1 }
+  c.g = 1; c.bloom = true; c.pr = S.active; S.cap += stor(c); anim.set("g:" + p, now() + delay); return 1 }
 // bloomKind (tutorial): "trees" counts planted trees, "bees" counts meadows pollinating a grove; otherwise every green tile counts
 const bloomCount = () => M.bloomKind === "trees" ? S.tiles.flat().filter(c => c.g >= TREES && !c.wild && !c.river).length
   : M.bloomKind === "springs" ? S.tiles.flat().filter(c => c.t === "spring" && c.river).length
@@ -318,9 +321,9 @@ function build(mv) {
       anim.set(p + "", t1 + 120 * (Math.abs(p[0] - mv.p[0]) + Math.abs(p[1] - mv.p[1]))) }
     notes.push(STORE ? `Lake filled: you can plant up to ${REACH} tiles from it, and the stream can leave from any side` : "Lake filled: the stream can leave from any side") }
   else { b.river = true; b.bloom = false; b.from = mv.from; b.rid = S.active; anim.set(mv.p + "", t1);
-    if (b.g) { const wild = b.wild; if (!wild) capAdd(b.pr, -b.g); const sp = Math.max(0, S.water - S.cap); S.water -= sp;
+    if (b.g) { const wild = b.wild, lose = stor(b); if (!wild) capAdd(b.pr, -lose); const sp = Math.max(0, S.water - S.cap); S.water -= sp;
       notes.push(wild ? "You cut through the forest" : `The river washed away the ${gName(b.g)}: storage down to ${S.cap} gal${sp ? `, ${sp} gal spilled` : ""}`);
-      if (!wild) float(mv.p, `−${b.g} storage`, "#ffb27a"); b.g = 0; b.wild = false; bump("cWater") }
+      if (!wild) float(mv.p, `−${lose} storage`, "#ffb27a"); b.g = 0; b.wild = false; bump("cWater") }
     if (b.t === "spring") { flowAdd(S.active, 1); notes.push(onMain(S.active) ? "Spring joined: flow +1 gal per water cycle" : "Spring joined: +1 flow once this tributary reaches the main river"); float(mv.p, "+1 flow", "#62e0c8"); bump("cFlow") }
     if (b.t === "sand") { for (const n of nbrs(mv.p)) { const d = 350 + 110 * (bl + gr); if (NEW) gr += sandGrass(n, d); if (!at(n).bloom || !NEW) bl += tryBloom(n, d) }
       const was = flowOf(S.active); flowAdd(S.active, -1); const now1 = flowOf(S.active);
@@ -453,7 +456,7 @@ function beavers() { let n = 0;
 function deerTurn() { if (S.turn % 3) return "";
   const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(q => { const c = at(q); return c.g === 1 && !c.river && !nbrs(q).some(n => at(n).g >= TREES) })
     .sort((a, b) => rnd("deer", S.turn, ...a) - rnd("deer", S.turn, ...b))[0]; if (!to) return "";
-  const c = at(to); c.g = 0; c.bloom = false; capAdd(c.pr, -1); const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; deer.push({p:to, t0:now()}); float(to, "−1 storage", "#ffb27a"); bump("cWater");
+  const c = at(to), lose = stor(c); c.g = 0; c.bloom = false; capAdd(c.pr, -lose); const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; deer.push({p:to, t0:now()}); float(to, `−${lose} storage`, "#ffb27a"); bump("cWater");
   return `Deer grazed a grass tile with no trees next to it: storage down to ${S.cap} gal${sp ? `, ${sp} gal spilled` : ""}` }
 const deer = [];
 if (DEER) turnHooks.push(deerTurn);
@@ -462,7 +465,7 @@ const wet = p => nbrs(p).some(n => { const k = at(n); return (k.river && k.t !==
 const dryTree = p => { const c = at(p); return c.g >= TREES && !c.river && !c.fire && !wet(p) };
 function fireTurn() { const notes = []; let burnt = 0, lost = 0;
   const burning = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(q => at(q).fire);
-  for (const q of burning) { const c = at(q); c.fire = false; if (!c.wild) { capAdd(c.pr, -c.g); lost += c.g } c.g = 0; c.wild = false; c.bloom = false; c.ash = true; burnt++ }
+  for (const q of burning) { const c = at(q); c.fire = false; if (!c.wild) { capAdd(c.pr, -stor(c)); lost += stor(c) } c.g = 0; c.wild = false; c.bloom = false; c.ash = true; burnt++ }
   // a fire spreads to the trees next to it, unless water is next to the burning tile
   const next = []; for (const q of burning) if (!wet(q)) for (const n of nbrs(q)) { const k = at(n); if (k.g >= TREES && !k.river && !k.fire && !next.some(z => same(z, n))) next.push(n) }
   if (WX && WX[S.turn] === "fire") { const hit = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(dryTree).sort((a, b) => rnd("bolt", ...a) - rnd("bolt", ...b))[0];
@@ -478,7 +481,7 @@ const bank = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0 && at(n).t !==
 function greenable(p) { const c = at(p); return c.t === "bare" && !c.river && !c.g && !c.rs && !c.ro && !c.pool && !c.beaver && !!bank(p) && !salty(p) }
 // Salt: land next to the sea doesn't turn green (planting, spread, sand or lakes) while the sea's salt is in it.
 const salty = p => !!M.salt && nbrs(p).some(n => at(n).t === "ocean");
-function grow(p, delay, col = "#b6f08a") { const c = at(p), r = root(at(bank(p)).rid); c.g = 1; c.bloom = true; c.pr = r; capAdd(r, 1); anim.set("g:" + p, now() + delay); float(p, "+1 storage", col) }
+function grow(p, delay, col = "#b6f08a") { const c = at(p), r = root(at(bank(p)).rid); c.g = 1; c.bloom = true; c.pr = r; capAdd(r, stor(c)); anim.set("g:" + p, now() + delay); float(p, `+${stor(c)} storage`, col) }
 const birds = [];
 function spreadTurn() {
   const grown = []; let seeded = 0;
@@ -510,7 +513,7 @@ function placeWhy(p) { const c = at(p);
   return "" }
 const placeable = p => PLACE && S.phase === "pick" && !placeWhy(p);
 function placeSrc(p) { const c = at(p); snapshot();
-  if (c.g && c.pr === 0) S.cap -= c.g; Object.assign(c, {t:"source", g:0, bloom:false, yield:PLACE_FLOW, rs:false, ro:0});
+  if (c.g && c.pr === 0) S.cap -= stor(c); Object.assign(c, {t:"source", g:0, bloom:false, yield:PLACE_FLOW, rs:false, ro:0});
   anim.set("g:" + p, now()); start(p, true) }
 function pick(p) {
   const c = at(p);
@@ -589,7 +592,7 @@ function tileName(c) {
   if (c.river && c.beaver) return c.beaver === 2 ? "Beaver pond" : "Beaver colony";
   if (c.river) return {lake:"Full lake", ocean:"The sea", source:"Source"}[c.t] || (c.rid >= 0 && c.rid !== S.active ? riverName(c.rid) : "Your stream");
   if (c.wild) return "Forest";
-  if (c.g) return c.g >= TREES ? "Trees" : c.g === MEADOW ? "Meadow" : "Grass";
+  if (c.g) return (c.g >= TREES ? "Trees" : c.g === MEADOW ? "Meadow" : "Grass") + (c.fert ? " · fertile" : "");
   if (c.pool) return "Rain pool";
   if (c.beaver) return c.beaver === 2 ? "Beaver pond" : "Beaver colony";
   if (c.fire) return "Trees on fire";
@@ -597,6 +600,7 @@ function tileName(c) {
   if (c.moss && !c.g) return "Mossy ground";
   if (c.ro === 1) return "Water side: runoff";
   if (c.rs) return "Rain shadow";
+  if (c.fert && c.t === "bare") return "Fertile ground";
   return {bare:"Bare ground", meadow:"Meadow", sand:"Sand", rock:"Rock", boulder:"Mountain", spring:"Spring", lake:"Empty lake", ocean:"The sea", source:"Source"}[c.t];
 }
 function tileText(p) {
@@ -604,10 +608,10 @@ function tileText(p) {
   if (c.river && c.beaver === 1) return "Your river runs through the beaver colony. Grow trees next to it and they dam a pond: +1 flow.";
   if (c.river && c.beaver === 2) return "The beavers dammed a pond on your river. It adds +1 flow.";
   if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
-  if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : "";
+  if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees${inCombo.len > inCombo.tiles.length ? " (fertile trees count double)" : ""}: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : "";
   if (bee) return "Pollinators: bees from this meadow add +1 flow to the grove next to it.";
   if (c.wild) return "Wild trees. A stream can run through for the normal cost, but it clears them. 3 in a row along the river make a grove: +1 flow.";
-  if (c.g) return `Stores ${c.g} extra gal. ${c.g < TREES && plantable(p) ? `Grow it into ${gName(c.g + 1)} for 1 gal: +1 storage. ` : ""}${NEW && c.g >= TREES ? "3 trees in a row along the river make a grove: +1 flow. " : ""}${NEW && c.g === MEADOW ? "A meadow next to a grove adds +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= TREES) ? " Deer may graze it: no trees next to it." : ""}${c.g >= TREES && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
+  if (c.g) return `Stores ${stor(c)} extra gal${c.fert ? " (fertile ground: +1)" : ""}. ${c.g < TREES && plantable(p) ? `Grow it into ${gName(c.g + 1)} for 1 gal: +1 storage. ` : ""}${NEW && c.g >= TREES ? (c.fert ? "Fertile trees count double toward a grove: 2 of them in a row along the river make one. " : "3 trees in a row along the river make a grove: +1 flow. ") : ""}${NEW && c.g === MEADOW ? "A meadow next to a grove adds +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= TREES) ? " Deer may graze it: no trees next to it." : ""}${c.g >= TREES && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
   if (c.beaver === 1) return "Beavers live here. Run your stream through the colony and grow trees next to it, and they dam a pond: +1 flow. Running beside it isn't enough.";
   if (c.beaver === 2) return "The beavers' pond. It adds +1 flow to your river.";
   if (c.fire) return wet(p) ? "Burning. It burns out at the next water cycle. Water is next to it, so the fire stops here." : "Burning. It burns out at the next water cycle and spreads to the trees next to it, because no water is next to it.";
@@ -617,6 +621,7 @@ function tileText(p) {
   if (c.ro === 1) return `Water side: +1 flow when your river reaches this tile (through or beside it).${MELT ? " Snowmelt adds +3 gal once." : ""} It's the only tile at this mountain that gives flow.`;
   if (c.ro === 2) return "Water side: your river already took this mountain's runoff (+1 flow).";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
+  if (c.fert && c.t === "bare") return "Rich, dark soil. Plant grass here for 1 gal and it stores 2 (meadow 3, trees 4). Trees here count double toward a grove.";
   const lake = c.t === "lake" ? LAKE_TILE_COST * S.lakes[c.lake].tiles.length : 0;
   return {bare:SPREAD ? "Plant here once your stream is next to it. Grass beside it on the bank may spread here." : "Plant here once your stream is next to it.", meadow:SPREAD ? "Grass next to a meadow always spreads along the bank. A meadow next to a grove adds +1 flow to it." : NEW ? "Pollinators: a meadow next to a grove (3 trees in a row by the river) adds +1 flow to it." : "Open ground the stream can cross.",
     sand:NEW ? "Free to cross, but cuts flow by 1. Grows grass on the bare ground around it." : "Free to cross, but cuts flow by 1. Blooms the land around it.",
@@ -638,13 +643,13 @@ function actions(p) {
     else if (c.ro === 1 || nbrs(p).some(n => at(n).ro === 1)) sub = `Mountain runoff: flow ${flowOf(S.active)} → ${flowOf(S.active) + [p, ...nbrs(p)].filter(q => at(q).ro === 1).length}${onMain(S.active) ? "" : " once joined"}`;
     if (c.beaver === 1) sub = nbrs(p).some(q => at(q).g >= TREES && !at(q).river) ? `Through the beaver colony: they dam a pond, flow +1` : "Through the beaver colony. Grow trees next to it for a pond: +1 flow";
     if (c.wild) sub = "Cuts through the forest";
-    else if (c.g) warn = `Washes away the ${gName(c.g)}: you lose ${c.g} storage`;
+    else if (c.g) warn = `Washes away the ${gName(c.g)}: you lose ${stor(c)} storage`;
     if (NEW && c.t !== "lake" && !c.river) { const d = comboPreview(p, k => { k.river = true; k.rid = S.active; k.g = 0 });
       if (d < 0) warn = (warn ? warn + ". " : "") + `Breaks a grove: flow −${-d}`;
       else if (d > 0) sub = (sub ? sub + ". " : "") + `Grove: flow +${d}` }
     out.push({k:"stream", name, cost:m.cost, sub, warn, run:() => build(m)}) }
   if (plantable(p)) { const d = NEW && c.g ? comboPreview(p, k => { k.g++; k.pr = S.active }) : 0;
-    out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + 1} gal${d > 0 ? `. Grove: flow +${d}` : ""}`,
+    out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + (c.g === 0 && c.fert ? 2 : 1)} gal${d > 0 ? `. Grove: flow +${d}` : ""}`,
       warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)}) }
   if (c.pool && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.unshift({k:"collect", name:"Collect the rain pool", cost:0, sub:`+2 gal at once${STORE && S.water + 2 > S.cap ? ` (only ${Math.max(0, S.cap - S.water)} fit)` : ""}`, warn:"", run:() => collect(p)});
   if (MOSS && c.t === "rock" && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.push({k:"moss", name:"Grow moss", cost:1, sub:"Breaks the rock into soil you can plant", warn:"", run:() => moss(p)});
@@ -899,6 +904,7 @@ function topColor(c) {
   if (c.river) return COL[c.t];
   if (c.g >= TREES) return COL.trees; if (c.g === MEADOW) return COL.meadow; if (c.g) return COL.grass;
   if (c.rs) return COL.shadow;
+  if (c.fert && c.t === "bare") return COL.fertile;
   if (c.ro && c.t === "bare") return c.ro === 1 ? "#6fa592" : "#7aa98c"; // wet green-blue ground at the foot of the water side
   if (c.bloom && c.t !== "meadow") return COL.bloom; return COL[c.t] }
 function pine(x, y, s, dark) {
@@ -1233,6 +1239,11 @@ function deco(p, c, o, t, h) {
   if (c.moss && !c.g) { ell(cx - 10, cy + 2, 7, 3.5, "#6fa84a"); ell(cx + 8, cy - 5, 6, 3, "#7cb956"); ell(cx + 3, cy + 7, 5, 2.5, "#5f9a40") }
   if (c.ash && !c.g) { ell(cx - 8, cy + 2, 9, 4, "rgba(40,30,25,.45)"); ell(cx + 9, cy - 4, 7, 3, "rgba(40,30,25,.4)"); line([[cx - 4, cy + 6], [cx + 6, cy + 1]], "#3a2a20", 2) }
   if (M.salt && salty(p) && c.t === "bare" && !c.g) { for (let i = 0; i < 6; i++) ell(cx - 16 + (hsh(i, h) % 32), cy - 7 + (hsh(h, i) % 15), 2.2, 1.2, "#f4f1e8") }
+  if (c.fert && c.t === "bare" && !c.g && !c.ro) { const k = shade(COL.fertile, .3); // furrows and sprouts (LOU-273)
+    for (let i = -1; i <= 1; i++) line([[cx - 16 + i * 6, cy - 2 + i * 7], [cx + 14 + i * 6, cy - 2 + i * 7 - 8]], k, 2.2);
+    const sw = reduce ? 0 : Math.sin(t * 2 + h) * 1.2;
+    for (const [sx, sy] of [[-10, 2], [2, -4], [10, 6], [-2, 10]]) { line([[cx + sx, cy + sy], [cx + sx + sw, cy + sy - 6]], "#6fbf45", 1.8); ell(cx + sx + sw - 2, cy + sy - 6, 2.4, 1.3, "#8ed65a"); ell(cx + sx + sw + 2, cy + sy - 7, 2.4, 1.3, "#7cc94c") }
+    return }
   if (c.t === "bare" && !c.ro) { line([[cx - 15, cy - 2], [cx - 6, cy + 2], [cx + 2, cy - 1]], shade(topColor(c), .25), 1.5); ell(cx + 12, cy + 6, 3, 2, shade(topColor(c), .3)); ell(cx - 6, cy - 10, 2.4, 1.6, mix(topColor(c), .25));
     if (c.rs) { const k = "rgba(70,45,20,.5)"; // dry, cracked ground in the rain shadow
       line([[cx + 4, cy - 8], [cx + 10, cy - 3], [cx + 18, cy - 5]], k, 1.6); line([[cx + 10, cy - 3], [cx + 9, cy + 3]], k, 1.3); line([[cx - 4, cy + 6], [cx + 2, cy + 10], [cx + 9, cy + 9]], k, 1.6);
