@@ -2,14 +2,55 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flow Tile · Tutorial 11</title>
-<meta http-equiv="refresh" content="0; url=../tutorial/11/">
-<link rel="canonical" href="../tutorial/11/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 6</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
 </head>
-<body style="font-family:system-ui,sans-serif;padding:24px">
-<!-- Map 6 moved to the tutorial as step 11 (LOU-261). Kept so shared links and installed shortcuts still work. -->
-<p>This island is now <a href="../tutorial/11/">Tutorial 11 · Tributaries</a>.</p>
-<script>location.replace("../tutorial/11/" + location.search + location.hash)</script>
+<body>
+<script>
+// Map 6 · Tributary: a second source between two mountains. Build a tributary from it with the main river's water; once it connects, its flow joins yours.
+// Map key: _ bare ground  s sand  B mountain  ~ sea  T source (3 gal/turn)  S source (2 gal/turn)
+window.MAP = {
+  id: "map-6-tributary",
+  label: "Map 6 · Tributary",
+  lesson: "<b>Tributaries.</b> Start a second river from the spring between the mountains, built with your main river's water. Its flow only counts once it connects.",
+  types: [
+    "____BTB__________~",
+    "____B_B__________~",
+    "S________________~",
+    "_________________~",
+    "_________________~"],
+  elev: [
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110",
+    "111111111111111110"],
+  storage: 3,
+  tributaries: true,
+  mainSource: [0, 2],
+  bloomGoal: 0,
+  turnGoal: 7,
+  tileCost: 1,
+  startHint: "Tap the spring on the left to start your main river.",
+  pickHint: "Start with the spring on the left. The big one between the mountains is for a tributary.",
+  next: "../7/",
+  help: [
+    "Start your <b>main river</b> at the spring on the left: <b>2 gal</b> per water cycle, and you can store 3 gal.",
+    "Any time after that, tap the big spring between the mountains to start a <b>tributary</b>. It has <b>no water of its own</b>: you build it with your main river's water. Tap a river, or its pill at the top, to choose which one you're building.",
+    "An unconnected tributary earns nothing. Run it <b>into the main river</b> (or the main river into it) and its source's <b>3 gal per water cycle</b> joins your flow from then on.",
+    "Water over your storage spills, so <b>plant grass</b> by the stream to store the bigger flow. Reach the sea by turn <b>7</b> for the last star."]
+};
+</script>
+<script src="../play.js"></script>
 </body>
 </html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · River mode</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<style>
+  :root{--sea:#2b68b0;--deep:#1f4f8c;--paper:#f4f1e8;--ink:#13222e;--gold:#ffd166;--gold-d:#d9a93c;--green:#7cc94c;--muted:#6c7b83;--blue:#2f9be8;--blue-d:#1d6aa6}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100dvh;background:radial-gradient(120% 80% at 50% 0%,#3a7cc4 0%,var(--sea) 45%,var(--deep) 100%);color:#fff;font-family:Nunito,system-ui,sans-serif}
+  main{max-width:560px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
+  h1{font-family:Fredoka,Nunito,sans-serif;font-size:30px;margin:6px 0 2px;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+  h1 span{color:#8fdcff}
+  .sub{margin:0 0 14px;opacity:.9;font-weight:700}
+  .bar{height:12px;border-radius:999px;background:rgba(0,0,0,.22);overflow:hidden;margin:0 0 6px}
+  .bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:999px;transition:width .6s cubic-bezier(.3,1.2,.5,1)}
+  .count{font-weight:800;font-size:13px;opacity:.85;margin:0 0 14px}
+  a.go{display:block;text-align:center;text-decoration:none;font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:19px;color:#fff;background:var(--blue);border-radius:16px;padding:14px;box-shadow:0 5px 0 var(--blue-d);margin:0 0 18px}
+  a.go:active{transform:translateY(3px);box-shadow:0 2px 0 var(--blue-d)}
+  a.go small{display:block;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;opacity:.9}
+  ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  ol a{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);background:var(--paper);border-radius:16px;padding:10px 12px;box-shadow:0 4px 0 #b9b19c}
+  ol a:active{transform:translateY(3px);box-shadow:0 1px 0 #b9b19c}
+  ol a:focus-visible,a.go:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+  .n{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#e2ddd0;font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:16px;color:#4c5c65;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
+  .done .n{background:var(--green);color:#fff}
+  .next{box-shadow:0 4px 0 #b9b19c,0 0 0 3px var(--gold) !important}
+  .t{flex:1;min-width:0}
+  .t b{display:block;font-family:Fredoka,Nunito,sans-serif;font-size:17px;line-height:1.15}
+  .t small{display:block;color:var(--muted);font-weight:700;font-size:13px;line-height:1.3}
+  .tick{flex:none;width:22px;height:22px}
+  .tick path{fill:none;stroke:#3f8a4a;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+  .st{flex:none;display:flex;gap:1px}.st svg{width:17px;height:17px;fill:#d9d3c4;stroke:#b9b19c;stroke-width:1.2;stroke-linejoin:round}.st svg.on{fill:var(--gold);stroke:var(--gold-d)}
+  .skip{flex:none;font-style:normal;font-weight:800;font-size:12px;color:var(--muted)}
+  footer{margin-top:22px;font-size:13px;opacity:.85}
+  footer a{color:#fff}
+  @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Flow <span>Tile</span> · River mode</h1>
+  <p class="sub">Dan's original maps, in order. No guidance: you choose where the river goes and what to grow.</p>
+  <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+  <p class="count" id="count"></p>
+  <a class="go" id="go" href="../1/"></a>
+  <ol id="list"></ol>
+  <footer>New to Flow Tile? Try the <a href="../tutorial/">tutorial</a> first. Or play the <a href="../daily/">Daily island</a>, or go <a href="../">home</a>.</footer>
+</main>
+<script>
+// River mode (LOU-265): Dan's original maps in his original order, free control. Progress is each map's own stars.
+const MAPS = [
+  ["1", "map-1-flat", "Flat", "Your first stream to the sea"],
+  ["1a", "map-1a-sand-v2", "Sand", "Free to cross, −1 flow, blooms the land"],
+  ["3", "map-3-lake", "Lake", "A lake fills all at once"],
+  ["4", "map-4-grass", "Grass", "Plant grass to store more water"],
+  ["4a", "map-4a-trees", "Trees", "Grass, meadow, trees: more storage"],
+  ["5", "map-5-desert", "Desert", "Oases and sand"],
+  ["6", "map-6-tributary", "Tributary", "A second river that joins the first"],
+  ["7", "map-7-rock", "Rock", "Rock costs more; mountains block"],
+  ["8", "map-8-grove", "Grove", "3 trees in a row: +1 flow"],
+  ["9", "map-9-pollinators", "Pollinators", "Meadows beside a grove bring bees"],
+  ["10", "map-10-mountains", "Mountains", "Runoff on the windward side"],
+  ["11", "map-11-forest", "Forest", "Old forest counts toward groves"],
+  ["12", "map-12-rain", "Rain", "Spill rises as a cloud and rains back"],
+  ["13", "map-13-spread", "Spread", "Grass spreads; birds carry seeds"],
+  ["14", "map-14-floodplain", "Floodplain", "Full storage floods the banks green"],
+  ["15", "map-15-harvest", "Harvest", "Rain pools, snowmelt and moss"],
+  ["16", "map-16-wildlife", "Wildlife", "Beavers, fish and deer"],
+  ["17", "map-17-wildfire", "Wildfire", "Lightning, dry trees and fire"],
+];
+const stars = id => { try { return +localStorage.getItem("flowtile.stars." + id) || 0 } catch (_) { return 0 } };
+const STAR = on => `<svg class="${on ? "on" : ""}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>`;
+const got = MAPS.map(m => stars(m[1])), n = got.filter(s => s > 0).length, first = got.findIndex(s => !s);
+document.getElementById("list").innerHTML = MAPS.map(([dir, id, name, what], i) =>
+  `<li><a class="${got[i] ? "done" : ""}${i === first ? " next" : ""}" href="../${dir}/" aria-label="Map ${dir}, ${name}: ${what}. ${got[i]} of 3 stars"><span class="n">${dir}</span><span class="t"><b>${name}</b><small>${what}</small></span><span class="st">${[0, 1, 2].map(k => STAR(k < got[i])).join("")}</span></a></li>`).join("");
+document.getElementById("count").textContent = `${n} of ${MAPS.length} reached the sea · ${got.reduce((a, b) => a + b, 0)} of ${MAPS.length * 3} stars`;
+document.getElementById("fill").style.width = (n / MAPS.length * 100) + "%";
+const go = document.getElementById("go");
+if (first < 0) { go.href = "../daily/"; go.innerHTML = "All done! Play the Daily island<small>A new island every day</small>" }
+else { go.href = `../${MAPS[first][0]}/`; go.innerHTML = `${n ? "Continue" : "Start River mode"}<small>Map ${MAPS[first][0]} · ${MAPS[first][2]}: ${MAPS[first][3]}</small>` }
+</script>
+</body>
+</html>

@@ -2,14 +2,47 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flow Tile · Tutorial 1</title>
-<meta http-equiv="refresh" content="0; url=../tutorial/1/">
-<link rel="canonical" href="../tutorial/1/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 1</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
 </head>
-<body style="font-family:system-ui,sans-serif;padding:24px">
-<!-- Map 1 moved to the tutorial as step 1 (LOU-261). Kept so shared links and installed shortcuts still work. -->
-<p>This island is now <a href="../tutorial/1/">Tutorial 1 · First stream</a>.</p>
-<script>location.replace("../tutorial/1/" + location.search + location.hash)</script>
+<body>
+<script>
+// Map 1 · Flat: all meadow at one level. Source on the left, sea on the right.
+// Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
+window.MAP = {
+  id: "map-1-flat",
+  label: "Map 1 · Flat",
+  lesson: "The basics. Each tile of stream costs <b>1 gal</b>, and every turn your <b>flow</b> refills your water. Build left to right to the sea.",
+  types: [
+    "........~",
+    "........~",
+    "S.......~",
+    "........~",
+    "........~"],
+  elev: [
+    "111111110",
+    "111111110",
+    "111111110",
+    "111111110",
+    "111111110"],
+  bloomGoal: 0,
+  turnGoal: 4,
+  tileCost: 1,
+  startHint: "Tap the spring on the left to start.",
+  next: "../1a/",
+  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle.", "Tap your stream's <b>end</b>, then a glowing tile to extend it. The number is its cost in gallons. Out of water? Tap <b>Next Water Cycle</b> and your flow refills it.", "The map is flat and every tile costs <b>1 gal</b>. Run the stream <b>left to right</b> to the sea."]
+};
+</script>
+<script src="../play.js"></script>
 </body>
 </html>

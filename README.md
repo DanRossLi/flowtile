@@ -26,7 +26,7 @@ Controls: tap your stream's **end** to select it, then tap a glowing tile to mov
 
 ## Tutorial
 
-New players start at https://danrossli.github.io/flowtile/tutorial/: twelve short islands, one new rule each, each opening on its goal card and ending with **Next lesson**. The index shows a tick for each finished step and a **Continue** button. A first-time visitor to the site root is offered the tutorial. The old lesson links (`/1/`, `/1a/`, `/3/`, `/4/`, `/4a/`, `/5/` … `/10/`) redirect to their step.
+New players start at https://danrossli.github.io/flowtile/tutorial/: twelve short islands, one new rule each, each opening on its goal card and ending with **Next lesson**. The index shows a tick for each finished step and a **Continue** button. Each step teaches through objectives on the map, one at a time (Skip lesson moves on). The home page marks the tutorial "New here?" for a first-time visitor.
 
 | Step | URL | Teaches |
 |---|---|---|
@@ -43,11 +43,31 @@ New players start at https://danrossli.github.io/flowtile/tutorial/: twelve shor
 | 11 · Tributaries | https://danrossli.github.io/flowtile/tutorial/11/ | Build a tributary; it earns only once it connects |
 | 12 · Mountains | https://danrossli.github.io/flowtile/tutorial/12/ | Runoff on the windward side, rain shadow behind |
 
+## River mode
+
+Dan's original maps in their original order, with no guidance: you choose where the river goes and what to grow. The list with your stars is at https://danrossli.github.io/flowtile/river/, and each map's win card goes on with **Next map**.
+
+| Map | URL |
+|---|---|
+| 1 · Flat | https://danrossli.github.io/flowtile/1/ |
+| 1a · Sand | https://danrossli.github.io/flowtile/1a/ |
+| 3 · Lake | https://danrossli.github.io/flowtile/3/ |
+| 4 · Grass | https://danrossli.github.io/flowtile/4/ |
+| 4a · Trees | https://danrossli.github.io/flowtile/4a/ |
+| 5 · Desert | https://danrossli.github.io/flowtile/5/ |
+| 6 · Tributary | https://danrossli.github.io/flowtile/6/ |
+| 7 · Rock | https://danrossli.github.io/flowtile/7/ |
+| 8 · Grove | https://danrossli.github.io/flowtile/8/ |
+| 9 · Pollinators | https://danrossli.github.io/flowtile/9/ |
+| 10 · Mountains | https://danrossli.github.io/flowtile/10/ |
+
+Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–17 below carry on from Map 10.
+
 ## More maps
 
 | Map | URL | Teaches |
 |---|---|---|
-| Spring Hill | https://danrossli.github.io/flowtile/ | The original test map, now flat |
+| Spring Hill | https://danrossli.github.io/flowtile/spring-hill/ | The original test map, now flat |
 | 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest where the trees left beside you become groves |
 | 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
 | 13 · Spread | https://danrossli.github.io/flowtile/13/ | Grass spreads along the bank; plant next to meadows to make it certain |
@@ -59,7 +79,7 @@ New players start at https://danrossli.github.io/flowtile/tutorial/: twelve shor
 | Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
 
-Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (the root one is Spring Hill; tutorial steps live in `tutorial/N/`) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
+Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (tutorial steps live in `tutorial/N/`; the site root is the home page) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
 
 ## Modes
 

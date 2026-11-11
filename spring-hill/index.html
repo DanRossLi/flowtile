@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Spring Hill</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Spring Hill: the original v0.1 test map. Flat since Nov 10 (slopes and speed are cut): every tile costs 1 gal.
+// Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
+window.MAP = {
+  id: "spring-hill",
+  label: "Test map · Spring Hill",
+  lesson: "A test island with the early rules together: springs, sand, lakes and meadows. Pick your source and find your own way to the sea.",
+  types: [
+    "BS...TB",
+    ".s..r.B",
+    "..o.s.s",
+    "s.LL.r.",
+    ".sLL.s.",
+    "B.s.sBo",
+    ".s.r..s",
+    "s..s.s.",
+    "~~~~~~~"],
+  elev: [
+    "1111111",
+    "1111111",
+    "1111111",
+    "1100111",
+    "1100111",
+    "1111111",
+    "1111111",
+    "1111111",
+    "0000000"],
+  bloomGoal: 6,
+  turnGoal: 6,
+  startHint: "Tap a spring at the top to choose your source.",
+  pickHint: "Tap one of the two springs at the top.",
+  next: null,
+  help: [
+    "Pick a source. The left one has a flow of <b>2 gal</b> per water cycle, the right one <b>3 gal</b>.",
+    "Tap your river's <b>end</b>, then a glowing tile to extend it. The number is its cost in gallons. Out of water? Tap <b>Next Water Cycle</b> and your flow refills it.",
+    "The island is flat: every tile costs <b>1 gal</b>.",
+    "<b>Sand</b> is free to cross and blooms every land tile around it, but it cuts your <b>flow by 1</b> for the rest of the run.",
+    "<b>Rock</b> costs <b>2 gal</b> to cross, and tiles touching it don't bloom.",
+    "<b>Mountains</b> block the river. <b>Springs</b> are free and add <b>+1 flow</b>.",
+    "<b>Lakes</b> (blue rings) cost 2 gal per tile to fill. Once full the water rises over the rim and the stream can leave from any side."]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>

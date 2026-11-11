@@ -57,18 +57,18 @@
 <script>
 // The tutorial (LOU-261): each step is /tutorial/N/. A step counts as finished once it has a star (reached the sea).
 const STEPS = [
-  ["map-1-flat", "First stream", "Move your stream, water and flow, Next Water Cycle"],
-  ["map-4-grass", "Grass", "Plant grass to store more water; storage and spill"],
+  ["tut-1-first-stream", "First stream", "Move your stream, water and flow, Next Water Cycle"],
+  ["tut-2-grass", "Grass", "Plant grass to store more water; storage and spill"],
   ["tut-3-meadow", "Meadow", "Grow grass into a meadow"],
-  ["map-4a-trees", "Trees", "Grow a meadow into trees"],
-  ["map-8-grove", "Groves", "3 trees in a row: +1 flow"],
-  ["map-9-pollinators", "Pollinators", "A meadow beside a grove: +1 flow"],
-  ["map-1a-sand-v2", "Sand", "Free to cross, −1 flow, greens the land"],
-  ["map-5-desert", "Oases", "Plan a route that keeps your flow"],
-  ["map-7-rock", "Rock", "Rock costs 2 gal; mountains block the way"],
-  ["map-3-lake", "Lakes", "Fill all at once; plant 2 tiles out"],
-  ["map-6-tributary", "Tributaries", "Connect to the main river to earn"],
-  ["map-10-mountains", "Mountains", "Runoff on the windward side, rain shadow behind"],
+  ["tut-4-trees", "Trees", "Grow a meadow into trees"],
+  ["tut-5-groves", "Groves", "3 trees in a row: +1 flow"],
+  ["tut-6-pollinators", "Pollinators", "A meadow beside a grove: +1 flow"],
+  ["tut-7-sand", "Sand", "Free to cross, −1 flow, greens the land"],
+  ["tut-8-oases", "Oases", "Plan a route that keeps your flow"],
+  ["tut-9-rock", "Rock", "Rock costs 2 gal; mountains block the way"],
+  ["tut-10-lakes", "Lakes", "Fill all at once; plant 2 tiles out"],
+  ["tut-11-tributaries", "Tributaries", "Connect to the main river to earn"],
+  ["tut-12-mountains", "Mountains", "Runoff on the windward side, rain shadow behind"],
 ];
 const stars = id => { try { return +localStorage.getItem("flowtile.stars." + id) || 0 } catch (_) { return 0 } };
 const TICK = '<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';

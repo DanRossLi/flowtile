@@ -2,14 +2,55 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flow Tile · Tutorial 2</title>
-<meta http-equiv="refresh" content="0; url=../tutorial/2/">
-<link rel="canonical" href="../tutorial/2/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 4</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
 </head>
-<body style="font-family:system-ui,sans-serif;padding:24px">
-<!-- Map 4 moved to the tutorial as step 2 (LOU-261). Kept so shared links and installed shortcuts still work. -->
-<p>This island is now <a href="../tutorial/2/">Tutorial 2 · Grass</a>.</p>
-<script>location.replace("../tutorial/2/" + location.search + location.hash)</script>
+<body>
+<script>
+// Map 4 · Grass: bare ground. Plant grass by the stream to store enough water for the lake.
+// Map key: _ bare ground  L lake  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  id: "map-4-grass",
+  label: "Map 4 · Grass",
+  lesson: "<b>Storage.</b> Plant grass beside your stream so you can hold more water, enough to fill the big lake.",
+  types: [
+    "_____B__~",
+    "_____L__~",
+    "T____L__~",
+    "_____L__~",
+    "_____B__~"],
+  elev: [
+    "111111110",
+    "111110110",
+    "111110110",
+    "111110110",
+    "111111110"],
+  storage: 3,
+  bloomGoal: 4,
+  bloomLabel: "Grass",
+  turnGoal: 6,
+  tileCost: 1,
+  showBloom: true,
+  startHint: "Tap the spring on the left to start.",
+  next: "../4a/",
+  help: [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>. Water over that spills at the next water cycle.",
+    "Tap your stream's <b>end</b>, then a glowing tile to extend it. Every tile costs <b>1 gal</b>. Run it <b>left to right</b> to the sea.",
+    "<b>Bare ground</b> next to the stream shows a leaf: tap it and choose <b>Plant grass</b> for 1 gal. Each grass lets you <b>store +1 gal</b>.",
+    "The <b>lake</b> fills all at once for <b>2 gal a tile</b>: <b>6 gal</b>, more than you can store at the start. Plant grass first. <b>Mountains</b> block the stream.",
+    "If the stream runs over grass it washes it away, and you lose that storage."]
+};
+</script>
+<script src="../play.js"></script>
 </body>
 </html>

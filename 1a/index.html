@@ -2,14 +2,48 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flow Tile · Tutorial 7</title>
-<meta http-equiv="refresh" content="0; url=../tutorial/7/">
-<link rel="canonical" href="../tutorial/7/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 1a</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
 </head>
-<body style="font-family:system-ui,sans-serif;padding:24px">
-<!-- Map 1a moved to the tutorial as step 7 (LOU-261). Kept so shared links and installed shortcuts still work. -->
-<p>This island is now <a href="../tutorial/7/">Tutorial 7 · Sand</a>.</p>
-<script>location.replace("../tutorial/7/" + location.search + location.hash)</script>
+<body>
+<script>
+// Map 1a · Sand: flat meadow with one sand tile near the sea. Sand blooms its neighbours but cuts flow by 1,
+// so taking it late is cheap: straight through still reaches the sea on turn 5 with 2 tiles in bloom.
+// Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
+window.MAP = {
+  id: "map-1a-sand-v2",
+  label: "Map 1a · Sand",
+  lesson: "<b>Sand</b> is free to cross and blooms the land around it, but each sand tile <b>cuts your flow by 1</b>. Decide when the blooms are worth it.",
+  types: [
+    "........~",
+    "........~",
+    "S.....s.~",
+    "........~",
+    "........~"],
+  elev: [
+    "111111110",
+    "111111110",
+    "111111110",
+    "111111110",
+    "111111110"],
+  bloomGoal: 2,
+  turnGoal: 4,
+  tileCost: 1,
+  startHint: "Tap the spring on the left to start.",
+  next: "../3/",
+  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle.", "Tap your stream's <b>end</b>, then a glowing tile to extend it. The number is its cost in gallons. Out of water? Tap <b>Next Water Cycle</b> and your flow refills it.", "The map is flat and every tile costs <b>1 gal</b>. Run the stream <b>left to right</b> to the sea.", "<b>Sand</b> (speckled tiles) is <b>free</b> to cross and <b>blooms</b> every land tile around it, but it soaks up water: your <b>flow drops by 1</b> for the rest of the run. Take it late, when you need less water.", "If your flow hits <b>0</b> you can't collect any more water."]
+};
+</script>
+<script src="../play.js"></script>
 </body>
 </html>
