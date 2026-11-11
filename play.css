@@ -24,7 +24,7 @@ body{position:fixed;inset:0;background:linear-gradient(180deg,#1a3346 0%,var(--n
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .overlay{position:absolute;left:0;right:0;pointer-events:none;padding:10px}
 .overlay button{pointer-events:auto}
-.top{top:0;display:grid;gap:8px;background:linear-gradient(to bottom,rgba(12,28,44,.78) 0%,rgba(12,28,44,.45) 70%,rgba(12,28,44,0) 100%)}
+.top{top:0;display:grid;gap:7px;padding-bottom:9px;background:var(--panel);border-radius:0 0 20px 20px;box-shadow:0 4px 0 #10273a,0 8px 18px rgba(0,0,0,.22)}
 .bottom{bottom:0}
 
 .bar{display:flex;align-items:center;gap:10px;min-width:0}
@@ -34,7 +34,10 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-to
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;text-shadow:0 2px 0 rgba(0,0,0,.35)}
 .icon{width:40px;height:40px;padding:0;border-radius:50%;font-size:18px;flex:none;background:var(--panel-2);box-shadow:0 3px 0 #0f2232}
 
-.hud{display:flex;gap:6px}
+.hud{display:flex;gap:0;background:#142d40;border-radius:14px;box-shadow:inset 0 3px 0 rgba(0,0,0,.22);padding:2px 0}
+/* stats sit in one solid strip, split by thin lines (LOU-260) */
+.hud .chip{background:none;box-shadow:none;border-radius:0;border-left:2px solid rgba(255,255,255,.07)}
+.hud .chip:first-child{border-left:0}
 .chip{flex:1;min-width:0;background:var(--glass);border-radius:14px;padding:5px 6px;text-align:center;box-shadow:var(--edge)}
 .chip span{display:block;font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -79,8 +82,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-to
 .chip.sky.fire b{color:#ff7a5a}
 .chip.wind svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:block;margin:1px auto 0}
 /* goals stay on screen */
-.goals{display:flex;flex-wrap:wrap;gap:5px}
-.goal{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;background:var(--glass);box-shadow:var(--edge);font-weight:800;font-size:12px;white-space:nowrap}
+.goals{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.goal{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;background:#142d40;box-shadow:var(--edge);font-weight:800;font-size:12px;white-space:nowrap}
 .goal svg{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linejoin:round}
 .goal.got{color:#3a2600;background:var(--gold);box-shadow:inset 0 -3px 0 var(--gold-d)}
 .goal.got svg{fill:#fff6d6;stroke:#3a2600}
@@ -137,7 +140,37 @@ dialog b.wtr{color:#1d6aa6}dialog b.flw{color:#178a76}
 .card a.btn{text-decoration:none;text-align:center}
 
 /* ---------- buttons: solid, with a darker bottom edge that presses in */
-.actions{grid-area:actions;display:grid;grid-template-columns:64px 64px minmax(0,1fr);gap:var(--gap)}
+.actions{grid-area:actions;display:grid;grid-template-columns:1fr 1fr 1fr 1.5fr;align-items:end;gap:4px;padding:6px 8px 4px;
+  background:var(--panel);border-radius:20px;box-shadow:0 4px 0 #0b1620}
+/* round labelled buttons, Polytopia-style (LOU-260) */
+button.rb{background:none;box-shadow:none;padding:0;display:grid;justify-items:center;gap:3px;min-width:0;border-radius:14px}
+button.rb:active:not(:disabled){transform:none;box-shadow:none}
+.rb>i{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--panel-2);color:var(--ink);
+  box-shadow:0 4px 0 #0f2232,inset 0 2px 0 rgba(255,255,255,.08);transition:transform .08s}
+.rb:active:not(:disabled)>i{transform:translateY(3px);box-shadow:0 1px 0 #0f2232}
+.rb>i svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rb>span{font-size:11px;font-weight:700;line-height:1.1;color:var(--muted);text-align:center;letter-spacing:.02em}
+.rb.go>i{width:62px;height:62px;margin-top:-22px;background:var(--blue);color:#fff;box-shadow:0 5px 0 var(--blue-d),0 0 0 4px var(--panel),0 8px 16px rgba(0,0,0,.3)}
+.rb.go:active:not(:disabled)>i{box-shadow:0 2px 0 var(--blue-d),0 0 0 4px var(--panel)}
+.rb.go>i svg{width:32px;height:32px;stroke-width:2.4}
+.rb.go>span{color:#fff;font-size:12px}
+.rb.go .gain{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font:800 11px var(--body);color:#06233a;background:#bfe4ff;padding:2px 7px;box-shadow:0 2px 0 rgba(0,0,0,.25);white-space:nowrap}
+.rb.go .gain.spill{background:var(--warn);color:#2a1608}
+.rb.go.ready>i{animation:ready 1.4s ease-in-out infinite}
+.rb:disabled{opacity:.45}
+
+/* ---------- turn banner: sweeps across the board at each water cycle (LOU-260) */
+.banner{position:absolute;left:0;right:0;top:42%;z-index:3;pointer-events:none;display:grid;justify-items:center;padding:10px 0 12px;
+  background:linear-gradient(90deg,rgba(29,106,166,0),rgba(29,106,166,.92) 18%,rgba(47,155,232,.95) 50%,rgba(29,106,166,.92) 82%,rgba(29,106,166,0));
+  box-shadow:0 4px 0 rgba(11,22,32,.35);opacity:0}
+.banner[hidden]{display:none}
+.banner b{font-family:var(--display);font-weight:700;font-size:34px;line-height:1;color:#fff;text-shadow:0 3px 0 var(--blue-d)}
+.banner small{font-weight:800;font-size:13px;color:#e4f4ff;margin-top:3px}
+.banner.go{animation:bswipe 1.7s cubic-bezier(.2,.9,.3,1) both}
+.banner.go b{animation:bpop 1.7s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes bswipe{0%{opacity:0;transform:translateX(-60%) scaleY(.6)}18%{opacity:1;transform:none}78%{opacity:1;transform:none}100%{opacity:0;transform:translateX(60%) scaleY(.8)}}
+@keyframes bpop{0%{transform:scale(.4)}22%{transform:scale(1.12)}32%{transform:none}}
+@media (prefers-reduced-motion:reduce){.banner.go,.banner.go b{animation:none;opacity:1}}
 button,a.btn{font:inherit;font-family:var(--display);font-weight:700;font-size:17px;border:0;border-radius:16px;padding:var(--btn-pad) 10px;
   color:var(--ink);background:var(--panel-2);cursor:pointer;touch-action:manipulation;display:block;box-shadow:0 4px 0 #0f2232;transition:transform .08s}
 button:active:not(:disabled),a.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0f2232}
@@ -193,16 +226,21 @@ dialog .orow>*{flex:1;text-align:center;font-size:14px;padding:10px 8px}
   .cells i{height:7px}
   .goal{padding:3px 8px;font-size:11px}
   button,a.btn{font-size:16px}
+  .rb>i{width:40px;height:40px}
+  .rb.go>i{width:54px;height:54px;margin-top:-18px}
+  .banner b{font-size:28px}
 }
 /* phone on its side: buttons in a column beside the game window */
 @media (orientation:landscape) and (max-height:540px){
-  .app{max-width:none;grid-template-columns:minmax(0,1fr) 150px;grid-template-rows:minmax(0,1fr);grid-template-areas:"board actions"}
-  .actions{grid-template-columns:1fr 1fr;align-content:end}
-  .actions .end{grid-column:1/-1;flex-wrap:wrap}
+  .app{max-width:none;grid-template-columns:minmax(0,1fr) 170px;grid-template-rows:minmax(0,1fr);grid-template-areas:"board actions"}
+  .actions{grid-template-columns:1fr 1fr 1fr;align-content:end;padding:10px 6px;row-gap:12px}
+  .actions .rb.go{grid-column:1/-1;grid-row:1}
+  .rb.go>i{margin-top:0}
+  .rb>i{width:38px;height:38px}
+  .rb>span{font-size:10px}
   .top{grid-template-columns:minmax(0,1fr) auto;align-items:center}
   .bar,.rivers{grid-column:1/-1}
   .goals{flex-wrap:nowrap}
-  .actions .end{padding-block:22px}
 }
 
 /* ---------- several rivers (tributary maps): one pill per river, tap to switch */
@@ -229,13 +267,17 @@ dialog .orow>*{flex:1;text-align:center;font-size:14px;padding:10px 8px}
 .tname small{display:block;font-size:13px;font-weight:700;line-height:1.35;color:#4c5c65}
 button.tclose{flex:none;width:40px;height:40px;padding:0;border-radius:50%;display:grid;place-items:center;background:#e2ddd0;color:var(--paper-ink);box-shadow:0 3px 0 #c4bca7}
 .tclose svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round}
-button.act{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;padding:7px 12px;text-align:left;background:var(--blue);color:#fff;box-shadow:0 4px 0 var(--blue-d)}
+button.act{display:flex;align-items:center;gap:10px;width:100%;min-height:58px;padding:7px 12px 7px 9px;border-radius:999px;text-align:left;background:var(--blue);color:#fff;box-shadow:0 4px 0 var(--blue-d)}
 button.act:active:not(:disabled){box-shadow:0 1px 0 var(--blue-d)}
 button.act.plant{background:#4caf3f;box-shadow:0 4px 0 #2f7a2a}
 button.act.trib{background:#3fb6c9;box-shadow:0 4px 0 #23818f}
 button.act.collect{background:#2f9be8;box-shadow:0 4px 0 #1d6aa6}
 button.act.moss{background:#7a9a4a;box-shadow:0 4px 0 #55702f}
 button.act:disabled{opacity:1;background:#d5d9dc;color:#6c7b83;box-shadow:0 4px 0 #b3b9be}
+.aico{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.22);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.aico svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+button.act:disabled .aico{background:rgba(0,0,0,.07)}
+button.act:disabled .aico svg{stroke:#8a979e}
 .atext{flex:1;min-width:0}
 .atext b{display:block;font-weight:700;font-size:16px;line-height:1.2}
 .atext small{display:block;font-family:var(--body);font-weight:800;font-size:12px;line-height:1.3;opacity:.92}

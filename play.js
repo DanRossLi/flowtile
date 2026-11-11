@@ -45,7 +45,6 @@ document.body.innerHTML = `
       <div class="bar">
         <div class="brand">Flow <span>Tiles</span></div>
         <div class="lvl">${M.label}</div>
-        <button class="icon" id="helpBtn" aria-label="How to play">?</button>
       </div>
       <div class="rivers" id="rivers" hidden></div>
       <div class="hud${WIND && (CYCLE || WX) ? " many" : ""}">
@@ -63,6 +62,7 @@ document.body.innerHTML = `
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
     <div class="overlay bottom" id="bottom"><div class="msg" id="msg" role="status"></div></div>
     <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
+    <div class="banner" id="banner" aria-hidden="true" hidden><b id="bTurn"></b><small id="bSub"></small></div>
     <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
       <div class="stars" id="wStars" role="img"></div>
       <div class="ribbon"><h2 id="winTitle">You reached the sea!</h2></div>
@@ -75,9 +75,10 @@ document.body.innerHTML = `
     </div></div>
   </div>
   <div class="actions">
-    <button id="undo" class="sq" aria-label="Undo" title="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
-    <button id="restart" class="sq" aria-label="Restart" title="Restart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5"/></svg></button>
-    <button id="end" class="end">Next Water Cycle <span class="gain" id="gain" hidden></span></button>
+    <button id="undo" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></i><span>Undo</span></button>
+    <button id="restart" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5"/></svg></i><span>Restart</span></button>
+    <button id="helpBtn" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 9a3 3 0 015.6 1.2c0 2-2.8 2.6-2.8 4.3"/><circle cx="12" cy="18.2" r=".6" fill="currentColor"/></svg></i><span>Help</span></button>
+    <button id="end" class="rb go"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c3-2 6-2 9 0s6 2 9 0M3 15c3-2 6-2 9 0s6 2 9 0"/><path d="M17 4l4 5-4 5" class="arr"/></svg><em class="gain" id="gain" hidden></em></i><span>Next Water Cycle</span></button>
   </div>
 </div>
 <dialog id="goal" class="goalcard" aria-labelledby="goalTitle">
@@ -332,6 +333,7 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   if (sp && !reduce) { const e = $("cWater"); if (e) { e.classList.remove("spill"); void e.offsetWidth; e.classList.add("spill") } }
   for (const h of turnHooks) { const n = h(); if (n) notes.push(n) }
   if (PERF && S.turn > TURN_GOAL) { S.turn = TURN_GOAL; S.phase = "won"; wave = now(); notes.push(`That's ${TURN_GOAL} turns: the island is scored`) }
+  if (S.phase === "play") showBanner(`Turn ${S.turn}`, sp ? `+${f.gain - sp} gal · ${sp} gal ${CYCLE ? "to the clouds" : "spilled"}` : `+${f.gain} gal of water`);
   const head = sp ? (up ? `Turn ${S.turn}: +${f.gain - sp} gal. ${up} gal spilled and rose as a cloud: it rains back on turn ${S.turn + 2}` : `Turn ${S.turn}: +${f.gain - sp} gal. Storage is full at ${cap0} gal, so ${sp} gal spilled`) : `Turn ${S.turn}: +${f.gain} gal of water`;
   say([head, ...notes].join(". ") + ".") }
 // ---------- floodplain: at full storage, spilled water floods one bare tile beside the river and greens it
@@ -414,6 +416,10 @@ function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.
 // ---------- UI
 let quiet = false; // set by the test solver: skip the screen
 function say(t, warn = false) { S.msg = t; S.warn = warn; if (!quiet) sync() }
+// A big "Turn N" banner sweeps across the board at each water cycle (LOU-260)
+let bannerT = 0;
+function showBanner(t, sub) { if (quiet) return; const b = $("banner"); tx("bTurn", t); tx("bSub", sub); b.hidden = false; b.classList.remove("go"); void b.offsetWidth; b.classList.add("go");
+  clearTimeout(bannerT); bannerT = setTimeout(() => { b.hidden = true; b.classList.remove("go") }, reduce ? 1200 : 1700) }
 function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump") }
 function sync() {
   const rv = $("rivers"), multi = TRIB && S.rivers && S.rivers.length > 1; rv.hidden = !multi;
@@ -524,10 +530,18 @@ function actions(p) {
 }
 const canDo = a => S.water >= a.cost;
 function shortBy(a) { return STORE && a.cost > S.cap ? `You can only store ${S.cap} gal. Plant to store more` : `You have ${S.water} gal. Next Water Cycle brings +${S.income}` }
+// Round icons for the tile card's actions (LOU-260)
+const ICON = {
+  plant:'<svg viewBox="0 0 24 24"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M12 15c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/></svg>',
+  trees:'<svg viewBox="0 0 24 24"><path d="M12 3l6 9h-3.5l4 6H5.5l4-6H6z"/><path d="M12 18v3"/></svg>',
+  collect:'<svg viewBox="0 0 24 24"><path d="M12 3c3.5 4.5 6 7.6 6 10.7a6 6 0 01-12 0C6 10.6 8.5 7.5 12 3z"/></svg>',
+  moss:'<svg viewBox="0 0 24 24"><path d="M4 18c2-6 7-10 16-12-1 8-6 13-13 13"/><path d="M4 21l7-8"/></svg>',
+  trib:'<svg viewBox="0 0 24 24"><path d="M6 3v6c0 4 6 5 6 9v3"/><path d="M18 3v6c0 4-6 5-6 9"/></svg>',
+};
 function renderCard() {
   const c = at(sel), el = $("tcard"); cardActs = actions(sel).filter(a => a.k !== "stream"); // the stream moves only from its selected end
   el.innerHTML = `<div class="thead"><i class="swatch" style="background:${topColor(c)}"></i><div class="tname"><b>${tileName(c)}</b>${cardActs.length ? "" : `<small>${tileText(sel)}</small>`}</div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>` +
-    cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.cost ? a.cost + " gal" : "Free"}</span></button>`).join("");
+    cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><i class="aico">${ICON[a.k === "plant" && at(sel).g ? "trees" : a.k] || ""}</i><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.cost ? a.cost + " gal" : "Free"}</span></button>`).join("");
   el.hidden = false; placeCard();
 }
 function placeCard() {
