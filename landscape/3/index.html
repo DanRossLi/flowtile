@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Landscape 3</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Landscape 3 · Keep off the sand: sand pulls the river in from every side. Get it to the sea without crossing any.
+window.MAP = {
+  "id": "land-3-nosand",
+  "label": "Landscape 3 · Keep off the sand",
+  "landscape": true,
+  "lesson": "<b>Keep off the sand.</b> Sand is free to cross, so the river always takes it. Reach the sea <b>without crossing sand</b>: turn sand into ground, or block it with a mountain.",
+  "types": [
+    "_____s___~",
+    "__s__s_s_~",
+    "T_______s~",
+    "__s__s_s_~",
+    "_____s___~",
+    "_____s___~"
+  ],
+  "elev": [
+    "1111111110",
+    "1111111110",
+    "1111111110",
+    "1111111110",
+    "1111111110",
+    "1111111110"
+  ],
+  "tileCost": 1,
+  "noSand": true,
+  "bloomGoal": 0,
+  "budget": 0,
+  "turnGoal": 4,
+  "startHint": "Tap the source on the left to let the river start.",
+  "next": "../sandbox/",
+  "nextLabel": "Sandbox",
+  "help": [
+    "Tap the source to let the river start. Its <b>flow</b> is <b>3</b>: it moves 3 tiles each water cycle, and brings you 3 gal of water to reshape the land.",
+    "Tap any land tile to change it: <b>sand</b> (1 gal) draws the river in but cuts its flow by 1, <b>rock</b> (1 gal) pushes it away, a <b>mountain</b> (3 gal) blocks it, <b>grass</b> (1 gal) turns the ground green.",
+    "<b>Springs</b> are free for the river to enter and add <b>+1 flow</b>.",
+    "Goal: reach the sea <b>without crossing sand</b>. If the river crosses sand the run ends: undo and try again. Watch the numbered circles: they show exactly where it goes next."
+  ]
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Landscape 2</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Landscape 2 · Ten green: green 10 tiles before the river reaches the sea. It washes away green it runs over.
+window.MAP = {
+  "id": "land-2-green",
+  "label": "Landscape 2 · Ten green",
+  "landscape": true,
+  "lesson": "<b>Race the river.</b> Turn <b>10 tiles green</b> before the river reaches the sea. It washes away any green it runs over, so plant beside its path. Sand blooms the meadows around it when the river crosses.",
+  "types": [
+    "___._.___~",
+    "____s____~",
+    "T___.____~",
+    "_________~",
+    "__.s.____~"
+  ],
+  "elev": [
+    "1111111110",
+    "1111111110",
+    "1111111110",
+    "1111111110",
+    "1111111110"
+  ],
+  "tileCost": 1,
+  "bloomGoal": 10,
+  "bloomLabel": "Green",
+  "showBloom": true,
+  "budget": 0,
+  "turnGoal": 5,
+  "startHint": "Tap the source on the left to let the river start.",
+  "next": "../3/",
+  "nextLabel": "Next puzzle",
+  "help": [
+    "Tap the source to let the river start. Its <b>flow</b> is <b>3</b>: it moves 3 tiles each water cycle, and brings you 3 gal of water to reshape the land.",
+    "Tap any land tile to change it: <b>sand</b> (1 gal) draws the river in but cuts its flow by 1, <b>rock</b> (1 gal) pushes it away, a <b>mountain</b> (3 gal) blocks it, <b>grass</b> (1 gal) turns the ground green.",
+    "<b>Springs</b> are free for the river to enter and add <b>+1 flow</b>.",
+    "Goal: <b>10 green tiles</b> when the river reaches the sea. Grass costs 1 gal. A river crossing <b>sand</b> blooms the meadows next to it for free, but sand cuts its flow by 1."
+  ]
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

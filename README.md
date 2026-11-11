@@ -43,6 +43,17 @@ New players start at https://danrossli.github.io/flowtile/tutorial/: twelve shor
 | 11 · Tributaries | https://danrossli.github.io/flowtile/tutorial/11/ | Build a tributary; it earns only once it connects |
 | 12 · Mountains | https://danrossli.github.io/flowtile/tutorial/12/ | Runoff on the windward side, rain shadow behind |
 
+## Landscape mode
+
+The river flows on its own and you shape the land. Each water cycle it moves as many tiles as its flow, always to the cheapest next tile (the sea first, then sand and springs, then ground, then rock), with ties going toward the sea. Tap land to change it, paid in water. Numbered circles show where the river goes next cycle. The list is at https://danrossli.github.io/flowtile/landscape/.
+
+| Level | URL | Goal |
+|---|---|---|
+| 1 · Two springs | https://danrossli.github.io/flowtile/landscape/1/ | Bend the river through both springs |
+| 2 · Ten green | https://danrossli.github.io/flowtile/landscape/2/ | Green 10 tiles before it reaches the sea |
+| 3 · Keep off the sand | https://danrossli.github.io/flowtile/landscape/3/ | Reach the sea without crossing sand |
+| Sandbox | https://danrossli.github.io/flowtile/landscape/sandbox/ | Shape an island, then copy it as a River mode map |
+
 ## River mode
 
 Dan's original maps in their original order, with no guidance: you choose where the river goes and what to grow. The list with your stars is at https://danrossli.github.io/flowtile/river/, and each map's win card goes on with **Next map**.

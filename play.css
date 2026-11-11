@@ -346,3 +346,10 @@ button.oskip{flex:none;font:800 11px var(--body);padding:6px 8px;border-radius:1
 .rb.aim>i,.stat.aim{animation:aim 1.2s ease-in-out infinite}
 @keyframes aim{50%{box-shadow:0 0 0 5px rgba(255,209,102,.9),0 0 18px rgba(255,209,102,.6)}}
 @media (prefers-reduced-motion:reduce){.obj.tick .ock,.obj.tick .ock svg,.obj.tick .otext{animation:none}.rb.aim>i,.stat.aim{animation:none;box-shadow:0 0 0 4px var(--gold)}}
+/* Landscape mode (LOU-266): copy the finished landscape as a River mode map */
+.lcopy{display:block;width:100%;margin:10px 0 0;padding:10px 12px;border:2px dashed #c9893d;border-radius:14px;background:#fff6e6;color:#7a4d16;font:700 14px Fredoka,Nunito,sans-serif;cursor:pointer}
+.lcopy:active{transform:translateY(2px)}
+button.act.sand:not(:disabled){background:#d9a93c;box-shadow:0 4px 0 #a37a22}
+button.act.rock:not(:disabled){background:#8d877c;box-shadow:0 4px 0 #625d55}
+button.act.boulder:not(:disabled){background:#9a6f3f;box-shadow:0 4px 0 #6b4b28}
+button.act.bare:not(:disabled){background:#a9784a;box-shadow:0 4px 0 #765230}
