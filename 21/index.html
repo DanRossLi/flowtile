@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Map 21</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script>
+// Map 21 · Caves: a mountain wall with one way under it. Caves are paired: in one, out of the other, for the normal tile cost.
+// Map key: _ bare ground  B mountain  C cave (paired)  ~ sea  T source (3 gal/turn)
+window.MAP = {
+  "id": "map-21-caves",
+  "label": "Map 21 · Caves",
+  "lesson": "<b>Caves.</b> Run your river into a cave (1 gal, like bare ground) and it comes out of the <b>other cave with the same number</b>. It's a shortcut under the mountains, but the land in between gets no river. Or take the long way round.",
+  "types": [
+    "______B_____~",
+    "______B_____~",
+    "T__C__B__C__~",
+    "______B_____~",
+    "____________~"
+  ],
+  "elev": [
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110"
+  ],
+  "storage": 3,
+  "bloomGoal": 4,
+  "bloomLabel": "Green",
+  "turnGoal": 5,
+  "tileCost": 1,
+  "showBloom": true,
+  "startHint": "Tap the spring on the left to start.",
+  "next": "../perfection/",
+  "help": [
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
+    "A <b>cave</b> is a dark rock arch with a number. Run your river into it for <b>1 gal</b> and it comes out of the other cave with the same number.",
+    "The underground stretch is a shortcut, but no land along it gets the river, so there's less to plant beside.",
+    "The long way round the bottom of the mountains costs more water and turns, but passes more land."
+  ]
+};
+</script>
+<script src="../play.js"></script>
+</body>
+</html>

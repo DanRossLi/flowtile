@@ -20,6 +20,8 @@
 // Alpine trees (LOU-235): on storage maps with mountains, grass touching a mountain can grow alpine trees (1 gal). Each one
 //   beside your river collects 1 snow per water cycle (2 on a mountain's water side), up to 3. Snow doesn't count against
 //   storage and never spills; tap an alpine tree to melt all your snow into water at once, any time (Dan, Nov 11).
+// Map code C (LOU-276): caves, paired in reading order (1st with 2nd, 3rd with 4th). Run the river into one for the normal
+//   tile cost and it comes out of the other; the land between is skipped. caves: [[[x,y],[x,y]], ...] sets the pairs.
 // Map code M (LOU-274): marsh. Next to your river it stores 2 gal; with green on two opposite sides it adds +1 flow.
 //   The river can run through it (normal cost), which drains it.
 // Map code f (LOU-273): fertile ground. Green on it stores 1 gal more (grass 2, meadow 3, trees 4) and its trees count double toward a grove.
@@ -57,7 +59,7 @@ const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add 
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
 const PLAY_TILE = 118; // LOU-262: a tile's width in px at play zoom, so 3–4 fit across a 390px phone (and stand ~59px tall)
-const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c",fertile:"#7a4f2e",marsh:"#4f8a7c"};
+const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c",fertile:"#7a4f2e",marsh:"#4f8a7c",cave:"#9a948a"};
 const BANKS = true; // river drawn as a channel with banks; lakes get a shore
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -151,9 +153,13 @@ function fresh() {
   const tiles = [];
   for (let y = 0; y < H; y++) { tiles.push([]); for (let x = 0; x < W; x++) {
     const ch = TYPES[y][x];
-    const t = {"_":"bare",f:"bare",M:"marsh",F:"bare",g:"bare",m:"bare",t:"bare",p:"bare",v:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
+    const t = {"_":"bare",f:"bare",M:"marsh",C:"cave",F:"bare",g:"bare",m:"bare",t:"bare",p:"bare",v:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
     tiles[y].push({t, e:+ELEV[y][x], river:false, g:ch==="F"?TREES:{g:1,m:MEADOW,t:TREES}[ch]||0, bloom:"gmt".includes(ch), wild:ch==="F", pool:ch==="p", beaver:ch==="v" ? 1 : 0, fert:ch==="f", ro:0, rs:false, rid:-1, pr:"gmt".includes(ch) ? 0 : -1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
   }}
+  // Caves (LOU-276): pairs, in reading order unless the map sets them
+  { const cs = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (TYPES[y][x] === "C") cs.push([x, y]);
+    const pairs = M.caves || cs.reduce((a, q, i) => (i % 2 ? a[a.length - 1].push(q) : a.push([q]), a), []);
+    pairs.forEach((pr, i) => { if (pr.length < 2) return; const [a, b] = pr; Object.assign(tiles[a[1]][a[0]], {mate:b, cave:i + 1}); Object.assign(tiles[b[1]][b[0]], {mate:a, cave:i + 1}) }) }
   // Mountains (LOU-269): each has exactly one water side, set per mountain (waterSides) or by the wind. The tile on that
   // face is its runoff tile (ro 1 = waiting, 2 = claimed); the tile on the far side is rain shadow.
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (TYPES[y][x] !== "B") continue;
@@ -186,6 +192,7 @@ function cost(from, to) {
   if (b.e > level(from)) return -1;
   if (merge) return M.tileCost ?? 1;
   if (b.t === "lake") return LAKE_TILE_COST * S.lakes[b.lake].tiles.length;
+  if (b.t === "cave" && (!b.mate || at(b.mate).river)) return -1; // its other end is already used
   let c = M.tileCost ?? 1; // flat maps: the tile type sets the cost
   if (b.t === "spring" || b.t === "sand") c = 0; // sand is free to enter; it cuts flow instead (see build)
   if (b.t === "rock") c += 1;   // hard ground
@@ -356,6 +363,8 @@ function build(mv) {
   const cb = recombo(); if (cb) notes.push(cb);
   const bv = beavers(); if (bv) notes.push(bv);
   S.head = mv.p;
+  if (b.t === "cave" && b.mate) { const q = b.mate, k = at(q); k.river = true; k.rid = S.active; k.from = null; anim.set(q + "", now() + 500); S.head = q;
+    const r2 = claimRunoff([q]); notes.push(`The river went underground and came out of the other cave${r2 ? `. Mountain runoff: flow +${r2}` : ""}`) }
   if (b.t === "ocean") { S.phase = "won"; wave = now(); float(mv.p, "Splash!", "#ffffff"); say(`You reached the sea on turn ${S.turn}.`); return }
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.push(`This river can't go on. Tap your ${riverName(openRivers()[0]).toLowerCase()} to switch`); say(notes.join(". ") + ".", true); return }
   if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on: the island is scored. Undo to try another way."); return }
@@ -639,12 +648,14 @@ function tileName(c) {
   if (c.rs) return "Rain shadow";
   if (c.fert && c.t === "bare") return "Fertile ground";
   if (c.t === "marsh") return "Marsh";
+  if (c.t === "cave") return `Cave ${c.cave || ""}`.trim();
   return {bare:"Bare ground", meadow:"Meadow", sand:"Sand", rock:"Rock", boulder:"Mountain", spring:"Spring", lake:"Empty lake", ocean:"The sea", source:"Source"}[c.t];
 }
 function tileText(p) {
   const c = at(p), cs = combos(), inCombo = cs.find(k => k.tiles.some(q => q + "" === p + "")), bee = cs.find(k => k.bees.some(q => q + "" === p + ""));
   if (c.river && c.beaver === 1) return "Your river runs through the beaver colony. Grow trees next to it and they dam a pond: +1 flow.";
   if (c.river && c.beaver === 2) return "The beavers dammed a pond on your river. It adds +1 flow.";
+  if (c.river && c.t === "cave") return "Your river runs underground between this cave and its pair.";
   if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
   if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees${inCombo.len > inCombo.tiles.length ? " (fertile trees count double)" : ""}: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : "";
   if (bee) return "Pollinators: bees from this meadow add +1 flow to the grove next to it.";
@@ -660,6 +671,7 @@ function tileText(p) {
   if (c.ro === 1) return `Water side: +1 flow when your river reaches this tile (through or beside it).${MELT ? " Snowmelt adds +3 gal once." : ""} It's the only tile at this mountain that gives flow.`;
   if (c.ro === 2) return "Water side: your river already took this mountain's runoff (+1 flow).";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
+  if (c.t === "cave") return c.mate ? `Run your river into this cave (${M.tileCost ?? 1} gal, like bare ground) and it comes out of cave ${c.cave} at the other end, ${Math.abs(c.mate[0] - p[0]) + Math.abs(c.mate[1] - p[1])} tiles away. A shortcut, but the land between gets no river.${at(c.mate).river ? " Its other end is already used, so it's closed." : ""}` : "A cave with no pair: the river can't use it.";
   if (c.t === "marsh") { const by = marshBy(p), gr = marshGreen(p);
     return by ? `Beside your river: stores 2 gal. ${gr ? "Green on both sides: +1 flow." : "Grow green on two opposite sides of it (both left and right, or above and below) for +1 flow."} A river running through it drains it.`
       : "Wet ground. Run your river beside it (not through it) and it stores 2 gal; with green on two opposite sides it also adds +1 flow." }
@@ -679,6 +691,7 @@ function actions(p) {
       name = `Join the ${riverName(c.rid).toLowerCase()}`; sub = g === 0 ? `Connects to the main river: flow ${S.income} → ${S.income + w}` : "The tributaries join; their flow still waits for the main river" }
     else if (c.t === "ocean") { name = "Reach the sea"; sub = "Finishes the map" }
     else if (c.t === "lake") { name = "Fill the lake"; sub = STORE ? `Then you can plant up to ${REACH} tiles from it` : "Then the stream can leave from any side" }
+    else if (c.t === "cave") { name = "Go underground"; sub = `Comes out of cave ${c.cave} on the other side` }
     else if (c.t === "marsh") { name = "Run through the marsh"; warn = "Drains the marsh: it only stores water and gives flow when your river runs beside it" }
     else if (c.t === "spring") { name = "Join the spring"; sub = onMain(S.active) ? `Flow ${S.income} → ${S.income + 1}` : "+1 flow once this tributary joins the main river" }
     else if (c.t === "sand") { const g = NEW ? nbrs(p).filter(n => { const k = at(n); return k.t === "bare" && !k.river && !k.g && !k.rs && !touchesRock(n) }).length : 0;
@@ -1264,8 +1277,18 @@ function lodge(cx, cy, pond, t, h) { // a beaver lodge on the bank of a river ti
     ctx.globalAlpha = .6 + .3 * Math.sin(t * 2 + h); ell(cx - 6, cy - 3, 3, 1.5, "#ffffff"); ctx.globalAlpha = 1 }
   const x = cx + 13, y = cy - 6; ell(x + 1, y + 4, 11, 4, "rgba(0,0,0,.2)"); ctx.beginPath(); ctx.ellipse(x, y, 10, 8, 0, Math.PI, 0); ctx.fillStyle = "#7a5233"; ctx.fill();
   for (let i = 0; i < 4; i++) line([[x - 9 + i * 5, y], [x - 6 + i * 4, y - 6 - (i % 2) * 2]], "#5a3a20", 1.6); ell(x, y - 1, 2.5, 2, "#2a1a0e") }
+function caveArch(cx, cy, c, t, h) { // a dark rock arch with a numbered tag; water spills out of the exit cave
+  ell(cx + 3, cy + 6, 22, 7, "rgba(0,0,0,.22)");
+  ctx.beginPath(); ctx.moveTo(cx - 20, cy + 6); ctx.quadraticCurveTo(cx - 22, cy - 22, cx, cy - 26); ctx.quadraticCurveTo(cx + 22, cy - 22, cx + 20, cy + 6); ctx.closePath(); ctx.fillStyle = "#7c766d"; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx + 2, cy - 26); ctx.quadraticCurveTo(cx + 22, cy - 22, cx + 20, cy + 6); ctx.lineTo(cx + 10, cy + 6); ctx.closePath(); ctx.fillStyle = "#666058"; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - 10, cy + 6); ctx.quadraticCurveTo(cx - 11, cy - 12, cx, cy - 13); ctx.quadraticCurveTo(cx + 11, cy - 12, cx + 10, cy + 6); ctx.closePath(); ctx.fillStyle = "#1f1b18"; ctx.fill();
+  ell(cx - 12, cy - 18, 3, 2, "#a8a196"); ell(cx + 6, cy - 22, 2.5, 1.6, "#a8a196");
+  if (c.river) { ell(cx, cy + 5, 9, 3, "#4aa3e8"); const k = reduce ? 0 : (t * 1.2 + h / 10) % 1; ctx.globalAlpha = 1 - k; ell(cx, cy + 5, 4 + k * 6, 1.5 + k * 2, "#e6f6ff"); ctx.globalAlpha = 1 }
+  if (c.cave) { ctx.save(); const x = cx + 15, y = cy - 26; ell(x, y, 8, 8, "#2a2622"); ctx.lineWidth = 2; ctx.strokeStyle = "#e9e3d6"; ctx.stroke();
+    ctx.fillStyle = "#ffffff"; ctx.font = "800 10px Fredoka, Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(c.cave, x, y + .5); ctx.restore() } }
 function deco(p, c, o, t, h) {
   const {x: cx, y: cy} = o, sway = reduce ? 0 : Math.sin(t * 1.6 + h) * 1.2;
+  if (c.t === "cave") { caveArch(cx, cy, c, t, h); return }
   if (c.river) return; // river tiles are drawn with the river (drawRivers)
   if (c.t === "ocean") { const w = reduce ? 0 : Math.sin(t * 2 + p[0] + p[1]) * 3; if (h % 3 === 0) line([[cx - 10 + w, cy - 2], [cx + 6 + w, cy - 2]], "rgba(255,255,255,.6)", 2);
     ctx.globalAlpha = .5 + .3 * Math.sin(t * 2 + h); line([[cx - 16, cy + 6], [cx - 8, cy + 3], [cx, cy + 6], [cx + 8, cy + 3]], "#ffffff", 1.8); ctx.globalAlpha = 1; return }
