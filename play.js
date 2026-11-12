@@ -1280,7 +1280,8 @@ function flat(p, c, cx, cy, h, r = rng("f", p)) {
       if (f[0] === "#9a7ad8") { line([[x, y], [x, y - 5]], "rgba(70,120,70,.6)", 1); for (let j = 0; j < 3; j++) ell(x, y - 2 - j * 1.6, 1.2, .9, f[j % 2]) } else { line([[x, y], [x, y - 3]], "rgba(70,120,70,.6)", .9); ell(x, y - 3.4, 1.8, 1.4, f[0]); ell(x - .4, y - 3.8, .7, .5, f[1]) } } }
     if (riverBy(p) && r() < .5) { const [x, y] = inTile(p, r, .5); shrub(x, y, .8, r) }
     return }
-  if (k === "meadow") { for (let i = 0; i < 3; i++) { const [x, y] = inTile(p, r, .6); ell(x, y, 5 + r() * 4, 2 + r() * 1.6, "rgba(240,248,215,.45)") } return }
+  if (k === "meadow") { for (let i = 0; i < 4; i++) { const [x, y] = inTile(p, r, .65); ell(x, y, 6 + r() * 5, 2.4 + r() * 1.8, i % 2 ? "rgba(250,246,200,.45)" : "rgba(214,236,160,.55)") }
+    for (let i = 0; i < 10; i++) { const [x, y] = inTile(p, r, .75); ell(x, y, 1, .7, ["#ffffff", "#f2c531", "#e88fb0", "#b9a0e6"][i % 4]) } return } // sunlit patches and a scatter of tiny far-off blooms
   if (c.moss) { ell(cx - 10, cy + 2, 7, 3.5, "#6fa84a"); ell(cx + 8, cy - 5, 6, 3, "#7cb956"); ell(cx + 3, cy + 7, 5, 2.5, "#5f9a40") }
   if (c.ash) { ell(cx - 8, cy + 2, 9, 4, "rgba(40,30,25,.4)"); ell(cx + 9, cy - 4, 7, 3, "rgba(40,30,25,.35)") }
   if (M.salt && salty(p) && c.t === "bare") for (let i = 0; i < 7; i++) { const [x, y] = inTile(p, r, .7); ell(x, y, 2.2, 1.3, "#fbf8f0") }
@@ -1385,7 +1386,7 @@ function drawRivers(t) {
     ribbon(.48, 0, -.55); ctx.fillStyle = "#6fa9c4"; ctx.fill(); ribbon(.16, 0, -.95); ctx.fillStyle = "rgba(63,127,159,.55)"; ctx.fill();
     // cut banks on the outside of sharp bends, pebbly point bars on the inside; riffles over a couple of stones
     for (let i = 1; i < ch.n - 1; i++) { const j = i * 8; if (j >= m) break; const tn = T[j], [x, y, nx, ny] = C[j], w = W[j] / 2, h = hsh(...ch.tiles[i]); if (Math.abs(tn) > .5) { const sg = tn > 0 ? -1 : 1;
-      ctx.beginPath(); for (let q = -3; q <= 3; q++) { const [a, b, mx, my] = C[Math.max(0, Math.min(m - 1, j + q))], ww = W[Math.max(0, Math.min(m - 1, j + q))] / 2 + 3; ctx.lineTo(a + mx * ww * sg, b + my * ww * sg) } ctx.strokeStyle = "#8a6a48"; ctx.lineWidth = 2.6; ctx.lineCap = "round"; ctx.stroke();
+      ctx.beginPath(); for (let q = -3; q <= 3; q++) { const [a, b, mx, my] = C[Math.max(0, Math.min(m - 1, j + q))], ww = W[Math.max(0, Math.min(m - 1, j + q))] / 2 + 3; ctx.lineTo(a + mx * ww * sg, b + my * ww * sg) } ctx.strokeStyle = "rgba(86,138,82,.5)"; ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.stroke(); // a mossy bank edge (Dan, Nov 12: not brown)
       for (let q = -2; q <= 2; q += 2) { const [a, b, mx, my] = C[Math.max(0, Math.min(m - 1, j + q))], ww = W[j] / 2 + 5; line([[a + mx * ww * sg, b + my * ww * sg], [a + mx * (ww - 2.5) * sg, b + my * (ww - 2.5) * sg + 1]], "#6f9e5c", 2) }
       const px = x - nx * (w + 1) * sg, py = y - ny * (w + 1) * sg; ell(px, py, 7, 3, "#e2d6ae"); pebble(px - 2, py, .55); pebble(px + 2.5, py + .5, .45) }
       else if (h % 4 === 1 && at(ch.tiles[i]).t !== "lake") { for (const [dx, dy] of [[-3, 1], [3, -1]]) { ell(x + dx, y + dy, 1.8, 1.1, "#9c9a8c"); ctx.globalAlpha = reduce ? .6 : .45 + .3 * osc(t, 1.4, h * .1 + dx);
@@ -1468,11 +1469,19 @@ function tufts(cx, cy, h, t) { // soft painted grass blades that rotate ±2° ar
     ctx.save(); ctx.translate(x, y); ctx.rotate(osc(t, 2.6 + (i % 3) * .5, (h + i) * .17) * 2 * Math.PI / 180);
     ctx.beginPath(); ctx.moveTo(-3.5, -5); ctx.quadraticCurveTo(-2, -2, -1.5, 0); ctx.moveTo(.5, -7); ctx.lineTo(0, 0); ctx.moveTo(4, -5); ctx.quadraticCurveTo(2, -2, 1.5, 0); ctx.strokeStyle = "rgba(70,140,80,.7)"; ctx.lineWidth = 1.2; ctx.lineCap = "round"; ctx.stroke(); ctx.restore() }) }
 const FLW = ["#f4b8c8", "#f2d13a", "#ffffff", "#b9a2ea", "#e0503c"];
-function flowers(cx, cy, h, t, full) { // wildflowers on a meadow that twinkle (opacity 1 → .65)
-  const spots = [[-16, 0], [-5, -9], [10, -4], [3, 8], [17, 4], [-8, 7], [6, -12], [-14, -6], [12, 9], [-2, 1]].slice(0, full ? 10 : 7);
-  spots.forEach(([a, b], i) => { if ((h + i) % 7 === 6) return; const x = cx + a, y = cy + b;
-    line([[x, y + 3], [x, y]], "rgba(80,130,70,.7)", 1); ctx.globalAlpha = .825 + .175 * osc(t, 2.4 + (i % 4) * .4, (h * 3 + i) * .13);
-    ell(x, y - .5, 2.2, 1.8, FLW[(h + i) % 5]); ell(x, y - .5, .8, .7, "#e8b530"); ctx.globalAlpha = 1 }) }
+// Meadows (Dan, Nov 12: "make meadows more visually appealing"): two or three drifts of mixed wildflowers (daisies, poppies,
+// cornflowers, buttercups, lavender) over a soft sunlit patch, seeded per tile. Heads twinkle and sway half a pixel.
+const MFL = [["#ffffff", "#f2c531"], ["#e5573f", "#3b2a2a"], ["#5b8fe0", "#d9e6ff"], ["#f4c531", "#fff3b0"], ["#a985da", "#a985da"]];
+function flowers(cx, cy, h, t, full) { const r = rng("mf", h), drifts = full ? 4 : 3;
+  for (let d = 0; d < drifts; d++) { const a = r() * Math.PI * 2, rr = 5 + r() * 9, dx = cx + Math.cos(a) * rr * 1.3, dy = cy + Math.sin(a) * rr * .55, kind = Math.floor(r() * 5), n = 6 + Math.floor(r() * 4);
+    ell(dx, dy + 1, 10, 4.2, "rgba(255,252,214,.35)");
+    for (let i = 0; i < n; i++) { const x0 = dx + (r() - .5) * 15, y = dy + (r() - .5) * 6, k = (i + d) % 4 === 3 ? (kind + 1) % 5 : kind, [c1, c2] = MFL[k], sw = reduce ? 0 : .5 * Math.sin(t * 1.4 + h * .3 + i), x = x0 + sw, st = 2.5 + r() * 2.5;
+      line([[x0, y + 1], [x, y + 1 - st]], "rgba(78,128,66,.75)", .9); const hy = y + 1 - st;
+      ctx.globalAlpha = .85 + .15 * osc(t, 2.4 + (i % 4) * .4, (h * 3 + i + d) * .13);
+      if (k === 0) { for (let q = 0; q < 5; q++) { const b = q / 5 * Math.PI * 2; ell(x + Math.cos(b) * 1.5, hy + Math.sin(b) * .9, 1.1, .8, c1) } ell(x, hy, .9, .7, c2) }
+      else if (k === 4) { for (let q = 0; q < 3; q++) ell(x, hy - q * 1.5, 1, .8, q ? "#c3a6ec" : c1) }
+      else { ell(x, hy, k === 3 ? 1.6 : 2, k === 3 ? 1.3 : 1.6, c1); ell(x - .2, hy - .2, .7, .55, c2) }
+      ctx.globalAlpha = 1 } } }
 function mountain(cx, cy, t, face) {
   ell(cx + 4, cy + 9, 34, 10, "rgba(50,70,70,.2)");
   const fx = face == null ? null : (() => { const a = -60 * face * Math.PI / 180, q = proj(R * .82 * Math.cos(a), R * .82 * Math.sin(a)); return [q.x, q.y] })();
@@ -1617,6 +1626,7 @@ function draw() {
     deco(p, c, o, t, h);
     if (s !== 1) ctx.restore();
   }
+  if (!TUT && hsel && S.phase === "play" && mv.size) { ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); for (const k of mv.keys()) hexPts(k.split(",").map(Number), R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fillStyle = "rgba(222,228,229,.34)"; ctx.fill("evenodd") } // the river's end is selected: the tiles it can flow to stay bright
   if (tq && !aim) { ctx.fillStyle = "rgba(222,228,229,.62)"; ctx.fillRect(-1e5, -1e5, 2e5, 2e5) } // the target is a button: grey the whole board
   else if (aim && TUT) { ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); for (const k of aim) hexPts(k.split(",").map(Number), R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fillStyle = "rgba(222,228,229,.62)"; ctx.fill("evenodd") } // tutorial: everything but the target greys out
   else if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = TUT ? "rgba(30,50,60,.34)" : "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
@@ -1625,8 +1635,10 @@ function draw() {
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
     const m = hsel && S.phase === "play" && (!TUT || !aim || aim.has(p + "")) ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
     if (m || pk) { // a target tile: an amber wash with a marching dashed outline and a cost bubble; grey if you can't afford it
-      const ok = pk || S.water >= m.cost; rpath(d(), 9); ctx.fillStyle = ok ? "rgba(255,217,138,.2)" : "rgba(150,150,150,.2)"; ctx.fill();
-      ctx.save(); if (ok) { ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 9 * scale } ink(ok ? `rgba(255,217,138,${reduce ? .95 : .8 + .2 * osc(t, 1.6, h * .03)})` : "rgba(150,150,150,.75)", 2.6); ctx.restore();
+      const ok = pk || S.water >= m.cost, pu = reduce ? 1 : .5 + .5 * osc(t, 1.6, h * .03); rpath(d(), 9); ctx.fillStyle = ok ? `rgba(255,224,150,${.3 + .12 * pu})` : "rgba(150,150,150,.22)"; ctx.fill();
+      if (ok) { rpath(hexPts(p, R - 9), 8); ctx.fillStyle = "rgba(255,255,240,.22)"; ctx.fill() } // a soft lit centre
+      ctx.save(); if (ok) { ctx.shadowColor = "#ffcf6a"; ctx.shadowBlur = (12 + 6 * pu) * scale } rpath(d(), 9); ink(ok ? `rgba(255,212,120,${.85 + .15 * pu})` : "rgba(150,150,150,.75)", 3.4); ctx.restore();
+      if (ok) { rpath(d(), 9); ink("rgba(255,255,255,.75)", 1.2) }
       badges.push({o, pk, ok, text: pk ? `+${c.yield}` : m.cost ? `−${m.cost}` : "0", sand: !!m && c.t === "sand"});
     } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true});
     } else if (PLACE && S.phase === "pick" && placeable(p)) { // tiles you can place a source on glow softly (LOU-263)
