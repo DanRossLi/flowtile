@@ -17,6 +17,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 6. **Ask, don't guess.** If anything needs Dan's decision, ask Dan. Examples are making the repo public, gh auth, hosting, or a rule the issue leaves open.
 7. **Quick questions first:** when Dan says to ask questions before going to bed, ask them all at once at the start, then work without stopping.
 8. **Linear tracking:** make one issue per piece of new work.
+   - **Issue limit** (Dan, Nov 11: "Keep using spec issues"): the workspace is at Linear's free-plan issue limit, so don't create new issues. Track each piece of work on the spec or Idea issue it builds (comment, link, status) instead.
 
 ## Hosting
 
