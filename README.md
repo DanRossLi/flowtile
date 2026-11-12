@@ -66,8 +66,6 @@ Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–23 below carry on fro
 | Spring Hill | https://danrossli.github.io/flowtile/spring-hill/ | The original test map, now flat |
 | 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest where the trees left beside you become groves |
 | 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
-| 13 · Spread | https://danrossli.github.io/flowtile/13/ | Grass spreads along the bank; plant next to meadows to make it certain |
-| 14 · Floodplain | https://danrossli.github.io/flowtile/14/ | Spill floods the bank green |
 | 15 · Harvest | https://danrossli.github.io/flowtile/15/ | Rain pools, snowmelt and moss: make room in storage before you collect |
 | 16 · Wildlife | https://danrossli.github.io/flowtile/16/ | Route through a beaver colony and grow trees by it for a pond (+1 flow); trees keep deer off your grass |
 | 17 · Wildfire | https://danrossli.github.io/flowtile/17/ | Lightning sets dry forest alight; keep your trees away from it |

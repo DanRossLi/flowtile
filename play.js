@@ -65,7 +65,8 @@ const PLACE = !!M.placeSource, PLACE_FLOW = 3, SEA_GAP = 4; // LOU-263: place yo
 // with water. MAP.budget adds water at the start; MAP.noSand fails the run if the river crosses sand.
 const LAND = !!M.landscape;
 // Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
-const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = !!M.spread, FLOOD = !!M.floodplain, MELT = !!M.snowmelt, MOSS = !!M.moss, DEER = !!M.deer;
+const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = false, FLOOD = false, // spread (grass and bird seeds) and floodplain greening are removed (Dan, Nov 12: "grass and tiles are randomly spawning...get rid of that mechanic")
+  _unused = [M.spread, M.floodplain], MELT = !!M.snowmelt, MOSS = !!M.moss, DEER = !!M.deer;
 const RECH = !!M.rechannel && !M.tributaries; // rechannel (LOU-238)
 const ALP = STORE > 0 && TYPES.some(r => r.includes("B")); // alpine trees (LOU-235)
 const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add themselves here
