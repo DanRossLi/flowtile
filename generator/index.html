@@ -64,6 +64,7 @@
       <div class="opt"><span>Storage</span><div class="seg" data-name="storage"></div></div>
     </fieldset>
     <fieldset><legend>Terrain</legend>
+      <div class="opt"><span>Biome</span><div class="seg" data-name="biome"></div></div>
       <div class="opt"><span>Mountains</span><div class="seg" data-name="B"></div></div>
       <div class="opt"><span>Rock</span><div class="seg" data-name="r"></div></div>
       <div class="opt"><span>Sand</span><div class="seg" data-name="s"></div></div>
@@ -94,10 +95,19 @@ const OPTS = {
   src: [["1", "One"], ["2", "Two"], ["place", "Place it"]],
   storage: [["on", "On"], ["off", "Off"]],
   B: AMT, r: AMT, s: AMT, L: AMT, F: AMT, g: AMT, o: AMT, M: AMT, f: AMT, p: AMT, v: AMT, C: [["0", "None"], ["1", "One pair"], ["2", "Two pairs"]],
+  biome: [["custom", "Your mix"], ["meadow", "Meadow"], ["desert", "Desert"], ["alpine", "Alpine"], ["rain", "Rainforest"]],
   wind: [["off", "Off"], ["on", "On"]],
   wx: [["off", "Off"], ["on", "Rain, drought & fire"]]
 };
-const DEF = {size:"m", mode:"sea", src:"1", storage:"on", B:"1", r:"1", s:"1", L:"1", F:"1", g:"1", o:"1", M:"0", f:"0", p:"0", v:"0", C:"0", wind:"on", wx:"off"};
+// Biome presets set the terrain amounts (and a rule or two); changing any terrain by hand makes it "Your mix" again.
+const TERRAIN = ["B", "r", "s", "L", "F", "g", "o", "M", "f", "p", "v", "C"];
+const BIOMES = {
+  meadow: {B:"1", r:"1", s:"0", L:"1", F:"1", g:"3", o:"1", M:"0", f:"1", p:"1", v:"1", C:"0"},
+  desert: {B:"1", r:"2", s:"3", L:"0", F:"0", g:"0", o:"3", M:"0", f:"0", p:"0", v:"0", C:"0"},
+  alpine: {B:"3", r:"2", s:"0", L:"2", F:"1", g:"2", o:"1", M:"0", f:"0", p:"1", v:"0", C:"1", wind:"on"},
+  rain: {B:"1", r:"0", s:"0", L:"2", F:"3", g:"2", o:"1", M:"2", f:"1", p:"2", v:"2", C:"0", wx:"on"}
+};
+const DEF = {biome:"custom", size:"m", mode:"sea", src:"1", storage:"on", B:"1", r:"1", s:"1", L:"1", F:"1", g:"1", o:"1", M:"0", f:"0", p:"0", v:"0", C:"0", wind:"on", wx:"off"};
 const SIZES = {s:[9, 5], m:[13, 7], l:[18, 10]};
 const $ = id => document.getElementById(id);
 const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (_) {} };
@@ -152,7 +162,9 @@ function generate(o) {
   const types = g.map(r => r.join("")), elev = types.map(r => [...r].map(c => "~L".includes(c) ? "0" : "1").join(""));
   const sizeName = {s:"small", m:"medium", l:"large"}[o.size];
   const map = {id:"gen-" + o.seed.replace(/[^\w-]/g, "").slice(0, 30), label:"Generated · " + o.seed.slice(0, 30), types, elev, tileCost:1, showBloom:true,
-    lesson:`A ${sizeName} island made by the map generator from the seed “${o.seed.slice(0, 30)}”.`};
+    gen:{seed:o.seed.slice(0, 30), size:sizeName, biome:o.biome}};
+  if (o.biome === "alpine") map.snowmelt = true;
+  if (o.biome === "desert") map.salt = true;
   if (o.storage === "on") map.storage = 3;
   if (o.src === "place") map.placeSource = true;
   if (o.wind === "on") map.wind = [[-1, 0], [0, -1], [0, 1]][ri(0, 2)];
@@ -188,7 +200,11 @@ function preview(map) {
 const code = map => { const b = new TextEncoder().encode(JSON.stringify(map)); let bin = ""; b.forEach(x => bin += String.fromCharCode(x)); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") };
 let cur = null;
 function update() { const o = opts(); store("ft-gen-opts", JSON.stringify(o)); cur = generate(o); preview(cur); $("msg").textContent = "" }
-$("f").addEventListener("change", update);
+const setSeg = (n, v) => { const r = document.querySelector(`input[name="${n}"][value="${v}"]`); if (r) r.checked = true };
+$("f").addEventListener("change", e => { const n = e.target.name;
+  if (n === "biome" && BIOMES[e.target.value]) for (const [k, v] of Object.entries(BIOMES[e.target.value])) setSeg(k, v);
+  else if (TERRAIN.includes(n)) setSeg("biome", "custom");
+  update() });
 $("seed").addEventListener("input", update);
 $("dice").onclick = $("reroll").onclick = () => { $("seed").value = randSeed(); update() };
 $("f").onsubmit = e => e.preventDefault();
@@ -198,6 +214,8 @@ $("copy").onclick = async () => { const url = new URL("../custom/#" + code(cur),
   $("msg").textContent = ok ? "Link copied: anyone with it plays this island." : ""; if (!ok) prompt("Map link:", url) };
 document.fonts && document.fonts.ready.then(() => cur && preview(cur));
 update();
+// "New island" on a generated island's win card comes back here with ?again: same options, a new seed, straight into play.
+if (new URLSearchParams(location.search).has("again")) { $("seed").value = randSeed(); update(); location.replace("../custom/#" + code(cur)) }
 </script>
 </body>
 </html>

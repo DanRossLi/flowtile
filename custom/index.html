@@ -26,6 +26,13 @@
     map.elev ||= map.types.map(r => [...r].map(c => "~L".includes(c) ? "0" : "1").join(""));
     map.id = "custom-" + (map.id || "map"); map.label = "Custom · " + String(map.label || "Map").replace(/<[^>]*>/g, "").slice(0, 40);
     map.next = null; map.placeSource = true; map.startHint = "Tap a source to start."; map.help = ["A map someone shared with you as a code."]; map.lesson = "A map someone shared with you. Reach the sea and see what you can grow."; map.turnGoal ||= 10;
+    if (map.gen && typeof map.gen === "object") { // made by the map generator: its own goal card and a New island button
+      const esc = s => String(s || "").replace(/[&<>"']/g, ch => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"})[ch]).slice(0, 40);
+      const biome = {meadow:"meadow", desert:"desert", alpine:"alpine", rain:"rainforest"}[map.gen.biome] || "", size = {small:"small", medium:"medium", large:"large"}[map.gen.size] || "";
+      map.label = "Generated · " + esc(map.gen.seed);
+      map.lesson = `A ${[size, biome].filter(Boolean).join(" ")} island from the map generator, seed <b>${esc(map.gen.seed)}</b>. ${map.mode === "perfection" ? "Score as many points as you can." : "Reach the sea and see what you can grow."}`;
+      map.help = ["Made by the map generator. The same seed and options always give the same island, so you can share it with <b>Copy map code</b>.", "<b>New island</b> on the win card makes another one with the same options."];
+      map.next = "../generator/?again"; map.nextLabel = "New island"; map.startHint = "Tap a source to start, or tap a glowing land tile to place your own." }
     window.MAP = map;
   } else {
     window.MAP = null;
