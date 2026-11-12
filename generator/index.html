@@ -16,7 +16,7 @@
   h1{font-size:30px;margin:6px 0 2px}
   .sub{margin:0 0 14px}
   .back{display:inline-block;margin:0 0 6px;font-family:"Patrick Hand",cursive;font-size:17px;color:#2f7fb8;text-decoration:none}
-  .prev{position:relative;background:#efe3c4;border-radius:10px;box-shadow:0 0 0 1.5px #6b4f33,3px 4px 0 rgba(107,79,51,.45);margin:0 0 14px;overflow:hidden}
+  .prev{position:relative;background:linear-gradient(180deg,#cfe6ea,#8fbccb);border-radius:10px;box-shadow:0 0 0 1.5px #6b4f33,3px 4px 0 rgba(107,79,51,.45);margin:0 0 14px;overflow:hidden}
   .prev canvas{display:block;width:100%;height:auto}
   .prev .seed{position:absolute;left:10px;top:8px;font-family:"Patrick Hand",cursive;font-size:16px;color:#7a5c3c;background:rgba(251,244,226,.85);border-radius:6px;padding:0 8px;box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.45)}
   .row{display:flex;gap:10px;margin:0 0 14px}
@@ -176,22 +176,22 @@ function generate(o) {
 }
 
 // ---------- preview: flat hex mini-map in the A4 colours
-const COL = {"_":"#d8ad74", g:"#93c565", m:"#c2da80", ".":"#c2da80", t:"#4f8a4a", F:"#3f7a3c", s:"#f0d793", r:"#a8a296", B:"#857e75", L:"#5aa9d0", o:"#7cc4e6",
+const COL = {"_":"#d6cf98", g:"#86c46f", m:"#d6e99a", ".":"#d6e99a", t:"#4c9a74", F:"#2f5f55", s:"#f1e6c2", r:"#b7b09c", B:"#9aa7b4", L:"#a9d4e2", o:"#8cc2d2",
   "~":null, T:"#2f7fb8", S:"#2f7fb8", M:"#7fa6a1", f:"#7a4f2e", p:"#9ccfe0", v:"#b0703c", C:"#3a332c"};
 function preview(map) {
   const cv = $("pv"), ctx = cv.getContext("2d"), H = map.types.length, W = map.types[0].length;
   const R = Math.min((cv.width - 40) / ((W + .5) * Math.sqrt(3)), (cv.height - 40) / (H * 1.5 + .5)), s3 = Math.sqrt(3) * R;
   const ox = (cv.width - (W + .5) * s3) / 2 + s3 / 2, oy = (cv.height - (H * 1.5 + .5) * R) / 2 + R;
-  ctx.fillStyle = "#b9dcd8"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = "#b3d6df"; ctx.fillRect(0, 0, cv.width, cv.height);
   const hex = (cx, cy, r) => { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i - 90); ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a)) } ctx.closePath() };
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const ch = map.types[y][x]; if (ch === "~") continue;
     const cx = ox + x * s3 + (y & 1 ? s3 / 2 : 0), cy = oy + y * 1.5 * R;
-    hex(cx, cy + R * .18, R); ctx.fillStyle = "#9a6c42"; ctx.fill() }
+    hex(cx, cy + R * .18, R); ctx.fillStyle = "#8a7558"; ctx.fill() }
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const ch = map.types[y][x]; if (ch === "~") continue;
     const cx = ox + x * s3 + (y & 1 ? s3 / 2 : 0), cy = oy + y * 1.5 * R;
-    hex(cx, cy, R * .94); ctx.fillStyle = COL[ch] || COL["_"]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "rgba(90,64,41,.55)"; ctx.stroke();
+    hex(cx, cy, R * .94); ctx.fillStyle = COL[ch] || COL["_"]; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.stroke();
     if ("TS".includes(ch)) { ctx.beginPath(); ctx.arc(cx, cy, R * .38, 0, 7); ctx.fillStyle = "#fbf4e2"; ctx.fill(); ctx.fillStyle = "#2f7fb8"; ctx.font = `700 ${R * .5}px Fraunces, Georgia, serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ch === "T" ? "3" : "2", cx, cy + 1) }
-    if (ch === "B") { ctx.beginPath(); ctx.moveTo(cx - R * .55, cy + R * .35); ctx.lineTo(cx, cy - R * .6); ctx.lineTo(cx + R * .55, cy + R * .35); ctx.closePath(); ctx.fillStyle = "#9c958c"; ctx.fill(); ctx.strokeStyle = "#4d3e30"; ctx.stroke() }
+    if (ch === "B") { ctx.beginPath(); ctx.moveTo(cx - R * .55, cy + R * .35); ctx.lineTo(cx, cy - R * .6); ctx.lineTo(cx + R * .55, cy + R * .35); ctx.closePath(); ctx.fillStyle = "#b9c4cc"; ctx.fill() }
     if (ch === "C") { ctx.beginPath(); ctx.arc(cx, cy + R * .2, R * .35, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#1f1b18"; ctx.fill() } }
   $("seedTag").textContent = `${W}×${H} · ${map.label.replace(/^Generated · /, "")}`;
 }

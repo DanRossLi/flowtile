@@ -26,7 +26,7 @@ Controls: tap your stream's **end** to select it, then tap a glowing tile to mov
 
 ## Look
 
-Since Nov 11 the game uses the A4 storybook look: an isometric island of hex tiles drawn like a watercolour diorama, with paper-and-ink buttons and cards (Fraunces, Patrick Hand and Nunito). Every tile has six neighbours. The top bar's **water jar** shows the water you have (blue), your storage (the jar and its notches) and next cycle's flow (teal); when that flow won't fit, it pours over the lip and the text says how much will spill.
+Since Nov 12 the game uses the painterly look (LOU-280): an isometric island of hex tiles painted as one soft surface, with tree kinds, reeds, wildlife and white glass panels (M PLUS Rounded 1c). **The river is as wide as the flow it carries**, so you can see where springs, runoff, groves and tributaries join and where sand thins it. Every tile has six neighbours. The top bar's **water jar** shows the water you have (blue), your storage (the jar and its notches) and next cycle's flow (teal); when that flow won't fit, it pours over the lip and the text says how much will spill.
 
 ## Landscape mode
 

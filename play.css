@@ -528,3 +528,83 @@ button.act:disabled{background:#e4ddcc;color:#8a7d68;box-shadow:0 0 0 1.5px #b8a
 .lcopy{font-family:var(--hand);font-size:16px;font-weight:400;border-radius:8px}
 .stat.jar span{display:inline;font:inherit;letter-spacing:0;text-transform:none;color:inherit;text-shadow:none}
 .stat.jar .jnums{display:grid}
+
+/* ==========================================================================
+   Painterly theme (LOU-280, Nov 12): a hand-painted backdrop under soft white panels.
+   Replaces the A4 paper and ink. Font: M PLUS Rounded 1c for numbers, labels and hints.
+   ========================================================================== */
+:root{
+  --paper:#ffffff; --paper-2:#eef4f2; --paper-ink:#1f3a3a; --paper-line:#dbe7e6; --ink-b:#7a9a96; --label:#5b7473;
+  --water:#2f7fb8; --flow:#1d8f78; --teal:#62e0c8; --blue:#4a8fb8; --blue-d:#2f6f94; --gold:#ffd98a; --gold-d:#c9962b;
+  --display:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif; --hand:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif; --body:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif;
+  --glass:rgba(255,255,255,.8); --soft:0 6px 18px rgba(40,70,80,.16),0 1px 3px rgba(40,70,80,.12);
+}
+body{background:#cfe3ea;color:var(--paper-ink)}
+.board{background:#cfe3ea;border-radius:20px;box-shadow:var(--soft)}
+/* a very light film grain over the whole view */
+.board::after{background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .05 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");mix-blend-mode:normal}
+.top{background:none;padding:8px 10px 10px}
+.stats{background:var(--glass);border-radius:22px;box-shadow:var(--soft);padding:6px 6px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.stat span{color:var(--label);font-family:var(--body);font-weight:800;font-size:12px;letter-spacing:.02em;text-transform:none}
+.stat b{color:var(--paper-ink);font-family:var(--display);font-weight:800;font-size:28px}
+.stat b small{color:var(--label);font-weight:500}
+.wx,.goal{background:var(--glass);color:var(--label);box-shadow:var(--soft);font-family:var(--hand);font-weight:500;font-size:13px;border-radius:999px}
+.wx svg,.goal svg{stroke:var(--label)}
+.goal.got{background:#fff3cf;color:#6b4f12;box-shadow:var(--soft)}
+/* the water jar: a clean glass jar, no ink outline, a soft white rim */
+.jglass{fill:rgba(255,255,255,.55)}
+.jink{stroke:rgba(255,255,255,.95);stroke-width:2;filter:drop-shadow(0 1px 1.5px rgba(40,70,80,.35))}
+.jrim{stroke:#ffffff;stroke-width:2.6;filter:drop-shadow(0 1px 1px rgba(40,70,80,.3))}
+.jn{stroke:rgba(47,127,184,.45)}
+.stat.jar b{font-family:var(--display);font-weight:800;color:var(--water)}
+.stat.jar b .cap{font-family:var(--display);font-weight:500;color:var(--label)}
+.stat.jar em{font-family:var(--hand);font-weight:800;font-size:13px}
+.zoom{background:var(--glass);color:var(--paper-ink);box-shadow:var(--soft);border-radius:50%}
+.msg{background:var(--glass);color:var(--paper-ink);border:0;border-radius:18px;box-shadow:var(--soft);font-family:var(--hand);font-weight:500;font-size:15px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.msg.warn{background:rgba(255,236,224,.92);color:#7a3418;border:0;box-shadow:var(--soft)}
+.actions{background:none;box-shadow:none}
+.rb>i{background:var(--glass);color:var(--paper-ink);box-shadow:var(--soft);border-radius:50%}
+.rb:active:not(:disabled)>i{transform:translateY(2px);box-shadow:0 2px 6px rgba(40,70,80,.2)}
+.rb>span{color:var(--label);font-family:var(--body);font-weight:800}
+/* Next Water Cycle: a mint-teal pill with a lip when active; muted grey-blue while you can still afford something */
+.rb.go>i{background:linear-gradient(180deg,#9fd7c9,#5fae9c);color:#0f3a33;border-radius:999px;box-shadow:0 4px 0 #3f8a7a,var(--soft)}
+.rb.go:active:not(:disabled)>i{transform:translateY(3px);box-shadow:0 1px 0 #3f8a7a,var(--soft)}
+.rb.go>span{color:var(--paper-ink);font-family:var(--display);font-weight:800}
+.rb.go.muted>i{background:linear-gradient(180deg,#e3ecee,#c7d5da);color:#5b7473;box-shadow:0 4px 0 #9fb2b8,var(--soft)}
+.rb.go.ready>i{background:linear-gradient(180deg,#9fd7c9,#5fae9c);animation:ready2 1.6s ease-in-out infinite}
+@keyframes ready2{50%{box-shadow:0 4px 0 #3f8a7a,0 0 0 8px rgba(98,224,200,.3)}}
+.rb.go .gain{font-family:var(--hand);font-weight:800;color:var(--flow);background:#fff;box-shadow:var(--soft);border-radius:999px}
+.rb.go.muted .gain{background:#fff;color:var(--label)}
+.rb.go.land.flowing>i{background:linear-gradient(180deg,#f2b8a2,#d27a5c);color:#3a140a;box-shadow:0 4px 0 #a2523a,var(--soft)}
+button,a.btn{font-family:var(--display);font-weight:800;color:var(--paper-ink);background:#fff;box-shadow:var(--soft);border-radius:14px}
+button:active:not(:disabled),a.btn:active{transform:translateY(2px);box-shadow:0 2px 6px rgba(40,70,80,.2)}
+.end{background:linear-gradient(180deg,#9fd7c9,#5fae9c) !important;color:#0f3a33 !important;box-shadow:0 4px 0 #3f8a7a,var(--soft) !important}
+.end:active:not(:disabled){box-shadow:0 1px 0 #3f8a7a !important}
+.win{background:rgba(30,60,70,.3)}
+.card,dialog,.tcard{background:rgba(255,255,255,.94);color:var(--paper-ink);border-radius:22px;box-shadow:var(--soft)}
+dialog::backdrop{background:rgba(30,60,70,.35)}
+.ribbon{background:linear-gradient(180deg,#9fd7c9,#5fae9c);border-radius:999px;box-shadow:0 4px 0 #3f8a7a}
+.card h2{color:#0f3a33}
+.wsub,dialog.goalcard .eyebrow{font-family:var(--hand);font-weight:800;color:var(--blue)}
+.card ul,dialog.goalcard .aims li,dialog .opts{background:#f2f7f6;box-shadow:none;border-radius:12px}
+.card li{border-bottom:1px solid var(--paper-line)}
+dialog,dialog h2,dialog h3,dialog b,.tname b,.tname small{color:var(--paper-ink)}
+button.tclose{background:#eef4f2;color:var(--paper-ink)}
+.swatch{border-radius:12px;box-shadow:none}
+.banner{background:linear-gradient(90deg,rgba(74,143,184,0),rgba(74,143,184,.9) 18%,rgba(74,143,184,.92) 50%,rgba(74,143,184,.9) 82%,rgba(74,143,184,0))}
+.banner b{font-family:var(--display);font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(30,70,100,.4)}
+.banner small{font-family:var(--hand);font-weight:500}
+button.act{background:#4a8fb8;color:#fff;border-radius:14px;box-shadow:0 3px 0 #2f6f94}
+button.act:active:not(:disabled){box-shadow:0 1px 0 #2f6f94}
+button.act.plant{background:#5fae6c;box-shadow:0 3px 0 #3f8a4c}
+button.act.trib{background:#3f9aa8;box-shadow:0 3px 0 #1f5a63}
+button.act.moss{background:#7a9a4a;box-shadow:0 3px 0 #44582a}
+button.act.sand:not(:disabled){background:#c9a24a;box-shadow:0 3px 0 #7a5a1c}
+button.act.rock:not(:disabled){background:#8d877c;box-shadow:0 3px 0 #4d463c}
+button.act.boulder:not(:disabled){background:#8a8f99;box-shadow:0 3px 0 #555a63}
+button.act.bare:not(:disabled){background:#b9a46a;box-shadow:0 3px 0 #7a6a3a}
+button.act:disabled{background:#e3e8e8;color:#7d8b8b;box-shadow:none}
+.acost,.atext b{font-family:var(--display)}
+.rivers button{background:var(--glass);color:var(--label);box-shadow:var(--soft)}
+.rivers button small{color:var(--paper-ink)}
+.lcopy{font-family:var(--hand);font-weight:500}
