@@ -84,6 +84,8 @@ Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the me
 
 ## Modes
 
+**Map generator:** https://danrossli.github.io/flowtile/generator/ builds a seeded island from your options (size, goal, sources, storage, how much of each terrain, wind and weather), previews it, and plays it on the Custom page or copies it as a map code.
+
 - **Islands** (https://danrossli.github.io/flowtile/world/): the campaign. Islands are grouped by biome, show your best stars, and each one opens when the one before it has a star.
 - **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, green tile and fish, 3 per grove, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
 - **Daily island** (`/daily/`): generated from the date, so everyone gets the same island. Add `?d=YYYY-MM-DD` to play another day's island. **Share score** copies your result.
