@@ -120,7 +120,7 @@ document.body.innerHTML = `
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
     <div class="overlay bottom" id="bottom">${M.tutorial ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="odots" id="tutD" aria-hidden="true"></span></div>` : ""}<div class="msg" id="msg" role="status"></div></div>
-    ${M.tutorial ? `<div class="hand" id="hand" aria-hidden="true" hidden><svg viewBox="0 0 30 40"><path class="hfill" d="M12 4.5a3 3 0 016 0V17l1-.3a2.8 2.8 0 013.5 2l.2.7a2.8 2.8 0 013.7 2 2.8 2.8 0 013.4 2.4V31a8 8 0 01-8 8h-3.6a8 8 0 01-6.6-3.6L5 28.2a2.9 2.9 0 014.3-3.7L12 27z"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div>` : ""}
+    ${M.tutorial ? `<div class="hand" id="hand" aria-hidden="true" hidden><span class="htap"></span><svg class="hsvg" viewBox="0 0 34 44"><g class="hout"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/><rect x="11" y="34" width="18" height="8" rx="2.5"/></g><g class="hin"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/></g><path class="hcrease" d="M16.8 17v5M22.4 18.5v4.5M27.6 21v3.5M11.6 4.2h3.6"/><rect class="hcuff" x="11" y="34" width="18" height="8" rx="2.5"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div><div class="welcome" id="welcome" hidden><div class="wcard"><svg class="wdrop" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4C24 4 9 21 9 30a15 15 0 0030 0C39 21 24 4 24 4z"/><path class="wsh" d="M17 30a7 7 0 007 7"/></svg><h2>Welcome to Flow Tile</h2><p>Every river starts as a spring. Spend water to carve yours across the island, grow the land around it, and reach the sea.</p><button type="button" class="go" id="wGo">Let's go</button><button type="button" class="wskip" id="wSkip">I've played before</button></div></div>` : ""}
     <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
     <div class="banner" id="banner" aria-hidden="true" hidden><b id="bTurn"></b><small id="bSub"></small></div>
     <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
@@ -986,7 +986,14 @@ function tutHand() { const h = $("hand"); if (!h) return; const ui = tutUi(), a 
   if (cb) { const q = cb.getBoundingClientRect(); x = q.right - 40; y = q.top + q.height * .5 }
   else if (ui) { const b = $(ui === "end" ? "end" : "cWater").querySelector(ui === "end" ? "i" : ".jsvg") || $(ui === "end" ? "end" : "cWater"), q = b.getBoundingClientRect(); x = q.left + q.width / 2; y = q.top + q.height * .55 }
   else if (a && S.phase !== "won") { const r = cv.getBoundingClientRect(), d = cv.width / r.width, k = [...a][0].split(",").map(Number), o = iso(...k); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d }
-  if (x == null || tutArrive) { h.hidden = true; return } h.hidden = false; h.style.left = (x - 15) + "px"; h.style.top = (y + 2) + "px" }
+  if (x == null || tutArrive) { h.hidden = true; if (!tutArrive && now() >= tutWait) tutPlace(null); return } h.hidden = false; h.style.left = (x - 15.5) + "px"; h.style.top = (y - 1) + "px"; tutPlace(x, y) }
+// The instruction card sits next to the action: under the target, or above it when the target is low on the screen.
+// With no target it goes back to the bottom of the screen.
+function tutPlace(x, y) { const c = $("tutc"); if (!c) return;
+  if (x == null) { if (c.classList.contains("near")) { c.classList.remove("near", "up"); c.style.left = c.style.top = c.style.width = "" } return }
+  const w = Math.min(330, innerWidth - 24), l = Math.max(12, Math.min(innerWidth - w - 12, x - w / 2)), up = y > innerHeight * .58;
+  c.classList.add("near"); c.classList.toggle("up", up); c.style.width = w + "px"; c.style.left = l + "px"; c.style.setProperty("--ax", (x - l) + "px");
+  c.style.top = (up ? y - 62 - c.offsetHeight : y + 58) + "px" }
 // Glide the camera to the step's target tiles (or back to the river's end).
 function tutLook() { const a = tutAim(); if (!a || view.z === null || !lay.w) { follow(true); return } let x = 0, y = 0, n = 0; for (const k of a) { const o = iso(...k.split(",").map(Number)); x += o.x; y += o.y; n++ }
   tgt = {x:x / n, y:y / n, n:0}; if (reduce) { view.cx = tgt.x; view.cy = tgt.y; tgt = null; applyView() } }
@@ -1010,10 +1017,13 @@ function tutCheck() {
 // Arrival: the camera glides in over the sea and settles on the island (3s; a tap skips it).
 function arrive() { if (!lay.w || view.z === null) { draw(); return } const a = tutArrive;
   if (!a.from) { const f = focusPoint(); a.from = {x:B.x - B.w * .9, y:B.y + B.h * .2, z:Math.max(.55, lay.zAuto * .35)}; a.to = {x:f.x, y:f.y, z:lay.zAuto}; a.t0 = now() }
+  if (a.hold) a.t0 = now(); // the welcome screen is up: wait at the start of the glide
   const k = Math.min(1, (now() - a.t0) / 3000), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
   view.cx = a.from.x + (a.to.x - a.from.x) * e; view.cy = a.from.y + (a.to.y - a.from.y) * e; view.z = a.from.z + (a.to.z - a.from.z) * e; applyView();
   if (k >= 1) { tutArrive = null; tutText() } }
 if (TUT) {
+  $("wGo").onclick = () => { const w = $("welcome"); w.classList.add("bye"); if (tutArrive) { tutArrive.hold = false; tutArrive.t0 = now() } setTimeout(() => { w.hidden = true; w.classList.remove("bye") }, reduce ? 0 : 400) };
+  $("wSkip").onclick = () => { try { localStorage.setItem("flowtile.tutorial", "skipped") } catch (_) {} location.href = ROOT };
   $("tutSkip").onclick = () => { if (!confirm("Skip the tutorial? You can replay it any time from the home page.")) return; try { localStorage.setItem("flowtile.tutorial", "skipped") } catch (_) {} location.href = ROOT };
 }
 if (OBJ.length && $("oSkip")) $("oSkip").onclick = () => { try { localStorage.setItem("flowtile.seen." + M.id, "skipped") } catch (_) {} location.href = M.next };
@@ -1570,7 +1580,7 @@ function deco(p, c, o, t, h) {
 
 function draw() {
   if (!S) return; objCheck();
-  const T = now(), t = (T - t0) / 1000, mv = moves(), aim = objAim();
+  const T = now(), t = (T - t0) / 1000, mv = moves(), aim = objAim(), tq = TUT && S.phase === "play" && (aim || tutUi()); // tq: a tutorial step has a target, so other hints stay quiet
   // the cached layers: the sky and sea (screen space, cheap) and the island (world space, painted at a fixed resolution)
   const lw = B.w + 2 * LPAD, lh = B.h + 2 * LPAD; ps = Math.min(Math.pow(2, Math.ceil(Math.log2(scale) * 2) / 2), 4096 / Math.max(lw, lh));
   const vk = [cv.width, cv.height, scale.toFixed(4), off.x.toFixed(1), off.y.toFixed(1)].join();
@@ -1603,11 +1613,13 @@ function draw() {
     deco(p, c, o, t, h);
     if (s !== 1) ctx.restore();
   }
-  if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = TUT ? "rgba(30,50,60,.34)" : "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
+  if (tq && !aim) { ctx.fillStyle = "rgba(222,228,229,.62)"; ctx.fillRect(-1e5, -1e5, 2e5, 2e5) } // the target is a button: grey the whole board
+  else if (aim && TUT) { ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); for (const k of aim) hexPts(k.split(",").map(Number), R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fillStyle = "rgba(222,228,229,.62)"; ctx.fill("evenodd") } // tutorial: everything but the target greys out
+  else if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = TUT ? "rgba(30,50,60,.34)" : "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
   for (const p of ORDER) {
     const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4);
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
-    const m = hsel && S.phase === "play" ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
+    const m = hsel && S.phase === "play" && (!TUT || !aim || aim.has(p + "")) ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
     if (m || pk) { // a target tile: an amber wash with a marching dashed outline and a cost bubble; grey if you can't afford it
       const ok = pk || S.water >= m.cost; rpath(d(), 9); ctx.fillStyle = ok ? "rgba(255,217,138,.2)" : "rgba(150,150,150,.2)"; ctx.fill();
       ctx.save(); if (ok) { ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 9 * scale } ink(ok ? `rgba(255,217,138,${reduce ? .95 : .8 + .2 * osc(t, 1.6, h * .03)})` : "rgba(150,150,150,.75)", 2.6); ctx.restore();
@@ -1615,7 +1627,7 @@ function draw() {
     } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true});
     } else if (PLACE && S.phase === "pick" && placeable(p)) { // tiles you can place a source on glow softly (LOU-263)
       rpath(d(), 8); ctx.fillStyle = `rgba(255,255,255,${.2 + .12 * osc(t, 2.5, h * .05)})`; ctx.fill();
-    } else if (plantable(p) && (!c.pre || riverBy(p))) { // a map's own greens away from the river can still be grown by tapping
+    } else if (plantable(p) && (!c.pre || riverBy(p)) && (!tq || (aim && aim.has(p + "")))) { // a map's own greens away from the river can still be grown by tapping
       ctx.save(); ctx.setLineDash([4, 5]); rpath(d(), 8); ink(S.water >= growCost(c) ? "rgba(255,255,255,.6)" : "rgba(150,150,150,.35)", 1.4); ctx.restore();
       badges.push({o, plant:true, ok:S.water >= growCost(c)});
     }
@@ -1768,7 +1780,7 @@ $("goal").addEventListener("click", e => { if (e.target === $("goal")) $("goal")
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
 function loop() { if (tutArrive) arrive(); else if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
-if (!load()) { S = fresh(); if (TUT && !reduce) tutArrive = {} }
+if (!load()) { S = fresh(); if (TUT) { $("welcome").hidden = false; if (!reduce) tutArrive = {hold:true} } }
 if (TUT) document.body.classList.add("tut");
 else if (S.phase === "pick" && !S.turn) showGoal(); // a new run opens on the map's goal card (the tutorial has none)
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();

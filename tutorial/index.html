@@ -67,7 +67,7 @@ window.MAP = {
     {text: "<b>Plant trees</b> next to your meadow.", sub: "Tap it: grass, then meadow, then trees.", target: [[2, 4]], lock: true, needs: g => g.g(2, 4) >= 1 ? 1 : 0, done: g => g.g(2, 4) >= 3, after: ["jar", "+1 storage: the tree shades your meadow."]},
     {text: g => `Three touching trees make a <b>grove</b>. <b>Plant 2 more</b> (${g.grown(GROVE, 3)}/2)`, sub: "A meadow you turn into trees gives up its storage.", target: g => { const q = GROVE.find(([x, y]) => g.g(x, y) < 3); return q ? [q] : [] }, lock: true,
       needs: g => { const q = GROVE.find(([x, y]) => g.g(x, y) < 3); return q && g.g(...q) >= 1 ? 1 : 0 }, done: g => g.groves >= 1, after: ["river", "+1 flow from your grove."]},
-    {text: "<b>Tap Next Water Cycle</b> to fill your jar.", target: "end", lock: true, done: g => g.spill > 0},
+    {text: "<b>Tap Next Water Cycle</b> to fill your jar.", target: "end", lock: true, done: g => g.water >= g.cap},
     {text: g => `Your jar is full: next cycle <b>${g.spill} gal would spill</b>. <b>Spend 3 gal</b> on the glowing ground (${Math.min(3, g.cap - g.water)}/3)`, sub: "Spend it first, or it's lost.",
       target: g => { const q = ROW.find(([x, y]) => g.g(x, y) < 3); return q ? [q] : [] }, allow: ROW, lock: true, noCycle: true, done: g => g.cap - g.water >= 3, before: ["jar", "Water over storage spills."], after: ["jar", "Less spills now."]},
     {text: "Now <b>flow to the sea</b>.", target: [[8, 2]], move: true, done: g => g.won}
