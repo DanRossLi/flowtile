@@ -115,10 +115,12 @@ document.body.innerHTML = `
           return `<div class="wx wind" id="cWind" aria-label="Wind from the ${["east","north-east","north-west","west","south-west","south-east"][f]}"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${deg}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg>Wind</div>` })() : ""}
         ${CYCLE || WX ? `<div class="wx sky" id="cSky"><span id="lSky">Sky</span> <b id="hSky">Clear</b></div>` : ""}
       </div>
-      ${M.objectives ? `<div class="obj" id="obj" role="status"><i class="ock" id="oTick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><span class="otext" id="oText"></span><span class="odots" id="oDots" aria-hidden="true"></span>${M.next ? `<button type="button" class="oskip" id="oSkip" aria-label="Skip lesson">Skip</button>` : ""}</div>` : ""}
+      ${M.tutorial ? `<button type="button" class="tutskip" id="tutSkip">Skip tutorial</button>` : ""}
+      ${M.objectives && !M.tutorial ? `<div class="obj" id="obj" role="status"><i class="ock" id="oTick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><span class="otext" id="oText"></span><span class="odots" id="oDots" aria-hidden="true"></span>${M.next ? `<button type="button" class="oskip" id="oSkip" aria-label="Skip lesson">Skip</button>` : ""}</div>` : ""}
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
-    <div class="overlay bottom" id="bottom"><div class="msg" id="msg" role="status"></div></div>
+    <div class="overlay bottom" id="bottom">${M.tutorial ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="odots" id="tutD" aria-hidden="true"></span></div>` : ""}<div class="msg" id="msg" role="status"></div></div>
+    ${M.tutorial ? `<div class="hand" id="hand" aria-hidden="true" hidden><svg viewBox="0 0 30 40"><path class="hfill" d="M12 4.5a3 3 0 016 0V17l1-.3a2.8 2.8 0 013.5 2l.2.7a2.8 2.8 0 013.7 2 2.8 2.8 0 013.4 2.4V31a8 8 0 01-8 8h-3.6a8 8 0 01-6.6-3.6L5 28.2a2.9 2.9 0 014.3-3.7L12 27z"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div>` : ""}
     <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
     <div class="banner" id="banner" aria-hidden="true" hidden><b id="bTurn"></b><small id="bSub"></small></div>
     <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
@@ -640,7 +642,7 @@ function pick(p) {
   if (c.t !== "source" || (M.mainSource && p + "" !== M.mainSource + "")) { say(M.pickHint ?? M.startHint, true); return }
   start(p) }
 function start(p, placed) { const c = at(p); closeCard();
-  if (!placed) snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.phase = "play"; syncCap(); S.water = STORE ? Math.min(c.yield, S.cap) : c.yield;
+  if (!placed) snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.phase = "play"; syncCap(); if (TUT) hsel = true; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield;
   anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal per water cycle`, "#bfe4ff");
   const ro = claimRunoff([p]);
   if (LAND) { S.water += M.budget || 0; preview = landPreview(); say(`The river waits here. Reshape the land with your water, then tap Flow: it runs ${S.income} tiles each water cycle to the cheapest ground. ${previewNote()}`); zoomTo(1); return } // Landscape stays on the whole island (Dan, LOU-272)
@@ -651,7 +653,7 @@ const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (flowing) stopFlow(); if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0; closeCard(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { if (flowing) stopFlow(); closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); zoomTo(1); showGoal() }
+function restart() { if (flowing) stopFlow(); closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); if (TUT) { objShown = -1; tutWait = 0; $("callout").hidden = true; if (!reduce) tutArrive = {}; else zoomTo(lay.zAuto) } else { zoomTo(1); showGoal() } }
 
 // ---------- UI
 let quiet = false; // set by the test solver: skip the screen
@@ -702,6 +704,10 @@ function sync() {
     $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
     const rows = [["River tiles", sc.river], ["Green tiles", sc.green], ["Groves", sc.combos], ["Fish", sc.fish], ["Full lakes", sc.lakes], ["Reached the sea", sc.sea]].filter(r => r[1]);
     $("wGoals").innerHTML = rows.map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>+${v}</b></li>`).join("") + `<li class="g3 extra"><i></i><span>${sc.total > prevBest && prevBest ? "New best! Before" : "Best score"}</span><b>${sc.total > prevBest && prevBest ? prevBest : Math.max(prevBest, sc.total)}</b></li>`;
+  } else if (won && TUT) {
+    $("winTitle").textContent = "You reached the sea!"; $("wStars").innerHTML = ""; $("wStars").dataset.n = "t"; $("wStars").removeAttribute("aria-label");
+    $("wGoals").innerHTML = (M.learned || []).map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>${v}</b></li>`).join("");
+    tx("again", "Replay tutorial");
   } else if (won) {
     const bl = bloomCount(), goals = [[true, `Reached the sea · turn ${S.turn}`], [bl >= BLOOM_GOAL, M.noSand ? "Never crossed sand" : BLOOM_GOAL ? (M.bloomKind === "springs" ? `Through ${bl}/${BLOOM_GOAL} springs` : M.bloomLabel ? `${M.bloomLabel} on ${bl}/${BLOOM_GOAL} tiles` : `Bloomed ${bl}/${BLOOM_GOAL} tiles`) : "Bloom goal (none on this map)"], [S.turn <= TURN_GOAL, `Turn ${S.turn} (goal: by turn ${TURN_GOAL})`]];
     const n = goals.filter(g => g[0]).length; if (n > getNum(starKey)) setNum(starKey, n);
@@ -860,7 +866,7 @@ function renderInfo() {
     `<div class="wline"><span>Flow</span><b class="flw">+${S.income} gal per water cycle</b></div>${ALP && S.tiles.flat().some(c => c.alp) ? `<div class="wline"><span>Snow</span><b>${snowTotal()} banked (tap an alpine tree to melt)</b></div>` : ""}${S.phase === "play" ? `<div class="wline"><span>Next Water Cycle</span><b>+${Math.min(f.gain, STORE ? Math.max(0, S.cap - S.water) : f.gain)} gal${STORE && f.gain > S.cap - S.water ? `, ${f.gain - Math.max(0, S.cap - S.water)} spills` : ""}${f.dry ? " (drought)" : ""}</b></div>` : ""}${rv}`;
   el.className = "tcard"; el.style.top = ""; el.hidden = false;
 }
-$("cWater").onclick = () => { if (info) { closeCard(); return } closeCard(); hsel = false; info = true; renderInfo(); sync() };
+$("cWater").onclick = () => { if (!tutGate("water")) return; if (info) { closeCard(); return } closeCard(); hsel = false; info = true; renderInfo(); sync() };
 function runAct(a) { closeCard(); a.run() }
 // Moving the stream (LOU-258, replaces LOU-255's quick tap): tap the stream's end to select it, then tap a glowing tile.
 // The end stays selected so you can keep extending. Tap the end again, or empty space, to let go. With nothing selected,
@@ -899,13 +905,17 @@ const G = { // what an objective's done(g) can ask
   get bees() { return combos().reduce((n, k) => n + k.bees.length, 0) }, get lakes() { return S.lakes.filter(L => L.filled).length },
   get rivers() { return S.rivers.length }, get joined() { return S.rivers.some(r => r.joined) }, get runoff() { return G.count(c => c.ro === 2) },
   river(t) { return G.count(c => c.river && c.t === t) },
+  on(x, y) { return !!at([x, y]).river }, g(x, y) { return at([x, y]).g || 0 }, // the tutorial (LOU-281) asks about single tiles
+  next(l) { const q = l.find(([x, y]) => !at([x, y]).river); return q ? [q] : [] }, grown(l, k) { return l.filter(([x, y]) => (at([x, y]).g || 0) >= k).length },
+  get water() { return S.water }, get cap() { return S.cap }, get income() { return S.income },
+  get spill() { return S.phase === "play" && STORE ? Math.max(0, S.water + forecast().gain - S.cap) : 0 },
   beside(f) { return S.tiles.flatMap((r, y) => r.map((c, x) => [x, y])).filter(p => { const c = at(p); return !c.river && f(c) && nbrs(p).some(n => at(n).river && at(n).rid >= 0) }).length },
   get besideGrove() { const g = combos().flatMap(k => k.tiles); return S.tiles.flatMap((r, y) => r.map((c, x) => [x, y])).filter(p => { const c = at(p); return !c.river && c.g >= 1 && c.g < TREES && nbrs(p).some(n => g.some(q => same(q, n))) }).length },
 };
 const objDone = o => { try { return !!o.done(G) } catch (_) { return false } };
 const objNow = () => S && OBJ.length && (S.obj || 0) < OBJ.length ? OBJ[S.obj || 0] : null;
 // Tiles to highlight for the current objective (null: none). Buttons get a ring instead (see objCheck).
-function objAim() { const o = objNow(); if (!o || !o.target || o.target === "end" || o.target === "water") return null;
+function objAim() { if (TUT) return tutAim(); const o = objNow(); if (!o || !o.target || o.target === "end" || o.target === "water") return null;
   const all = S.tiles.flatMap((r, y) => r.map((c, x) => [x, y])), t = o.target;
   const pick = Array.isArray(t) ? [t] : t === "head" ? (S.phase === "play" ? headTiles(S.active) : []) : t === "moves" ? [...moves().values()].map(m => m.p)
     : t === "plantable" ? all.filter(plantable) : all.filter(p => { const c = at(p); return {
@@ -914,7 +924,7 @@ function objAim() { const o = objNow(); if (!o || !o.target || o.target === "end
       grass:!c.river && c.g === 1, meadow:!c.river && c.g === MEADOW, trees:!c.river && c.g >= TREES, grove:combos().some(k => k.tiles.some(q => same(q, p))) }[t] });
   return pick.length ? new Set(pick.map(p => p + "")) : null }
 let objShown = -1;
-function objCheck() { if (!OBJ.length || !S) return; let moved = false;
+function objCheck() { if (!OBJ.length || !S) return; if (TUT) return tutCheck(); let moved = false;
   if (S.phase === "won" && (S.obj || 0) < OBJ.length) { S.obj = OBJ.length; moved = true } // reaching the sea finishes the lesson whatever the route
   while ((S.obj || 0) < OBJ.length && objDone(OBJ[S.obj || 0])) { S.obj = (S.obj || 0) + 1; moved = true }
   const i = S.obj || 0, o = OBJ[Math.min(i, OBJ.length - 1)];
@@ -924,6 +934,88 @@ function objCheck() { if (!OBJ.length || !S) return; let moved = false;
     if (objShown >= 0 && moved && !reduce) { el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick") }
     objShown = i; if (moved) save() }
   const tg = objNow() && objNow().target; $("end").classList.toggle("aim", tg === "end"); $("cWater").classList.toggle("aim", tg === "water") }
+// ---------- directed tutorial (LOU-281): one micro goal at a time. The target glows and a hand points at it, the rest dims,
+// and while a step is locked only its target answers taps (anything else shakes the card and repeats the hint). A goal ends
+// with a tick, a sparkle and a one-word cheer; the next one appears 0.6s later, never behind an OK button.
+// Step fields (MAP.objectives with MAP.tutorial): text and sub (string or g => string), target ("source", "end", [[x,y],…] or
+// g => …), allow (the tiles that answer taps, default target), lock, move (keeps the river's end selected), needs (gal the
+// step costs; short of it, the card says to tap Next Water Cycle), noCycle (Next Water Cycle waits), before/after: [where, text]
+// callouts (where: "jar", "end", "river" or [x,y]), done(g).
+const TUT = !!M.tutorial, CHEERS = ["Nice!", "Got it", "Great!", "Yes!", "Lovely"];
+let tutWait = 0, tutArrive = null, tutCallT = 0;
+const tval = (v, g) => typeof v === "function" ? v(g) : v;
+const tutStep = () => S && (S.obj || 0) < OBJ.length ? OBJ[S.obj || 0] : null;
+const tutTiles = t => Array.isArray(t) ? (Array.isArray(t[0]) ? t : [t]) : null;
+const tutShort = o => { const n = o && tval(o.needs, G) || 0; return S.phase === "play" && n > S.water };
+function tutAim() { const o = tutStep(); if (!o || now() < tutWait || tutShort(o)) return null; const t = tval(o.target, G); if (!t || t === "end" || t === "water") return null;
+  if (t === "source") return new Set(S.phase === "pick" ? ORDER.filter(p => at(p).t === "source").map(String) : []);
+  const l = tutTiles(t); return l && l.length ? new Set(l.map(String)) : null }
+function tutUi() { const o = tutStep(); if (!o || now() < tutWait) return ""; if (tutShort(o)) return "end"; const t = tval(o.target, G); return t === "end" || t === "water" ? t : "" }
+// May this tile be tapped now?
+function tutTap(p) { if (tutArrive) { tutArrive.t0 = -1e9; return false } const o = tutStep(); if (!o || !o.lock || S.phase === "won") return true;
+  if (now() < tutWait) return false; if (tutShort(o)) { tutNo(); return false }
+  const allow = tutTiles(tval(o.allow || o.target, G)) || (tval(o.target, G) === "source" ? ORDER.filter(q => at(q).t === "source") : []);
+  if (p && allow.some(q => same(q, p))) return true;
+  if (p && o.move && headTiles(S.active).some(q => same(q, p))) { hsel = true; return false } // the end stays selected
+  tutNo(); return false }
+// May this button be pressed now?
+function tutGate(k) { if (!TUT || S.phase !== "play") return true; const o = tutStep(); if (!o) return true;
+  if (now() < tutWait) return false;
+  if (k === "end") { if (o.noCycle) { tutNo(); return false } if (!o.lock || tutUi() === "end") return true; tutNo(); return false }
+  if (k === "water" && tutUi() === "water") return true;
+  if (o.lock) { tutNo(); return false } return true }
+function tutNo() { const c = $("tutc"); if (!c || reduce) return; c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake");
+  const a = tutAim(); if (a) for (const k of a) ring(k.split(",").map(Number)) }
+function tutText() { const o = tutStep(), i = S.obj || 0, c = $("tutc"); if (!c) return;
+  if (S.phase === "won" || !o) { tx("tutT", "You reached the sea!"); tx("tutS", ""); c.classList.add("all") }
+  else if (tutShort(o)) { $("tutT").innerHTML = "Out of water. <b>Tap Next Water Cycle.</b>"; tx("tutS", `Your flow (+${S.income}) refills it every cycle.`) }
+  else { $("tutT").innerHTML = tval(o.text, G); tx("tutS", tval(o.sub, G) || "") }
+  $("tutD").innerHTML = OBJ.map((_, k) => `<i class="${k < i ? "d" : k === i ? "c" : ""}"></i>`).join("") }
+// A small white pill pointing at the jar, a button, the river's end or a tile; it hides itself after 2.5s.
+function callout(where, text) { const el = $("callout"); if (!el || !where) return; const r = cv.getBoundingClientRect(), d = cv.width / r.width;
+  let x, y, below = false;
+  if (where === "jar" || where === "end") { const b = $(where === "jar" ? "cWater" : "end").getBoundingClientRect(); x = b.left + b.width / 2; if (where === "jar") { y = b.bottom + 8; below = true } else y = b.top - 8 }
+  else { const p = where === "river" ? S.head : where, o = iso(...p); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d - 26 }
+  el.innerHTML = tval(text, G); el.classList.toggle("below", below); el.hidden = false;
+  const w = el.offsetWidth; el.style.left = Math.max(8, Math.min(innerWidth - w - 8, x - w / 2)) + "px"; el.style.top = (below ? y : y - el.offsetHeight) + "px";
+  el.style.setProperty("--ax", (x - Math.max(8, Math.min(innerWidth - w - 8, x - w / 2))) + "px");
+  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); tutCallT = now() + 2500 }
+// Point the hand at the target: a tile on the board or a button.
+function tutHand() { const h = $("hand"); if (!h) return; const ui = tutUi(), a = tutAim(); let x = null, y = null;
+  const cb = !$("tcard").hidden && a && sel && a.has(sel + "") && $("tcard").querySelector("button[data-a]:not([disabled])");
+  if (cb) { const q = cb.getBoundingClientRect(); x = q.right - 40; y = q.top + q.height * .5 }
+  else if (ui) { const b = $(ui === "end" ? "end" : "cWater").querySelector(ui === "end" ? "i" : ".jsvg") || $(ui === "end" ? "end" : "cWater"), q = b.getBoundingClientRect(); x = q.left + q.width / 2; y = q.top + q.height * .55 }
+  else if (a && S.phase !== "won") { const r = cv.getBoundingClientRect(), d = cv.width / r.width, k = [...a][0].split(",").map(Number), o = iso(...k); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d }
+  if (x == null || tutArrive) { h.hidden = true; return } h.hidden = false; h.style.left = (x - 15) + "px"; h.style.top = (y + 2) + "px" }
+// Glide the camera to the step's target tiles (or back to the river's end).
+function tutLook() { const a = tutAim(); if (!a || view.z === null || !lay.w) { follow(true); return } let x = 0, y = 0, n = 0; for (const k of a) { const o = iso(...k.split(",").map(Number)); x += o.x; y += o.y; n++ }
+  tgt = {x:x / n, y:y / n, n:0}; if (reduce) { view.cx = tgt.x; view.cy = tgt.y; tgt = null; applyView() } }
+function tutCheck() {
+  if (now() < tutWait) { tutHand(); return }
+  if (S.phase === "won" && (S.obj || 0) < OBJ.length) { S.obj = OBJ.length; try { localStorage.setItem("flowtile.tutorial", "done") } catch (_) {} save() }
+  let i = S.obj || 0;
+  while (i < OBJ.length && objDone(OBJ[i])) { const o = OBJ[i], seen = objShown === i; S.obj = ++i; save();
+    if (seen) { // tick, sparkle and cheer, then the next step after 0.6s
+      const c = $("tutc"), a = tutTiles(tval(o.target, G)), p = a && a[0] && S.phase !== "pick" ? a[0] : S.head;
+      tx("tutT", CHEERS[(i - 1) % CHEERS.length]); tx("tutS", ""); c.classList.add("ok"); if (!reduce) { c.classList.remove("tick"); void c.offsetWidth; c.classList.add("tick") }
+      if (p) { float(p, "✓", "#ffffff"); ring(p) } if (o.after) callout(...o.after);
+      tutWait = now() + 600; $("hand").hidden = true; return } }
+  $("tutc").classList.remove("ok");
+  const o = tutStep(); if (o && o.move && S.phase === "play" && !tutShort(o)) hsel = true;
+  if (i !== objShown || tutShort(o) !== S.tutShort) { const first = objShown !== i; objShown = i; S.tutShort = tutShort(o); tutText(); if (first) { if (o && o.before) callout(...o.before); tutLook() } }
+  else if (o && typeof o.text === "function") tutText();
+  if (tutCallT && now() > tutCallT) { $("callout").hidden = true; tutCallT = 0 }
+  const ui = tutUi(); $("end").classList.toggle("aim", ui === "end"); $("cWater").classList.toggle("aim", ui === "water");
+  document.body.classList.toggle("tlock", !!(o && o.lock && S.phase !== "won")); tutHand() }
+// Arrival: the camera glides in over the sea and settles on the island (3s; a tap skips it).
+function arrive() { if (!lay.w || view.z === null) { draw(); return } const a = tutArrive;
+  if (!a.from) { const f = focusPoint(); a.from = {x:B.x - B.w * .9, y:B.y + B.h * .2, z:Math.max(.55, lay.zAuto * .35)}; a.to = {x:f.x, y:f.y, z:lay.zAuto}; a.t0 = now() }
+  const k = Math.min(1, (now() - a.t0) / 3000), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  view.cx = a.from.x + (a.to.x - a.from.x) * e; view.cy = a.from.y + (a.to.y - a.from.y) * e; view.z = a.from.z + (a.to.z - a.from.z) * e; applyView();
+  if (k >= 1) { tutArrive = null; tutText() } }
+if (TUT) {
+  $("tutSkip").onclick = () => { if (!confirm("Skip the tutorial? You can replay it any time from the home page.")) return; try { localStorage.setItem("flowtile.tutorial", "skipped") } catch (_) {} location.href = ROOT };
+}
 if (OBJ.length && $("oSkip")) $("oSkip").onclick = () => { try { localStorage.setItem("flowtile.seen." + M.id, "skipped") } catch (_) {} location.href = M.next };
 
 // ---------- Perfection score
@@ -1511,7 +1603,7 @@ function draw() {
     deco(p, c, o, t, h);
     if (s !== 1) ctx.restore();
   }
-  if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
+  if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = TUT ? "rgba(30,50,60,.34)" : "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
   for (const p of ORDER) {
     const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4);
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
@@ -1644,6 +1736,7 @@ $("fitBtn").onclick = () => zoomTo(view.z > 1.02 ? 1 : lay.zAuto); // overview <
 cv.addEventListener("pointerup", e => {
   unhold(); const wasDrag = dragged; lift(e); if (held) { held = false; return } if (wasDrag) { if (!ptrs.size) dragged = false; return }
   const p = tileAt(e.clientX, e.clientY);
+  if (TUT && !tutTap(p)) return;
   if (!p) { closeCard(); if (hsel) { hsel = false; draw() } return }
   if (S.phase === "pick") { if (sel && same(sel, p) && placeable(p)) { closeCard(); return placeSrc(p) } return pick(p) }
   if (S.phase !== "play") return;
@@ -1654,9 +1747,9 @@ $("tcard").addEventListener("click", e => {
   const rb = e.target.closest("button[data-r]"); if (rb && !rb.disabled && S.phase === "play") { const i = +rb.dataset.r; if (i !== S.active) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } return }
   const b = e.target.closest("button[data-a]"); if (b && !b.disabled) runAct(cardActs[+b.dataset.a]);
 });
-$("end").onclick = LAND ? toggleFlow : endTurn; $("undo").onclick = undo; $("restart").onclick = restart; $("again").onclick = restart;
+$("end").onclick = () => tutGate("end") && (LAND ? toggleFlow() : endTurn()); $("undo").onclick = () => tutGate("undo") && undo(); $("restart").onclick = () => tutGate("restart") && restart(); $("again").onclick = restart;
 addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
-addEventListener("keydown", e => { if (e.key === " " && !$("help").open && !$("goal").open) { e.preventDefault(); LAND ? toggleFlow() : endTurn() } });
+addEventListener("keydown", e => { if (e.key === " " && !$("help").open && !$("goal").open) { e.preventDefault(); if (tutGate("end")) LAND ? toggleFlow() : endTurn() } });
 $("helpBtn").onclick = () => { $("hard").checked = hard(); $("help").showModal() };
 $("hard").onchange = e => { try { localStorage.setItem(HARD_KEY, e.target.checked ? "1" : "0") } catch (_) {} sync() };
 // Map codes: the map as a short text you can share; /custom/#<code> plays it.
@@ -1674,14 +1767,15 @@ $("help").addEventListener("click", e => { if (e.target === $("help")) $("help")
 $("goal").addEventListener("click", e => { if (e.target === $("goal")) $("goal").close() });
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
-function loop() { if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
-if (!load()) S = fresh();
-if (S.phase === "pick" && !S.turn) showGoal(); // a new run opens on the map's goal card
+function loop() { if (tutArrive) arrive(); else if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
+if (!load()) { S = fresh(); if (TUT && !reduce) tutArrive = {} }
+if (TUT) document.body.classList.add("tut");
+else if (S.phase === "pick" && !S.turn) showGoal(); // a new run opens on the map's goal card (the tutorial has none)
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get lay() { return lay }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, select(p) { sel = p },
+window.FT = {get lay() { return lay }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const o = iso(...p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = o.x, cy = o.y;

@@ -63,6 +63,7 @@ Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–23 below carry on fro
 
 | Map | URL | Teaches |
 |---|---|---|
+| Tutorial | https://danrossli.github.io/flowtile/tutorial/ | A directed tutorial: one small island, one step at a time (LOU-281) |
 | Spring Hill | https://danrossli.github.io/flowtile/spring-hill/ | The original test map, now flat |
 | 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest where the trees left beside you become groves |
 | 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
