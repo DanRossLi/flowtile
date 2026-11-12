@@ -1103,10 +1103,12 @@ function paintLand() {
 // upper-left) with its own wobbly ink outline, then whatever lies flat on it.
 function paintTile(p, c) {
   const col = topColor(c), o = iso(...p), h = hsh(...p);
-  if (c.t === "lake" && c.river) { // a full lake: one inked pool spanning its tiles
-    poly(hexPts(p, R + .8), COL.water); const pts = hexPts(p, R);
-    for (let i = 0; i < 6; i++) { const n = step(p, EDGE_FACE(i)); if (inside(...n) && at(n).t === "lake") continue; line([pts[i], pts[(i + 1) % 6]], "#2c5f80", 1.8) }
-    ell(o.x - 8, o.y - 3, 12, 4, "rgba(255,255,255,.18)"); return }
+  if (c.t === "lake") { // one inked pool spanning its tiles: deep blue when full, a pale shallow basin (dashed shore) until then
+    const full = c.river; poly(hexPts(p, R + .8), full ? COL.water : "#b4d5dc"); const pts = hexPts(p, R);
+    if (!full) { ctx.save(); ctx.setLineDash([5, 5]) }
+    for (let i = 0; i < 6; i++) { const n = step(p, EDGE_FACE(i)); if (inside(...n) && at(n).t === "lake") continue; line([pts[i], pts[(i + 1) % 6]], "#2c5f80", full ? 1.8 : 1.5) }
+    if (!full) ctx.restore();
+    ell(o.x - 8, o.y - 3, 12, 4, full ? "rgba(255,255,255,.18)" : "rgba(255,255,255,.3)"); return }
   const fillP = hexPts(p, R - 3.2, 1.1, 1), inkP = hexPts(p, R - 3.2, 1.3, 7);
   rpath(fillP, 8); ctx.fillStyle = col; ctx.fill();
   ctx.save(); ctx.clip(); ell(o.x + (h % 7 - 3), o.y + (h % 5 - 2), 24, 11, mix(col, .14)); ell(o.x - 14, o.y - 7, 13, 5, "rgba(255,255,255,.2)"); ctx.restore();
@@ -1119,9 +1121,6 @@ function flat(p, c, cx, cy, h) {
   const dot = (x, y, r, f) => ell(x, y, r, r * .6, f);
   if (c.t === "bed") { inkEll(cx, cy, 22, 10, "#c9b48b", "rgba(110,85,50,.5)"); ell(cx - 2, cy - 1, 15, 6, "#ddcba5"); const k = "rgba(110,85,50,.55)";
     line([[cx - 12, cy - 2], [cx - 5, cy + 1], [cx + 2, cy - 2]], k, 1.2); line([[cx + 4, cy + 3], [cx + 11, cy], [cx + 14, cy + 3]], k, 1.2); return }
-  if (c.t === "lake") { // an empty basin waiting to fill
-    ctx.save(); ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.ellipse(cx, cy, 25, 12.5, 0, 0, 7); ink("#2c5f80", 1.6); ctx.restore();
-    line([[cx - 14, cy], [cx - 5, cy + 2], [cx + 3, cy - 3], [cx + 13, cy + 1]], "rgba(110,85,50,.45)", 1.2); return }
   if (c.t === "spring") { inkEll(cx, cy + 1, 18, 9, "#5aa9d0", "#2c5f80", 1.4); ell(cx - 4, cy - 1, 9, 3.5, "rgba(255,255,255,.35)"); return }
   if (c.t === "marsh") { const on = marshBy(p); inkEll(cx - 7, cy + 3, 12, 5.5, on ? "#5aa9d0" : "#7fa6a1", "#2c5f80", 1); inkEll(cx + 11, cy - 6, 7, 3.3, on ? "#5aa9d0" : "#7fa6a1", "#2c5f80", 1); return }
   if (c.beaver === 2) { inkEll(cx, cy + 1, 23, 11, "#5aa9d0", "#2c5f80", 1.4); return }
@@ -1351,7 +1350,7 @@ function draw() {
     } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true});
     } else if (PLACE && S.phase === "pick" && placeable(p)) { // tiles you can place a source on glow softly (LOU-263)
       rpath(d(), 8); ctx.fillStyle = `rgba(251,244,226,${.22 + .12 * osc(t, 2.5, h * .05)})`; ctx.fill();
-    } else if (plantable(p)) {
+    } else if (plantable(p) && (!c.pre || riverBy(p))) { // a map's own greens away from the river can still be grown by tapping
       ctx.save(); ctx.setLineDash([4, 5]); rpath(d(), 8); ink(S.water >= PLANT_COST ? "rgba(74,122,50,.75)" : "rgba(120,120,120,.45)", 1.8); ctx.restore();
       badges.push({o, plant:true, ok:S.water >= PLANT_COST});
     }
@@ -1422,8 +1421,10 @@ function badge(b, t) {
   if (b.stopX) { const x = o.x, y = o.y - 4; bubble(x, y, 11, "#c8553d", "", PAPER, ""); line([[x - 4.5, y - 4.5], [x + 4.5, y + 4.5]], PAPER, 2.6); line([[x + 4.5, y - 4.5], [x - 4.5, y + 4.5]], PAPER, 2.6); return }
   if (b.step) { bubble(o.x, o.y - 2, 11, PAPER, b.step, "#2f6f9e", `600 13px ${NUM}`); return }
   if (b.drop) { ctx.globalAlpha = .8 + .2 * osc(t, 2.2, o.x * .01); tag(o.x + 4, o.y - 24, "+1 flow", "#1d8f78", 15); ctx.globalAlpha = 1; return } // a paper "+1 flow" tag until the river claims it
-  if (b.plant) { const x = o.x, y = o.y + 1; bubble(x, y, 10, b.ok ? PAPER : "#d9d4c8", "", "", "");
-    ctx.beginPath(); ctx.moveTo(x - 4.5, y + 4.5); ctx.quadraticCurveTo(x - 5.5, y - 5.5, x + 5.5, y - 5.5); ctx.quadraticCurveTo(x + 5.5, y + 4.5, x - 4.5, y + 4.5); ctx.fillStyle = b.ok ? "#6aa65a" : "#9a9a92"; ctx.fill(); ink(b.ok ? INK_T : "#77746c", 1); return }
+  if (b.plant) { const x = o.x, y = o.y + 4, f = b.ok ? "#6aa65a" : "#a9a69c", k = b.ok ? INK_T : "#77746c"; // a small inked sprout: you can plant here
+    line([[x, y], [x, y - 7]], k, 1.4);
+    ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.quadraticCurveTo(x - 8, y - 6, x - 9, y - 12); ctx.quadraticCurveTo(x - 2, y - 12, x, y - 5); ctx.fillStyle = f; ctx.fill(); ink(k, 1);
+    ctx.beginPath(); ctx.moveTo(x, y - 7); ctx.quadraticCurveTo(x + 7, y - 8, x + 8, y - 14); ctx.quadraticCurveTo(x + 1, y - 14, x, y - 7); ctx.fillStyle = f; ctx.fill(); ink(k, 1); return }
   const y = o.y - 4;
   if (b.pk) bubble(o.x, y, 16, PAPER, b.text, "#1d8f78", `24px ${HAND}`);
   else bubble(o.x, y, 14, b.ok ? "#2f6f9e" : "#8f9498", b.text, PAPER, `22px ${HAND}`);
