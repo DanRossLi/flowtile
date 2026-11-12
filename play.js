@@ -1244,12 +1244,15 @@ function chainFlows(chains) {
     chains.forEach((ch, ci) => { const last = ch.tiles[ch.tiles.length - 1], c = at(last), f = fl[ci][fl[ci].length - 1];
       if (c.t === "lake") carry.set(last + "", (carry.get(last + "") || 0) + f); // a chain leaving the lake starts at the lake tile
       else if (c.t === "cave" && c.mate) carry.set(c.mate + "", f);
-      else chains.forEach((o, oi) => { if (oi !== ci) { const j = o.tiles.findIndex((t, k) => k && same(t, last)); if (j > 0) into.set(oi + ":" + last, (into.get(oi + ":" + last) || 0) + f) } }) });
+      else chains.forEach((o, oi) => { if (oi !== ci) { const j = o.tiles.findIndex((t, k) => k && same(t, last));
+        // where both chains end on the same tile, only the tributary pours into the main river (never both ways)
+        if (j > 0 && (j < o.tiles.length - 1 || root(ch.rid) !== 0 && root(o.rid) === 0 || (root(ch.rid) === root(o.rid) && ch.rid > o.rid))) into.set(oi + ":" + last, (into.get(oi + ":" + last) || 0) + f) } }) });
     for (const [k, v] of [...carry]) { const L = at(k.split(",").map(Number)); if (L.t === "lake") for (const q of S.lakes[L.lake].tiles) carry.set(q + "", v) } }
-  // whatever the walk can't place (a bonus with no tile) goes in at the main source, so the river ends at your flow
+  // whatever the walk can't place (a bonus with no tile) goes in at the river's end only, so the river ends at your flow
+  // without widening anything upstream (Dan, Nov 12: widen only "onwards")
   const mi = chains.findIndex(ch => root(ch.rid) === 0 && at(ch.tiles[0]).t === "source");
   if (mi >= 0 && S.phase !== "pick") { let end = 0; chains.forEach((ch, ci) => { if (root(ch.rid) === 0) { const l = ch.tiles[ch.tiles.length - 1]; if (at(l).t === "ocean" || l + "" === S.head + "") end = Math.max(end, fl[ci][fl[ci].length - 1]) } });
-    const d = S.income - end; if (d && end) fl[mi] = fl[mi].map(v => Math.max(0, v + d)) }
+    const d = S.income - end; if (d && end) chains.forEach((ch, ci) => { if (root(ch.rid) === 0) { const l = ch.tiles.length - 1, q = ch.tiles[l]; if (at(q).t === "ocean" || q + "" === S.head + "") fl[ci][l] = Math.max(0, fl[ci][l] + d) } }) }
   return fl }
 const dispF = new Map(); let lastRT = 0;
 const smooth = k => k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k);
@@ -1286,14 +1289,14 @@ function drawRivers(t) {
     for (let i = 1; i < ch.n - 1; i++) { const h = hsh(...ch.tiles[i]); if (h % 3) continue; const j = i * 8 + 3; if (j >= m) break; const [x, y, nx, ny] = C[j], sg = h % 2 ? 1 : -1; reeds(x + nx * (W[j] / 2 + 5) * sg, y + ny * (W[j] / 2 + 5) * sg, t, h) }
     // a tributary's end flows into the river it joins: rings spread where they meet
     const last = ch.tiles[ch.tiles.length - 1]; if (ch.n === ch.tiles.length && at(last).t !== "ocean" && at(last).t !== "lake" && raw.some(o => o !== raw[ch.ci] && o.tiles.some((q, k) => k && same(q, last)))) joins.push(C[m - 1]) }
-  if (!reduce) { // two layers of current streaks at different speeds, then the teal flow drops, a leaf, a fish
+  if (!reduce) { // two layers of current streaks at different speeds, then a leaf, a fish
     for (const [dash, sp, a, lw] of [[[5, 13, 2, 16], 26, .6, 1.5], [[3, 22], 15, .35, 1]]) { ctx.save(); ctx.setLineDash(dash); ctx.lineDashOffset = -t * sp; ctx.globalAlpha = a; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = lw; ctx.lineCap = "round";
       for (const ch of chains) { ctx.beginPath(); ch.C.forEach(([x, y, nx, ny], j) => { const o = (lw > 1.2 ? -.18 : .2) * ch.W[j]; j ? ctx.lineTo(x + nx * o, y + ny * o) : ctx.moveTo(x + nx * o, y + ny * o) }); ctx.stroke() } ctx.restore() }
     for (const ch of chains) { if (!flowOf(ch.rid >= 0 ? ch.rid : S.active)) continue; const s = ch.C, cum = [0];
       for (let i = 1; i < s.length; i++) cum.push(cum[i - 1] + Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]));
       const L = cum[cum.length - 1], v = 34, gap = v * 1.6; if (L < 20) continue;
       const at2 = d => { let i = 1; while (i < cum.length - 1 && cum[i] < d) i++; const k = (d - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1); return [s[i - 1][0] + (s[i][0] - s[i - 1][0]) * k, s[i - 1][1] + (s[i][1] - s[i - 1][1]) * k] };
-      for (let d = (t * v) % gap; d < L; d += gap) { const [x, y] = at2(d); ctx.globalAlpha = Math.min(1, d / 30, (L - d) / 30); ell(x, y, 3.2, 2.4, "#62e0c8"); ell(x - .8, y - .7, 1.2, .8, "rgba(255,255,255,.8)"); ctx.globalAlpha = 1 }
+      // no teal flow drops in the river (Dan, Nov 12: "what is that green bubble in the river..get rid of it")
       const lk = (t / 18 + hsh(...ch.tiles[0]) * .07) % 1; if (lk < .7 && L > 80) { const d = lk / .7 * L, [x, y] = at2(d); ctx.save(); ctx.translate(x, y); ctx.rotate(t * .8); ctx.globalAlpha = Math.min(1, d / 30, (L - d) / 30);
         ctx.beginPath(); ctx.moveTo(-4, 0); ctx.quadraticCurveTo(0, -3, 4, 0); ctx.quadraticCurveTo(0, 3, -4, 0); ctx.fillStyle = "#c9a24a"; ctx.fill(); ctx.restore(); ctx.globalAlpha = 1 } }
     const fk = (t % 11) / 11, fc = chains.find(ch => ch.C.length > 30); if (fc && fk < .12) { const j = Math.floor((hsh(Math.floor(t / 11), 3) / 97) * (fc.C.length - 16)) + 8, [x, y] = fc.C[j], k = fk / .12;
@@ -1544,7 +1547,7 @@ function draw() {
     const o = iso(...b.p); ctx.globalAlpha = 1 - k; line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#f5d04a", 5); line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#fffaf0", 2); ctx.globalAlpha = 1 }
   // the end of each stream: a dashed ink ring with marching dashes; selected, it's bolder with a teal wash
   for (const i of liveRivers()) for (const q of headTiles(i)) { const o = iso(...q), on = hsel && i === S.active, k = reduce ? 0 : (t / 1.6) % 1;
-    if (on) ell(o.x, o.y, R * .7, R * .35, "rgba(98,224,200,.25)");
+    if (on) ell(o.x, o.y, R * .7, R * .35, "rgba(255,255,255,.22)");
     ctx.beginPath(); ctx.ellipse(o.x, o.y, R * .62, R * .31, 0, 0, 7); ink("rgba(255,255,255,.95)", on ? 3.4 : 2.4);
     if (!reduce) { ctx.globalAlpha = (1 - k) * .8; ctx.beginPath(); ctx.ellipse(o.x, o.y, R * (.62 + .22 * k), R * (.31 + .11 * k), 0, 0, 7); ink("#ffffff", 2); ctx.globalAlpha = 1 } }
   if (aim) { const k = reduce ? 1 : .6 + .4 * osc(t, 1.4); for (const key of aim) { const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
