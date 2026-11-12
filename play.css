@@ -382,3 +382,149 @@ button.oskip{font-size:11px;padding:4px 8px;border-radius:9px;background:transpa
 .rb.go.land.flowing .ico-play{display:none}
 .rb.go.land.flowing .ico-stop{display:block}
 .rb.go.land.flowing>i{background:#e2794a;box-shadow:0 5px 0 #a8502a,0 0 0 4px var(--panel),0 8px 16px rgba(0,0,0,.3);animation:none}
+
+/* ==========================================================================
+   A4 storybook theme (Nov 11): paper, ink and watercolour over everything above.
+   Fonts: Fraunces for numbers and buttons, Patrick Hand for hints and tags, Nunito for labels.
+   ========================================================================== */
+:root{
+  --paper:#fbf4e2; --paper-2:#efe3c4; --paper-ink:#3d2a17; --paper-line:#e2d3b0; --ink-b:#6b4f33; --label:#7a5c3c;
+  --water:#2f7fb8; --flow:#1d8f78; --teal:#62e0c8; --blue:#2f6f9e; --blue-d:#1f4a6b; --gold:#e0a030; --gold-d:#a8721c; --warn:#b5562f; --rust:#b5562f;
+  --display:"Fraunces",Georgia,serif; --hand:"Patrick Hand","Nunito",cursive; --body:"Nunito",system-ui,sans-serif;
+  color-scheme:light;
+}
+body{background:#d9c69c;color:var(--paper-ink)}
+.board{background:#efe3c4;border-radius:20px;box-shadow:0 0 0 1.5px var(--ink-b),3px 4px 0 rgba(107,79,51,.55)}
+/* paper grain and a warm brown vignette over the whole view */
+.board::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:inherit;
+  background:radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 55%,rgba(110,72,34,.28) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .09 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  mix-blend-mode:multiply}
+.overlay,.zoom,.tcard,.win,.banner{z-index:2}
+/* top bar (LOU-267/270 layout) on a paper fade */
+.top{background:linear-gradient(180deg,rgba(239,227,196,.96) 0%,rgba(239,227,196,.85) 55%,rgba(239,227,196,0) 100%);padding:8px 10px 14px}
+.stat span{color:var(--label);text-shadow:none;font-family:var(--body);font-weight:800;font-size:11px;letter-spacing:.09em}
+.stat b{color:var(--paper-ink);text-shadow:none;font-family:var(--display);font-weight:700;font-size:28px}
+.stat b small{color:var(--label);font-size:15px}
+.stat.over b{color:var(--rust)}
+.wx,.goal{background:rgba(251,244,226,.85);color:var(--label);box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.45);font-family:var(--hand);font-weight:400;font-size:14px;padding:1px 9px}
+.wx svg{stroke:var(--ink-b)}
+.goal svg{stroke:var(--label)}
+.goal.got{background:#f5d98a;color:#5a3d12;box-shadow:inset 0 0 0 1.2px var(--gold-d)}
+.goal.got svg{fill:#fff3c4;stroke:#5a3d12}
+.goal.live{color:var(--gold-d)}.goal.live svg{stroke:var(--gold-d)}
+.goal.miss{color:var(--rust)}.goal.miss svg{stroke:var(--rust)}
+.wx.rain b,.wx.cloud b{color:var(--water)}.wx.drought b{color:#b5762f}.wx.fire b{color:var(--rust)}
+/* the water jar (LOU-278): water (blue), storage (notches), next cycle's flow (teal), spill (pours over the lip) */
+.stats{grid-template-columns:1fr 1fr 1.7fr}
+.stat.jar{display:flex;align-items:center;justify-content:center;gap:6px;padding:0}
+.jsvg{width:36px;height:47px;flex:none;overflow:visible}
+.jglass{fill:rgba(255,255,255,.45)}
+.jink{fill:none;stroke:var(--ink-b);stroke-width:1.6;stroke-linejoin:round}
+.jrim{fill:none;stroke:var(--ink-b);stroke-width:2.4;stroke-linecap:round}
+.jlvl{transition:transform .4s cubic-bezier(.3,1,.5,1)}
+.jteal{fill:var(--teal);opacity:.55;animation:jpulse 1.6s ease-in-out infinite}
+.jwave{fill:#5aa9d0;animation:jwave 2s linear infinite}
+.jn{stroke:var(--ink-b);stroke-width:1.2;stroke-linecap:round;opacity:.75;transition:transform .4s cubic-bezier(.3,1,.5,1)}
+@keyframes jwave{to{transform:translateX(20px)}}
+@keyframes jpulse{50%{opacity:.32}}
+.jpour{display:none}
+.spilling .jpour{display:inline}
+.jstream{fill:none;stroke:var(--teal);stroke-width:2.2;stroke-linecap:round}
+.jdrop{fill:var(--teal);animation:jdrop 1s ease-in infinite}
+.jdrop.d2{animation-delay:.5s}
+@keyframes jdrop{from{transform:translateY(0);opacity:1}to{transform:translateY(12px);opacity:0}}
+.jnums{display:grid;justify-items:start;line-height:1;min-width:0}
+.stat.jar b{display:block;font-size:28px;color:var(--water);line-height:1}
+.stat.jar b .cap{font-family:var(--display);font-size:15px;color:var(--label);margin:0}
+.stat.jar b .cap i{color:var(--label) !important}
+.stat.jar em{display:block;font-family:var(--hand);font-size:15px;font-style:normal;color:var(--flow);white-space:nowrap;margin-top:2px}
+.stat.jar em i{font-style:normal;color:var(--flow) !important}
+.stat.jar em .jsp{color:var(--rust) !important}
+.stat.jar.bump,.stat.jar em.bump{animation:none}
+@media (prefers-reduced-motion:reduce){.jteal,.jwave,.jdrop{animation:none}.jlvl,.jn{transition:none}.jdrop.d2{display:none}}
+/* zoom and round side buttons: paper with an ink border */
+.zoom{background:var(--paper);color:var(--ink-b);box-shadow:0 0 0 1.5px var(--ink-b),2px 3px 0 rgba(107,79,51,.5);border-radius:50%}
+/* hint: a paper note */
+.msg{background:var(--paper);color:var(--paper-ink);border:1.5px solid var(--ink-b);border-radius:6px;box-shadow:3px 4px 0 rgba(107,79,51,.35);
+  font-family:var(--hand);font-weight:400;font-size:17px;line-height:1.3;padding:8px 12px}
+.msg.warn{background:#f6dcc4;color:#6b2c10;border-color:#8a4a24;box-shadow:3px 4px 0 rgba(138,74,36,.35)}
+/* bottom bar */
+.actions{background:var(--paper-2);box-shadow:0 0 0 1.5px var(--ink-b),3px 4px 0 rgba(107,79,51,.45);border-radius:18px}
+.rb>i{background:var(--paper);color:var(--ink-b);box-shadow:0 0 0 1.5px var(--ink-b),2px 3px 0 rgba(107,79,51,.45)}
+.rb:active:not(:disabled)>i{transform:translate(2px,3px);box-shadow:0 0 0 1.5px var(--ink-b)}
+.rb>span{color:var(--label);font-family:var(--body);font-weight:800}
+/* Next Water Cycle: blue with paper text when active; muted while you can still afford something */
+.rb.go>i{background:var(--blue);color:var(--paper);box-shadow:0 0 0 2px var(--blue-d),3px 4px 0 var(--blue-d),0 0 0 6px var(--paper-2)}
+.rb.go:active:not(:disabled)>i{box-shadow:0 0 0 2px var(--blue-d),1px 1px 0 var(--blue-d),0 0 0 6px var(--paper-2)}
+.rb.go>span{color:var(--paper-ink);font-family:var(--display);font-weight:700;font-size:13px}
+.rb.go .cyc{transform-origin:50% 50%;animation:cyc 6s linear infinite}
+@keyframes cyc{to{transform:rotate(360deg)}}
+.rb.go.muted>i{background:#c9d3d6;color:#5e6f78;box-shadow:0 0 0 2px #8c9aa0,3px 4px 0 #8c9aa0,0 0 0 6px var(--paper-2)}
+.rb.go.muted .cyc{animation-duration:14s}
+.rb.go.muted>span{color:var(--label)}
+.rb.go .gain{font-family:var(--hand);font-weight:400;font-size:14px;color:var(--flow);background:var(--paper);box-shadow:0 0 0 1.2px var(--ink-b);border-radius:4px}
+.rb.go .gain.spill,.gain.spill{color:var(--rust);background:var(--paper)}
+.rb.go.muted .gain{background:var(--paper);color:var(--label)}
+.rb.go.ready>i{background:var(--blue);animation:ready 1.6s ease-in-out infinite}
+@keyframes ready{50%{box-shadow:0 0 0 2px var(--blue-d),3px 4px 0 var(--blue-d),0 0 0 9px rgba(47,111,158,.25)}}
+.rb.go.land.flowing>i{background:#c8553d;box-shadow:0 0 0 2px #7d2f1f,3px 4px 0 #7d2f1f,0 0 0 6px var(--paper-2)}
+@media (prefers-reduced-motion:reduce){.rb.go .cyc{animation:none}}
+/* buttons in cards and dialogs */
+button,a.btn{font-family:var(--display);color:var(--paper-ink);background:var(--paper);box-shadow:0 0 0 1.5px var(--ink-b),2px 3px 0 rgba(107,79,51,.45);border-radius:10px}
+button:active:not(:disabled),a.btn:active{transform:translate(2px,3px);box-shadow:0 0 0 1.5px var(--ink-b)}
+.end{background:var(--blue) !important;color:var(--paper) !important;box-shadow:0 0 0 2px var(--blue-d),3px 4px 0 var(--blue-d) !important;text-shadow:none}
+.end:active:not(:disabled){box-shadow:0 0 0 2px var(--blue-d) !important}
+button:focus-visible,a.btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+/* win card */
+.win{background:rgba(61,42,23,.35)}
+.card{background:var(--paper);color:var(--paper-ink);border-radius:10px;box-shadow:0 0 0 1.5px var(--ink-b),4px 6px 0 rgba(107,79,51,.45)}
+.ribbon{background:var(--blue);border-radius:6px;box-shadow:0 0 0 2px var(--blue-d),3px 4px 0 var(--blue-d)}
+.card h2{color:var(--paper);font-family:var(--display)}
+.wsub{color:var(--label);font-family:var(--hand);font-size:16px;font-weight:400;letter-spacing:0;text-transform:none}
+.card ul{background:#fffaf0;box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.35);border-radius:8px}
+.card li{border-bottom:1px dashed var(--paper-line)}
+.card li b{font-family:var(--display);color:#b8a27a}
+.card li.got b{color:var(--gold-d)}
+.card li.g0 i{background:#5aa9d0}.card li.g1 i{background:#93c565}.card li.g2 i{background:#e0a030}.card li.g3 i{background:#4f8a4a}
+.stars .st path{fill:#e2d3b0;stroke:#a8906a}
+.stars .st path.glint{fill:rgba(255,255,255,.25)}
+.stars .st.on path{fill:#f2c14e;stroke:var(--gold-d)}
+.stars .st.on path.glint{fill:#fde7a6}
+/* banner at each water cycle: a blue paper strip */
+.banner{background:linear-gradient(90deg,rgba(47,111,158,0),rgba(47,111,158,.94) 18%,rgba(47,111,158,.96) 50%,rgba(47,111,158,.94) 82%,rgba(47,111,158,0));box-shadow:none}
+.banner b{font-family:var(--display);color:var(--paper);text-shadow:2px 3px 0 var(--blue-d)}
+.banner small{font-family:var(--hand);font-weight:400;font-size:16px;color:#e8f1f5}
+/* dialogs and the tile card: paper with an ink border */
+dialog,.tcard{background:var(--paper);color:#5b4630;border-radius:10px;box-shadow:0 0 0 1.5px var(--ink-b),4px 6px 0 rgba(107,79,51,.4)}
+dialog::backdrop{background:rgba(61,42,23,.45)}
+dialog h2,dialog h3,dialog b,.tname b{color:var(--paper-ink)}
+dialog h2,.tname b{font-family:var(--display)}
+dialog.goalcard .eyebrow{font-family:var(--hand);color:var(--blue);font-size:16px;font-weight:400;letter-spacing:.02em;text-transform:none}
+dialog.goalcard .aims li,dialog .opts{background:#f3e6c8;border-radius:6px}
+dialog.goalcard .aims svg{fill:#f2c14e;stroke:var(--gold-d)}
+dialog b.wtr{color:var(--water)}dialog b.flw,.wline b.flw{color:var(--flow)}
+.tname small{color:#5b4630}
+.swatch{border-radius:8px;box-shadow:0 0 0 1.2px rgba(107,79,51,.55)}
+button.tclose{background:#f3e6c8;color:var(--ink-b)}
+.wline span{color:var(--label)}
+.cells.big i{background:#e2d3b0}.cells.big i.f{background:#5aa9d0}
+button.act{background:var(--blue);color:var(--paper);border-radius:10px;box-shadow:0 0 0 1.5px var(--blue-d),2px 3px 0 var(--blue-d)}
+button.act:active:not(:disabled){box-shadow:0 0 0 1.5px var(--blue-d)}
+button.act.plant{background:#5f9a48;box-shadow:0 0 0 1.5px #2e4a26,2px 3px 0 #2e4a26}
+button.act.trib{background:#3f9aa8;box-shadow:0 0 0 1.5px #1f5a63,2px 3px 0 #1f5a63}
+button.act.moss{background:#7a9a4a;box-shadow:0 0 0 1.5px #44582a,2px 3px 0 #44582a}
+button.act.sand:not(:disabled){background:#c9a24a;box-shadow:0 0 0 1.5px #7a5a1c,2px 3px 0 #7a5a1c}
+button.act.rock:not(:disabled){background:#8d877c;box-shadow:0 0 0 1.5px #4d463c,2px 3px 0 #4d463c}
+button.act.boulder:not(:disabled){background:#8a6a48;box-shadow:0 0 0 1.5px #4d3e30,2px 3px 0 #4d3e30}
+button.act.bare:not(:disabled){background:#b07e4f;box-shadow:0 0 0 1.5px #5a3f28,2px 3px 0 #5a3f28}
+button.act:disabled{background:#e4ddcc;color:#8a7d68;box-shadow:0 0 0 1.5px #b8a888}
+.atext b{font-family:var(--display)}
+.acost{font-family:var(--hand);font-weight:400;font-size:16px;background:rgba(251,244,226,.2)}
+.atext small.awarn{color:#ffe7c9}
+.rivers button{background:rgba(251,244,226,.85);color:var(--label);box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.45)}
+.rivers button small{color:var(--paper-ink)}
+.rivers button.on{box-shadow:inset 0 0 0 2px var(--water)}
+.lcopy{font-family:var(--hand);font-size:16px;font-weight:400;border-radius:8px}
+.stat.jar span{display:inline;font:inherit;letter-spacing:0;text-transform:none;color:inherit;text-shadow:none}
+.stat.jar .jnums{display:grid}

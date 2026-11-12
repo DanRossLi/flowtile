@@ -11,7 +11,7 @@
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
 <style>
   :root{--sea:#2b68b0;--deep:#1f4f8c;--paper:#f4f1e8;--ink:#13222e;--gold:#ffd166;--gold-d:#d9a93c;--green:#7cc94c;--muted:#6c7b83}
   *{box-sizing:border-box}
@@ -45,6 +45,7 @@
   footer a{color:#fff}
   @media (prefers-reduced-motion:reduce){a.isle{transition:none}}
 </style>
+<link rel="stylesheet" href="../paper.css">
 </head>
 <body>
 <main>
@@ -56,10 +57,6 @@
 <script>
 // The campaign: a world of islands, one biome each. An island opens when the one before it has a star.
 const WORLD = [
-  {name:"Tutorial", note:"Twelve short islands, one new rule each. <a href=\"../tutorial/\">Your progress</a>", col:"#a3d977", isles:[
-    ["tutorial/1", "tut-1-first-stream", "First stream"], ["tutorial/2", "tut-2-grass", "Grass"], ["tutorial/3", "tut-3-meadow", "Meadow"], ["tutorial/4", "tut-4-trees", "Trees"],
-    ["tutorial/5", "tut-5-groves", "Groves"], ["tutorial/6", "tut-6-pollinators", "Pollinators"], ["tutorial/7", "tut-7-sand", "Sand"], ["tutorial/8", "tut-8-oases", "Oases"],
-    ["tutorial/9", "tut-9-rock", "Rock"], ["tutorial/10", "tut-10-lakes", "Lakes"], ["tutorial/11", "tut-11-tributaries", "Tributaries"], ["tutorial/12", "tut-12-mountains", "Mountains"]]},
   {name:"River mode", note:"Dan's original maps, in order, with no guidance. <a href=\"../river/\">The list</a>", col:"#4aa3e8", isles:[
     ["1", "map-1-flat", "Flat"], ["1a", "map-1a-sand-v2", "Sand"], ["3", "map-3-lake", "Lake"], ["4", "map-4-grass", "Grass"], ["4a", "map-4a-trees", "Trees"], ["5", "map-5-desert", "Desert"],
     ["6", "map-6-tributary", "Tributary"], ["7", "map-7-rock", "Rock"], ["8", "map-8-grove", "Grove"], ["9", "map-9-pollinators", "Pollinators"], ["10", "map-10-mountains", "Mountains"]]},

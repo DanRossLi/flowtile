@@ -11,9 +11,8 @@
 //     your flow only once it connects to the main river
 //   mainSource: [x, y] of the only source you can start on (others are for tributaries)
 //   plantCost: gal to plant grass, meadow or trees (default 1)
-//   tutorial: step number on /tutorial/N/ (the win card says "Next lesson"); nextLabel: text for the win card's next button
+//   nextLabel: text for the win card's next button
 //   bloomKind: "trees" or "bees" to count planted trees or pollinating meadows for the bloom goal
-//   offerTutorial: offer the tutorial to a first-time visitor (site root)
 //   objectives: [{text, target, done: g => …}] (tutorial, LOU-264): one at a time on the map; done is tested after every action
 //     with the helpers in G below; target names what to highlight (see objAim)
 //   placeSource: true lets you place your source on any bare ground, grass, meadow or sand tile at least 4 tiles from the sea (LOU-263)
@@ -60,13 +59,23 @@ const ALP = STORE > 0 && TYPES.some(r => r.includes("B")); // alpine trees (LOU-
 const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add themselves here
 // A fixed roll per map, turn and tile, so undo and replays give the same result.
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
-const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
-const PLAY_TILE = 118; // LOU-262: a tile's width in px at play zoom, so 3–4 fit across a 390px phone (and stand ~59px tall)
-const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c",fertile:"#7a4f2e",marsh:"#4f8a7c",cave:"#9a948a",bed:"#cdb894"};
+const W = TYPES[0].length, H = TYPES.length;
+// Hex grid (A4): pointy-top hexes in "odd-r" offset rows (odd rows sit half a tile right). Six faces, numbered
+// 0 E, 1 NE, 2 NW, 3 W, 4 SW, 5 SE; face d and face d + 3 are opposite. Distance and straight lines use cube coordinates.
+const HEX = [[[1,0],[0,-1],[-1,-1],[-1,0],[-1,1],[0,1]], [[1,0],[1,-1],[0,-1],[-1,0],[0,1],[1,1]]];
+const step = ([x, y], d) => { const o = HEX[y & 1][((d % 6) + 6) % 6]; return [x + o[0], y + o[1]] };
+const cube = ([x, y]) => [x - (y - (y & 1)) / 2, y];
+const hexDist = (a, b) => { const [q1, r1] = cube(a), [q2, r2] = cube(b), dq = q1 - q2, dr = r1 - r2; return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2 };
+const faceOf = (a, b) => [0, 1, 2, 3, 4, 5].find(d => { const q = step(a, d); return q[0] === b[0] && q[1] === b[1] }) ?? -1;
+// Old square-grid sides ([dx, dy] in wind / waterSides) map to a hex face; a number 0–5 is a face already.
+const FACE = s => typeof s === "number" ? s : ({"1,0":0, "0,-1":2, "-1,0":3, "0,1":5})[s + ""] ?? 0;
 const BANKS = true; // river drawn as a channel with banks; lakes get a shore
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- DOM
+// A4 fonts: Fraunces for numbers and the button, Patrick Hand for hints and tags, Nunito for labels
+if (!document.querySelector("link[data-a4]")) { const l = document.createElement("link"); l.rel = "stylesheet"; l.dataset.a4 = "1";
+  l.href = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap"; document.head.appendChild(l) }
 document.body.innerHTML = `
 <div class="app">
   <div class="board" id="board">
@@ -76,11 +85,21 @@ document.body.innerHTML = `
       <div class="stats">
         <div class="stat" id="cScore"><span>Score</span><b id="hScore">0</b></div>
         <div class="stat" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i><small>/${TURN_GOAL}</small></b></div>
-        <button type="button" class="stat water" id="cWater"><span>Water</span><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.8 4.8 6.5 8.2 6.5 11.6a6.5 6.5 0 01-13 0c0-3.4 2.7-6.8 6.5-11.6z"/><path class="hl" d="M9 14.5a3 3 0 002.4 2.9"/></svg><i id="hWater">0</i>${STORE ? `<small class="cap">/<i id="hCap">0</i></small>` : ""}<em id="cFlow">(+<i id="hFlow">0</i>)</em></b></button>
+        <!-- Water jar (LOU-278): water you have (blue), storage (jar and notches), next cycle's flow (teal) and any spill -->
+        <button type="button" class="stat water jar" id="cWater"><svg class="jsvg" viewBox="0 0 40 52" aria-hidden="true">
+            <defs><clipPath id="jclip"><path d="M8 7h24v31a12 12 0 01-24 0z"/></clipPath></defs>
+            <path class="jglass" d="M8 7h24v31a12 12 0 01-24 0z"/>
+            <g clip-path="url(#jclip)"><g class="jlvl" id="jFlow"><rect class="jteal" x="0" y="0" width="40" height="60"/></g>
+              <g class="jlvl" id="jWater"><path class="jwave" d="M-20 2q5-3 10 0t10 0t10 0t10 0t10 0t10 0t10 0v60h-70z"/></g></g>
+            <g id="jNotch"></g>
+            <path class="jink" d="M8 7v31a12 12 0 0024 0V7"/><path class="jrim" d="M6 6.5h28"/>
+            <g class="jpour" id="jPour"><path class="jstream" d="M32 7q5 1 5 9v10"/><circle class="jdrop d1" cx="37" cy="30" r="1.6"/><circle class="jdrop d2" cx="37" cy="30" r="1.3"/></g>
+          </svg><span class="jnums"><b><i id="hWater">0</i>${STORE ? `<small class="cap"> / <i id="hCap">0</i></small>` : ""}</b><em id="cFlow"><i class="jin">+<i id="hFlow">0</i><span id="jNext"> next cycle</span></i><i class="jsp" id="jSpill"></i></em></span></button>
       </div>
       <div class="subrow">
         <div class="goals" id="goals"></div>
-        ${WIND ? `<div class="wx wind" id="cWind" aria-label="Wind from the ${{"-1,0":"west","1,0":"east","0,-1":"north","0,1":"south"}[WIND + ""] || "side"}"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${Math.round(Math.atan2((-WIND[0] - WIND[1]) * TH / 2, (-WIND[0] + WIND[1]) * TW / 2) * 180 / Math.PI)}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg>Wind</div>` : ""}
+        ${WIND != null ? (() => { const f = FACE(WIND), ang = -60 * f * Math.PI / 180, vx = -Math.cos(ang), vy = -Math.sin(ang), deg = Math.round(Math.atan2((vx + vy) * .3536, (vx - vy) * .7071) * 180 / Math.PI);
+          return `<div class="wx wind" id="cWind" aria-label="Wind from the ${["east","north-east","north-west","west","south-west","south-east"][f]}"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${deg}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg>Wind</div>` })() : ""}
         ${CYCLE || WX ? `<div class="wx sky" id="cSky"><span id="lSky">Sky</span> <b id="hSky">Clear</b></div>` : ""}
       </div>
       ${M.objectives ? `<div class="obj" id="obj" role="status"><i class="ock" id="oTick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><span class="otext" id="oText"></span><span class="odots" id="oDots" aria-hidden="true"></span>${M.next ? `<button type="button" class="oskip" id="oSkip" aria-label="Skip lesson">Skip</button>` : ""}</div>` : ""}
@@ -97,7 +116,7 @@ document.body.innerHTML = `
       ${LAND ? `<button type="button" class="lcopy" id="landCopy">Copy this landscape as a River mode map</button>` : ""}
       <div class="row" id="wRow">
         <button id="again">Play again</button>
-        ${M.share ? `<button class="end" id="share">Share score</button>` : M.next ? `<a class="btn end" id="next" href="${M.next}">${M.nextLabel || (M.tutorial ? "Next lesson" : "Next map")}</a>` : ""}
+        ${M.share ? `<button class="end" id="share">Share score</button>` : M.next ? `<a class="btn end" id="next" href="${M.next}">${M.nextLabel || "Next map"}</a>` : ""}
       </div>
     </div></div>
   </div>
@@ -106,7 +125,7 @@ document.body.innerHTML = `
     <button id="restart" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5"/></svg></i><span>Restart</span></button>
     <button id="helpBtn" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 9a3 3 0 015.6 1.2c0 2-2.8 2.6-2.8 4.3"/><circle cx="12" cy="18.2" r=".6" fill="currentColor"/></svg></i><span>Help</span></button>
     ${LAND ? `<button id="end" class="rb go land"><i><svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5l11 6.5-11 6.5z"/></svg><svg class="ico-stop" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6v12M16 6v12"/></svg><em class="gain" id="gain" hidden></em></i><span id="endLbl">Flow</span></button>`
-    : `<button id="end" class="rb go"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c3-2 6-2 9 0s6 2 9 0M3 15c3-2 6-2 9 0s6 2 9 0"/><path d="M17 4l4 5-4 5" class="arr"/></svg><em class="gain" id="gain" hidden></em></i><span>Next Water Cycle</span></button>`}
+    : `<button id="end" class="rb go"><i><svg class="cyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3"/><path d="M18.2 2.8l-.9 3.9-3.9-.9"/></svg><em class="gain" id="gain" hidden></em></i><span>Next Water Cycle</span></button>`}
   </div>
 </div>
 <dialog id="goal" class="goalcard" aria-labelledby="goalTitle">
@@ -116,12 +135,6 @@ document.body.innerHTML = `
   <h3>${PERF ? "Your goal" : "Earn 3 stars"}</h3>
   <ul class="aims">${aims().map(a => `<li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span>${a}</span></li>`).join("")}</ul>
   <form method="dialog"><button class="end" id="goalGo">Let's go</button></form>
-</dialog>
-<dialog id="offer" class="goalcard" aria-labelledby="offerTitle">
-  <small class="eyebrow">Welcome to Flow Tile</small>
-  <h2 id="offerTitle">New here?</h2>
-  <p class="learn">Start the <b>tutorial</b>: 12 short islands, one new rule each, from your first stream to tributaries and mountains.</p>
-  <form method="dialog" class="orow2"><a class="btn end" href="${ROOT}tutorial/1/">Start the tutorial</a><button value="stay" id="offerStay">Play this island</button></form>
 </dialog>
 <dialog id="help" aria-labelledby="helpTitle">
   <h2 id="helpTitle">How to play</h2>
@@ -166,8 +179,8 @@ function fresh() {
   // Mountains (LOU-269): each has exactly one water side, set per mountain (waterSides) or by the wind. The tile on that
   // face is its runoff tile (ro 1 = waiting, 2 = claimed); the tile on the far side is rain shadow.
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (TYPES[y][x] !== "B") continue;
-    const side = (M.waterSides && M.waterSides[x + "," + y]) || WIND; if (!side) continue;
-    const a = [x + side[0], y + side[1]], b = [x - side[0], y - side[1]], land = p => inside(...p) && !["boulder","ocean","source"].includes(tiles[p[1]][p[0]].t);
+    const s0 = (M.waterSides && M.waterSides[x + "," + y]) ?? WIND; if (s0 == null) continue; const side = FACE(s0);
+    const a = step([x, y], side), b = step([x, y], side + 3), land = p => inside(...p) && !["boulder","ocean","source"].includes(tiles[p[1]][p[0]].t);
     tiles[y][x].ws = side;
     if (land(a)) tiles[a[1]][a[0]].ro = 1;
     if (land(b) && !["lake","spring"].includes(tiles[b[1]][b[0]].t)) tiles[b[1]][b[0]].rs = true }
@@ -183,7 +196,7 @@ function fresh() {
   return {tiles, lakes, rivers:[], active:0, phase:"pick", cap:STORE + grown, water:0, income:0, turn:0, head:null, msg:PLACE ? `${M.startHint} Or tap any glowing land tile to place your own source there.` : M.startHint, warn:false, clouds:[], dry:0};
 }
 const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
-function nbrs([x, y]) { return [[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy]) => [x+dx, y+dy]).filter(([a,b]) => inside(a, b)) }
+function nbrs(p) { return [0, 1, 2, 3, 4, 5].map(d => step(p, d)).filter(([a, b]) => inside(a, b)) }
 const at = p => S.tiles[p[1]][p[0]];
 function level(p) { const c = at(p); return c.t === "lake" && S.lakes[c.lake].filled ? c.e + 1 : c.e }
 
@@ -209,7 +222,7 @@ function plantable(p) {
   return nbrs(p).some(n => at(n).river && at(n).rid >= 0 && onMain(at(n).rid)) || lakeReach(p);
 }
 // A full lake's reach: ground up to 2 tiles from its water can be planted.
-function lakeReach(p) { return S.lakes.some(L => L.filled && L.tiles.some(q => Math.abs(q[0] - p[0]) + Math.abs(q[1] - p[1]) <= REACH && onMain(at(q).rid))) }
+function lakeReach(p) { return S.lakes.some(L => L.filled && L.tiles.some(q => hexDist(q, p) <= REACH && onMain(at(q).rid))) }
 // ---------- rivers: water, storage and flow (S.income) belong to the main river. Each river keeps its own head; the
 // active river's head lives on S.head. Rivers that have merged share a group (grp); group 0 is connected to the main river.
 // A group that isn't connected keeps its flow waiting (pend) until it connects.
@@ -228,10 +241,10 @@ const byRiver = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0);
 function combos() {
   const out = []; if (!NEW || !S.rivers.length) return out;
   for (const [kind, ok, min] of [["grove", groveTile, GROVE]])
-    for (const [dx, dy] of [[1, 0], [0, 1]]) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    for (const d of [0, 4, 5]) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { // the three hex axes
       const good = q => inside(...q) && ok(at(q)) && !!byRiver(q);
-      if (!good([x, y]) || good([x - dx, y - dy])) continue;
-      const run = []; for (let q = [x, y]; good(q); q = [q[0] + dx, q[1] + dy]) run.push(q);
+      if (!good([x, y]) || good(step([x, y], d + 3))) continue;
+      const run = []; for (let q = [x, y]; good(q); q = step(q, d)) run.push(q);
       const len = run.reduce((n, q) => n + (at(q).fert ? 2 : 1), 0); // fertile trees count double (LOU-273)
       if (len < min) continue;
       const first = kind === "grove" && at(run[0]).pr >= 0 ? at(run[0]).pr : at(byRiver(run[0])).rid;
@@ -248,7 +261,7 @@ function comboBonus(rid) { return combos().filter(k => k.rid === rid).reduce((s,
 // +1 flow. A river running through it drains it.
 const marshBy = p => { const c = at(p); return c.t === "marsh" && !c.river && nbrs(p).some(n => { const k = at(n); return k.river && k.rid >= 0 && k.t !== "ocean" && onMain(k.rid) }) };
 const greenAt = q => inside(...q) && !at(q).river && at(q).g >= 1;
-const marshGreen = p => [[1, 0], [0, 1]].some(([dx, dy]) => greenAt([p[0] + dx, p[1] + dy]) && greenAt([p[0] - dx, p[1] - dy]));
+const marshGreen = p => [0, 1, 2].some(d => greenAt(step(p, d)) && greenAt(step(p, d + 3)));
 const HAS_MARSH = TYPES.some(r => r.includes("M"));
 function marshState() { let cap = 0, flow = 0; if (!HAS_MARSH) return {cap, flow};
   S.tiles.forEach((r, y) => r.forEach((c, x) => { if (!marshBy([x, y])) return; cap += 2; if (marshGreen([x, y])) flow++ })); return {cap, flow} }
@@ -373,7 +386,7 @@ function build(mv) {
   if (mv.cost) float(mv.p, `−${mv.cost} gal`, "#bfe4ff");
   if (b.t === "lake") { const L = S.lakes[b.lake]; L.filled = true; placed = L.tiles;
     for (const p of L.tiles) { const c = at(p); c.river = true; c.bloom = false; c.from = mv.from; c.rid = S.active;
-      anim.set(p + "", t1 + 120 * (Math.abs(p[0] - mv.p[0]) + Math.abs(p[1] - mv.p[1]))) }
+      anim.set(p + "", t1 + 120 * hexDist(p, mv.p)) }
     notes.push(STORE ? `Lake filled: you can plant up to ${REACH} tiles from it, and the stream can leave from any side` : "Lake filled: the stream can leave from any side") }
   else { b.river = true; b.bloom = false; b.from = mv.from; b.rid = S.active; anim.set(mv.p + "", t1);
     if (b.g) { const wild = b.wild, lose = stor(b); if (!wild) capAdd(b.pr, -lose); const sp = Math.max(0, S.water - S.cap); S.water -= sp;
@@ -403,10 +416,10 @@ function build(mv) {
   say(notes.length ? notes.join(". ") + "." : "Keep building, or tap Next Water Cycle.");
 }
 // ---------- Landscape mode (LOU-266)
-const DIR_RANK = {"1,0":0, "0,1":1, "0,-1":2, "-1,0":3}; // last tie-break: right, down, up, left
+const DIR_RANK = [0, 2, 4, 5, 3, 1]; // last tie-break by hex face: east, south-east, north-east, south-west, north-west, west
 function landNext() { let best = null, bk = null;
   for (const m of moves().values()) { const c = at(m.p); if (c.river) continue;
-    const k = [c.t === "ocean" ? -1 : m.cost, seaGap(m.p), DIR_RANK[[m.p[0] - m.from[0], m.p[1] - m.from[1]] + ""] ?? 4];
+    const k = [c.t === "ocean" ? -1 : m.cost, seaGap(m.p), DIR_RANK[faceOf(m.from, m.p)] ?? 6];
     if (!bk || k[0] < bk[0] || (k[0] === bk[0] && (k[1] < bk[1] || (k[1] === bk[1] && k[2] < bk[2])))) { best = m; bk = k } }
   return best }
 // The river's own move: as many tiles as its flow at the start of the cycle.
@@ -564,8 +577,8 @@ function spreadTurn() {
     if (to) grown.push(to) }));
   grown.forEach((p, i) => grow(p, 250 + 160 * i));
   if (S.turn % 3 === 0) for (const k of combos().filter(k => k.kind === "grove")) { const mid = k.tiles[Math.floor(k.tiles.length / 2)];
-    const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(q => greenable(q) && Math.abs(q[0] - mid[0]) + Math.abs(q[1] - mid[1]) <= 4)
-      .sort((a, b) => (Math.abs(a[0] - mid[0]) + Math.abs(a[1] - mid[1])) - (Math.abs(b[0] - mid[0]) + Math.abs(b[1] - mid[1])) || rnd("seed", ...a) - rnd("seed", ...b))[0];
+    const to = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(q => greenable(q) && hexDist(q, mid) <= 4)
+      .sort((a, b) => hexDist(a, mid) - hexDist(b, mid) || rnd("seed", ...a) - rnd("seed", ...b))[0];
     if (to) { grow(to, 900, "#ffe066"); birds.push({from:mid, to, t0:now()}); seeded++ } }
   if (!grown.length && !seeded) return "";
   bump("cWater"); bump("cBloom"); const cb = recombo();
@@ -579,7 +592,7 @@ function rainTarget() { let best = null, bs = -1;
     const sc = nbrs(p).filter(n => at(n).g || at(n).bloom).length * 10 + c.g; if (sc > bs) { bs = sc; best = p } }));
   return best || S.head }
 // Placing your source (LOU-263): bare ground, grass, meadow or sand, at least SEA_GAP tiles from the sea.
-const seaGap = p => { let d = 1e9; S.tiles.forEach((r, y) => r.forEach((k, x) => { if (k.t === "ocean") d = Math.min(d, Math.abs(x - p[0]) + Math.abs(y - p[1])) })); return d };
+const seaGap = p => { let d = 1e9; S.tiles.forEach((r, y) => r.forEach((k, x) => { if (k.t === "ocean") d = Math.min(d, hexDist([x, y], p)) })); return d };
 function placeWhy(p) { const c = at(p);
   if (!["bare", "meadow", "sand"].includes(c.t) || c.pool || c.beaver || c.wild) return `You can't place a source on ${{rock:"rock", boulder:"a mountain", lake:"a lake", ocean:"the sea", spring:"a spring"}[c.t] || (c.wild ? "the forest" : c.pool ? "a rain pool" : c.beaver ? "a beaver colony" : "this tile")}. Choose bare ground, grass, meadow or sand.`;
   if (seaGap(p) < SEA_GAP) return `Too close to the sea: place your source at least ${SEA_GAP} tiles from it.`;
@@ -615,10 +628,22 @@ let bannerT = 0, toastT = 0;
 function showBanner(t, sub) { if (quiet) return; const b = $("banner"); tx("bTurn", t); tx("bSub", sub); b.hidden = false; b.classList.remove("go"); void b.offsetWidth; b.classList.add("go");
   clearTimeout(bannerT); bannerT = setTimeout(() => { b.hidden = true; b.classList.remove("go") }, reduce ? 1200 : 1700) }
 function bump(id) { const e = $(id); if (!e || reduce) return; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump") }
+// The water jar (LOU-278): levels ease to their new height (CSS transitions); one notch per gallon of storage.
+// Maps without storage scale the jar to what you hold plus next cycle's flow.
+function jar() { const play = S.phase === "play", g = play ? forecast().gain : S.income, cap = STORE ? Math.max(1, S.cap) : Math.max(8, S.water + g + 2);
+  const top = 7, bot = 50, lv = v => bot - (bot - top) * Math.min(1, v / cap), sp = STORE ? Math.max(0, S.water + g - S.cap) : 0;
+  $("jWater").style.transform = `translateY(${lv(S.water)}px)`; $("jFlow").style.transform = `translateY(${lv(S.water + g)}px)`;
+  const nb = $("jNotch"), want = STORE ? Math.max(0, S.cap - 1) : 0;
+  while (nb.children.length < want) { const l = document.createElementNS("http://www.w3.org/2000/svg", "path"); l.setAttribute("d", "M28 0h4"); l.setAttribute("class", "jn"); l.style.transform = `translateY(${bot}px)`; nb.appendChild(l) }
+  while (nb.children.length > want) nb.lastChild.remove();
+  [...nb.children].forEach((l, i) => { requestAnimationFrame(() => l.style.transform = `translateY(${lv(i + 1)}px)`) });
+  $("cWater").classList.toggle("spilling", sp > 0 || (STORE && S.water >= S.cap && g > 0));
+  tx("jNext", sp ? "" : " next cycle"); tx("jSpill", sp ? ` · ${sp} spill` : "") }
 // Next Water Cycle (LOU-270): muted while you can still afford something, bright and pulsing once you can't.
 const nothingLeft = () => LAND ? S.water < 1 : !affordable() && !canPlant();
 function sync() {
   tx("hWater", S.water); tx("hCap", S.cap); tx("hFlow", S.income); tx("hTurn", S.turn); tx("hScore", PERF ? score().total : bloomCount());
+  jar();
   $("cWater").setAttribute("aria-label", `Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gallons. Flow: +${S.income} per water cycle. Tap for details`);
   $("cTurn").classList.toggle("over", S.turn > TURN_GOAL);
   goals();
@@ -702,7 +727,7 @@ function tileText(p) {
   if (c.ro === 1) return `Water side: +1 flow when your river reaches this tile (through or beside it).${MELT ? " Snowmelt adds +3 gal once." : ""} It's the only tile at this mountain that gives flow.`;
   if (c.ro === 2) return "Water side: your river already took this mountain's runoff (+1 flow).";
   if (c.rs) return "Behind the mountain, out of the rain. Nothing grows here unless the stream runs through it.";
-  if (c.t === "cave") return c.mate ? `Run your river into this cave (${M.tileCost ?? 1} gal, like bare ground) and it comes out of cave ${c.cave} at the other end, ${Math.abs(c.mate[0] - p[0]) + Math.abs(c.mate[1] - p[1])} tiles away. A shortcut, but the land between gets no river.${at(c.mate).river ? " Its other end is already used, so it's closed." : ""}` : "A cave with no pair: the river can't use it.";
+  if (c.t === "cave") return c.mate ? `Run your river into this cave (${M.tileCost ?? 1} gal, like bare ground) and it comes out of cave ${c.cave} at the other end, ${hexDist(c.mate, p)} tiles away. A shortcut, but the land between gets no river.${at(c.mate).river ? " Its other end is already used, so it's closed." : ""}` : "A cave with no pair: the river can't use it.";
   if (c.t === "marsh") { const by = marshBy(p), gr = marshGreen(p);
     return by ? `Beside your river: stores 2 gal. ${gr ? "Green on both sides: +1 flow." : "Grow green on two opposite sides of it (both left and right, or above and below) for +1 flow."} A river running through it drains it.`
       : "Wet ground. Run your river beside it (not through it) and it stores 2 gal; with green on two opposite sides it also adds +1 flow." }
@@ -779,7 +804,7 @@ function renderCard() {
 }
 function placeCard() {
   if (!sel) return;
-  const el = $("tcard"), d = diamond(sel), sx = ((d[0][0] + d[2][0]) / 2 * scale + off.x) / lay.dpr, sy = ((d[0][1] + d[2][1]) / 2 * scale + off.y) / lay.dpr;
+  const el = $("tcard"), o = iso(...sel), sx = (o.x * scale + off.x) / lay.dpr, sy = (o.y * scale + off.y) / lay.dpr;
   const side = lay.h < 540 && lay.w > lay.h * 1.3, up = sy > lay.topH + (lay.h - lay.topH) / 2;
   el.className = "tcard " + (side ? (sx > lay.w / 2 ? "left" : "right") : up ? "up" : "");
   el.style.top = !side && up ? lay.topH + 6 + "px" : "";
@@ -859,7 +884,7 @@ function objCheck() { if (!OBJ.length || !S) return; let moved = false;
     if (objShown >= 0 && moved && !reduce) { el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick") }
     objShown = i; if (moved) save() }
   const tg = objNow() && objNow().target; $("end").classList.toggle("aim", tg === "end"); $("cWater").classList.toggle("aim", tg === "water") }
-if (OBJ.length && $("oSkip")) $("oSkip").onclick = () => { lsSet("flowtile.seen." + M.id, "skipped"); location.href = M.next };
+if (OBJ.length && $("oSkip")) $("oSkip").onclick = () => { try { localStorage.setItem("flowtile.seen." + M.id, "skipped") } catch (_) {} location.href = M.next };
 
 // ---------- Perfection score
 function score() {
@@ -915,35 +940,50 @@ function prog(key) { if (reduce) return 1; const s = anim.get(key); if (s == nul
 function float(p, text, col) { if (reduce) return; const t = now(), busy = fx.filter(f => f.p + "" === p + "" && f.t0 > t - 400).length; fx.push({p, text, col, t0:t + busy * 280}) }
 function ring(p) { if (!reduce) rings.push({p, t0:now()}) }
 
-// ---------- drawing (isometric blocks in the sea)
-const cv = $("cv"), ctx = cv.getContext("2d");
+// ---------- drawing (A4): a storybook diorama. Pointy-top hexes built flat in world space (radius R), then projected
+// isometrically; watercolour tiles with ink outlines on one continuous island with a layered soil cliff, in a paper sea.
+// The sea and the island are drawn into two cached layers that are redrawn only when the view or the land changes; the
+// river, everything standing on the land and all motion are drawn over them every frame.
+const cv = $("cv"), mainCtx = cv.getContext("2d"); let ctx = mainCtx;
+const seaC = document.createElement("canvas"), landC = document.createElement("canvas"); let seaKey = "", landKey = "", foamPath = null;
 let scale = 1, off = {x:0, y:0}, t0 = now(), lastSize = "", lastHead = null;
 // view.z is zoom relative to "whole map fits"; cx/cy is the world point at the middle of the free area
 const view = {z:null, cx:0, cy:0}, lay = {w:0, h:0, topH:0, availH:0, dpr:1, fit:1, zAuto:1};
 let tgt = null;
-const RING = 0, CELLS = []; // no sea border around the map
-for (let y = -RING; y < H + RING; y++) for (let x = -RING; x < W + RING; x++) CELLS.push([x, y]);
-CELLS.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
-const ORDER = CELLS.filter(p => inside(...p));
-const iso = (x, y, e) => ({x:(x - y) * TW / 2, y:(x + y) * TH / 2 - e * ZH});
-function drawLevel(p) { const c = at(p); if (c.t === "ocean") return 0; if (c.t === "lake") return c.e + (S.lakes[c.lake].filled ? .7 * prog(p + "") : 0); return c.e }
-function diamond(p, lv = drawLevel(p)) { const o = iso(p[0], p[1], lv); return [[o.x, o.y - TH/2], [o.x + TW/2, o.y], [o.x, o.y + TH/2], [o.x - TW/2, o.y]] }
+const R = 46, SQ3 = Math.sqrt(3), DEPTH = 30, PLAY_W = 390; // R = 46 at a 390px-wide screen (A4)
+const INK = "rgba(90,64,41,.55)", INK_M = "#4d3e30", INK_T = "#2e4a26", PAPER = "#fbf4e2", HAND = "'Patrick Hand', 'Nunito', cursive", NUM = "Fraunces, Georgia, serif";
+const hsh = (x, y) => Math.abs(((x + 11) * 73856093) ^ ((y + 7) * 19349663)) % 97;
+const world = (x, y) => [x * SQ3 * R + (y & 1 ? SQ3 * R / 2 : 0), y * 1.5 * R];
+const proj = (wx, wy) => ({x:(wx - wy) * .7071, y:(wx + wy) * .3536});
+const iso = (x, y) => { const [wx, wy] = world(x, y); return proj(wx, wy) };
+const drawLevel = () => 0; // every map is flat
+const ORDER = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) ORDER.push([x, y]);
+ORDER.sort((a, b) => iso(...a).y - iso(...b).y || iso(...a).x - iso(...b).x); // back to front
+// The six corners of tile p at radius r (corner i at 60·i − 90°), optionally jittered for a hand-painted edge.
+function hexPts(p, r = R, j = 0, seed = 0) { const [wx, wy] = world(...p), h = hsh(p[0] + seed, p[1]);
+  return [0, 1, 2, 3, 4, 5].map(i => { const a = (60 * i - 90) * Math.PI / 180, rr = r + (j ? ((h * (i + 5) * 37 + seed * 13) % 17 / 17 - .5) * 2 * j : 0), q = proj(wx + rr * Math.cos(a), wy + rr * Math.sin(a)); return [q.x, q.y] }) }
+const diamond = p => hexPts(p); // the tile's outline (kept under the old name for the test hook)
+const landTile = q => inside(...q) && at(q).t !== "ocean";
+// Edge i of a hex runs from corner i to corner i + 1 and faces neighbour (1 − i) mod 6; it faces the viewer when its
+// outward normal points down the screen.
+const EDGE_FACE = i => (7 - i) % 6, FRONT = [0, 1, 2, 3, 4, 5].map(i => { const a = (60 * i - 60) * Math.PI / 180; return Math.cos(a) + Math.sin(a) > .01 });
+function rpath(pts, rad = 8) { const n = pts.length, m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  ctx.beginPath(); ctx.moveTo(...m(pts[n - 1], pts[0])); for (let i = 0; i < n; i++) ctx.arcTo(...pts[i], ...m(pts[i], pts[(i + 1) % n]), rad); ctx.closePath() }
 function bounds() { let a = 1e9, b = 1e9, c = -1e9, d = -1e9;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const e = +ELEV[y][x], o = iso(x, y, e), g = iso(x, y, 0);
-    a = Math.min(a, o.x - TW/2); c = Math.max(c, o.x + TW/2); b = Math.min(b, o.y - TH/2 - 44); d = Math.max(d, g.y + TH/2 + 14) }
-  return {x:a - 8, y:b, w:c - a + 16, h:d - b + 8} }
+  for (const p of ORDER) for (const [x, y] of hexPts(p)) { a = Math.min(a, x); c = Math.max(c, x); b = Math.min(b, y); d = Math.max(d, y) }
+  return {x:a - 14, y:b - 56, w:c - a + 28, h:d - b + 56 + DEPTH + 16} }
 const B = bounds();
 // Fit the map into the part of the game window not covered by the top bar and the message.
 // Before a source is picked the whole island shows (the overview); after, play zoomed in like Polytopia (LOU-262):
-// a tile is PLAY_TILE px wide and the camera follows the stream's end. The message is a toast over the map, so it takes no room.
+// R is 46px on a 390px-wide screen and the camera follows the stream's end. The message is a toast, so it takes no room.
 function resize() {
   const box = $("board"), w = box.clientWidth, h = box.clientHeight, dpr = Math.min(devicePixelRatio || 1, 3);
   if (!w || !h) return;
   const topH = $("top").offsetHeight, botH = 0;
   const key = [w, h, topH, botH, dpr].join(); if (key === lastSize) return; lastSize = key;
-  const availH = Math.max(40, h - topH - botH), fit = Math.min(w / B.w, availH / B.h);
-  Object.assign(lay, {w, h, topH, availH, dpr, fit, zAuto:Math.max(1, PLAY_TILE / (TW * fit))});
-  if (view.z === null) { view.z = S.phase === "pick" ? 1 : lay.zAuto; const f = S.phase === "pick" ? {x:B.x + B.w / 2, y:B.y + B.h / 2} : focusPoint(); view.cx = f.x; view.cy = f.y }
+  const availH = Math.max(40, h - topH - botH), fit = Math.min(w / B.w, availH / B.h), play = Math.min(1.35, Math.max(1, w / PLAY_W));
+  Object.assign(lay, {w, h, topH, availH, dpr, fit, zAuto:Math.max(1, play / fit)});
+  if (view.z === null) { view.z = S.phase === "pick" || LAND ? 1 : lay.zAuto; const f = view.z === 1 ? {x:B.x + B.w / 2, y:B.y + B.h / 2} : focusPoint(); view.cx = f.x; view.cy = f.y }
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   $("fitBtn").style.top = topH + 6 + "px";
   applyView();
@@ -966,7 +1006,7 @@ function applyView() {
 function focusPoint() {
   const p = S && S.head ? S.head : M.mainSource || (() => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (TYPES[y][x] === "S" || TYPES[y][x] === "T") return [x, y] })();
   if (!p) return {x:B.x + B.w / 2, y:B.y + B.h / 2};
-  const o = iso(p[0], p[1], +ELEV[p[1]][p[0]]); return {x:o.x, y:o.y};
+  return iso(p[0], p[1]);
 }
 function follow(force) {
   if (view.z === null || !lay.w || (LAND && view.z <= 1.02)) return; // Landscape's whole-island view stays put
@@ -993,180 +1033,145 @@ const shade = (hex, k) => mix(hex, -k);
 function poly(pts, fill) { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill() }
 function line(pts, col, w) { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke() }
 function ell(x, y, rx, ry, fill) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fillStyle = fill; ctx.fill() }
-const hsh = (x, y) => Math.abs(((x + 11) * 73856093) ^ ((y + 7) * 19349663)) % 97;
+function ink(col = INK, w = 1.4) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.stroke() }
+function inkPoly(pts, fill, col = INK, w = 1.4) { poly(pts, fill); ink(col, w) }
+function inkEll(x, y, rx, ry, fill, col = INK, w = 1.2) { ell(x, y, rx, ry, fill); ink(col, w) }
+const TAU = Math.PI * 2, osc = (t, period, ph = 0) => reduce ? 0 : Math.sin((t / period + ph) * TAU); // −1..1 over one period
+// Tile colours (A4)
+const COL = {bare:"#d8ad74",grass:"#93c565",trees:"#86bd5e",meadow:"#c2da80",sand:"#f0d793",rock:"#d8ad74",boulder:"#c8b593",spring:STORE ? "#d8ad74" : "#c2da80",lake:"#c9b083",water:"#5aa9d0",ocean:"#cfe8e2",source:"#d8ad74",river:"#3d8fc4",bloom:"#93c565",shadow:"#d9b98c",fertile:"#8a5a36",marsh:"#a7c6a0",cave:"#bcae96",bed:"#e0cca3",runoff:"#9ccfbd",alpine:"#8fbf8a"};
 function topColor(c) {
   if (c.t === "ocean") return COL.ocean;
-  if (c.river && c.t === "lake") return COL.river;
-  if (c.river) return COL[c.t];
-  if (c.alp) return "#79b07e"; // alpine trees: cooler grass
-  if (c.g >= TREES) return COL.trees; if (c.g === MEADOW) return COL.meadow; if (c.g) return COL.grass;
-  if (c.rs) return COL.shadow;
+  if (c.t === "lake") return c.river ? COL.water : COL.lake;
+  if (c.alp) return COL.alpine;
+  if (!c.river) { if (c.g >= TREES) return COL.trees; if (c.g === MEADOW) return COL.meadow; if (c.g) return COL.grass }
+  if (c.rs && !c.river) return COL.shadow;
   if (c.fert && c.t === "bare") return COL.fertile;
-  if (c.ro && c.t === "bare") return c.ro === 1 ? "#6fa592" : "#7aa98c"; // wet green-blue ground at the foot of the water side
-  if (c.bloom && c.t !== "meadow") return COL.bloom; return COL[c.t] }
-function pine(x, y, s, dark) {
-  ell(x + 3 * s, y + 1, 10 * s, 3.5 * s, "rgba(0,0,0,.2)");
-  poly([[x - 1.8 * s, y - 5 * s], [x + 1.8 * s, y - 5 * s], [x + 1.8 * s, y + 1], [x - 1.8 * s, y + 1]], "#6b4a2b");
-  poly([[x, y - 30 * s], [x + 11 * s, y - 5 * s], [x - 11 * s, y - 5 * s]], dark ? "#24703a" : "#2f8a3a");
-  poly([[x, y - 30 * s], [x + 11 * s, y - 5 * s], [x, y - 5 * s]], dark ? "#378f3e" : "#46a948");
-  poly([[x, y - 40 * s], [x + 8 * s, y - 18 * s], [x - 8 * s, y - 18 * s]], dark ? "#2e8038" : "#3c9a40");
-  poly([[x, y - 40 * s], [x + 8 * s, y - 18 * s], [x, y - 18 * s]], dark ? "#47a646" : "#5cbf52");
+  if (c.ro && c.t === "bare") return COL.runoff;
+  if (c.bloom && c.t !== "meadow" && !c.river) return COL.bloom; return COL[c.t] || COL.bare }
+
+// ---------- the sea layer: paper washed with sea colour, the island's soft shadow and the shallows of the sea goal
+function paintSea() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#efe3c4"; ctx.fillRect(0, 0, cv.width, cv.height);
+  const g = ctx.createLinearGradient(0, 0, 0, cv.height); g.addColorStop(0, "#b9dcd8"); g.addColorStop(1, "#8fc0c6");
+  ctx.globalAlpha = .75; ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
+  ctx.setTransform(scale, 0, 0, scale, off.x, off.y);
+  // the island's shadow on the water
+  ctx.save(); ctx.shadowColor = "rgba(47,90,94,.55)"; ctx.shadowBlur = 16 * scale; ctx.shadowOffsetY = 6 * scale; ctx.fillStyle = "rgba(47,90,94,.4)"; ctx.beginPath();
+  for (const p of ORDER) { if (!landTile(p)) continue; const h = hexPts(p, R + 2); h.forEach(([x, y], i) => i ? ctx.lineTo(x, y + DEPTH) : ctx.moveTo(x, y + DEPTH)); ctx.closePath() }
+  ctx.fill(); ctx.restore();
+  // the sea goal (~): bright shallows with an inked dashed edge, so you can tell where to go
+  for (const p of ORDER) { if (at(p).t !== "ocean") continue; const h = hexPts(p, R - 3, 1.2, 3);
+    rpath(h, 9); ctx.fillStyle = "rgba(225,244,238,.75)"; ctx.fill(); ctx.save(); ctx.setLineDash([5, 5]); ink("rgba(79,133,144,.7)", 1.4); ctx.restore() }
 }
-function tufts(cx, cy, h, sway) {
-  [[-18, 2], [-6, -9], [12, -5], [2, 9], [18, 5]].forEach(([a, b], i) => { if ((h + i) % 5 === 4) return;
-    const x = cx + a, y = cy + b, w = sway * Math.sin(i * 1.7);
-    ctx.beginPath(); ctx.moveTo(x - 4 + w, y - 6); ctx.lineTo(x - 2, y); ctx.moveTo(x + w, y - 9); ctx.lineTo(x, y); ctx.moveTo(x + 4 + w, y - 6); ctx.lineTo(x + 2, y);
-    ctx.strokeStyle = "#3d9a35"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke() });
-  ell(cx - 9 + h % 7, cy + 4, 2.4, 2.4, "#ffe066"); ell(cx + 9, cy - 9 + h % 5, 2.1, 2.1, "#ffffff");
+// ---------- the island layer: a layered soil cliff under one continuous mass, then each tile in watercolour and ink
+function paintLand() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.setTransform(scale, 0, 0, scale, off.x, off.y);
+  const edges = []; // outer edges, for the cliff and the foam
+  for (const p of ORDER) { if (!landTile(p)) continue; const h = hexPts(p);
+    for (let i = 0; i < 6; i++) if (!landTile(step(p, EDGE_FACE(i)))) edges.push({a:h[i], b:h[(i + 1) % 6], front:FRONT[i]}) }
+  const band = (e, y0, y1, fill) => poly([[e.a[0], e.a[1] + y0], [e.b[0], e.b[1] + y0], [e.b[0], e.b[1] + y1], [e.a[0], e.a[1] + y1]], fill);
+  for (const e of edges) if (e.front) { band(e, -1, DEPTH, "#5a3f28"); band(e, -1, DEPTH * .72, "#9a6c42"); band(e, -1, 7, "#b07e4f") }
+  for (const e of edges) if (e.front) { for (const y of [12, 19]) line([[e.a[0], e.a[1] + y], [e.b[0], e.b[1] + y]], "rgba(77,55,35,.22)", 1);
+    line([[e.a[0], e.a[1] + DEPTH], [e.b[0], e.b[1] + DEPTH]], "rgba(60,40,24,.7)", 1.6) }
+  foamPath = new Path2D(); for (const e of edges) { const y = e.front ? DEPTH + 1 : 1; foamPath.moveTo(e.a[0], e.a[1] + y); foamPath.lineTo(e.b[0], e.b[1] + y) }
+  // the ground under the tiles, as one piece
+  ctx.beginPath(); for (const p of ORDER) { if (!landTile(p)) continue; hexPts(p, R + .6).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() }
+  ctx.fillStyle = "#cfa36b"; ctx.fill();
+  for (const e of edges) line([e.a, e.b], "rgba(77,55,35,.6)", 1.5);
+  for (const p of ORDER) if (landTile(p)) paintTile(p, at(p));
 }
-function flowers(cx, cy, h) {
-  [[-16, 0, "#ffe066"], [-5, -9, "#ffffff"], [10, -4, "#c9a2ff"], [3, 8, "#ffe066"], [17, 4, "#ffffff"], [-8, 7, "#ff9fb8"]].forEach(([a, b, f], i) => {
-    if ((h + i) % 6 === 5) return; const x = cx + a, y = cy + b;
-    line([[x, y + 3], [x, y]], "#4e9a3c", 1.5); ell(x, y - 1, 2.6, 2.2, f); ell(x, y - 1, 1, 1, "#f2a93b") });
+// One tile: a rounded, slightly inset hex in watercolour (paint pools at the edges, a lighter middle, a soft highlight
+// upper-left) with its own wobbly ink outline, then whatever lies flat on it.
+function paintTile(p, c) {
+  const col = topColor(c), o = iso(...p), h = hsh(...p);
+  if (c.t === "lake" && c.river) { // a full lake: one inked pool spanning its tiles
+    poly(hexPts(p, R + .8), COL.water); const pts = hexPts(p, R);
+    for (let i = 0; i < 6; i++) { const n = step(p, EDGE_FACE(i)); if (inside(...n) && at(n).t === "lake") continue; line([pts[i], pts[(i + 1) % 6]], "#2c5f80", 1.8) }
+    ell(o.x - 8, o.y - 3, 12, 4, "rgba(255,255,255,.18)"); return }
+  const fillP = hexPts(p, R - 3.2, 1.1, 1), inkP = hexPts(p, R - 3.2, 1.3, 7);
+  rpath(fillP, 8); ctx.fillStyle = col; ctx.fill();
+  ctx.save(); ctx.clip(); ell(o.x + (h % 7 - 3), o.y + (h % 5 - 2), 24, 11, mix(col, .14)); ell(o.x - 14, o.y - 7, 13, 5, "rgba(255,255,255,.2)"); ctx.restore();
+  rpath(fillP, 8); ink(shade(col, .14), 4.5); ctx.globalAlpha = .55; rpath(fillP, 8); ink(shade(col, .1), 2); ctx.globalAlpha = 1;
+  rpath(inkP, 8); ink(INK, 1.5);
+  flat(p, c, o.x, o.y, h);
 }
-// Meadow (LOU-258): soft pale patches and wildflowers on short stems, no grass tufts. A bloomed meadow is fuller.
-function meadow(cx, cy, h, full) {
-  [[-11, 1, 9, 4], [9, -5, 8, 3.6], [2, 8, 7, 3]].forEach(([a, b, rx, ry], i) => { if ((h + i) % 4 !== 3) ell(cx + a, cy + b, rx, ry, "#c3e89e") });
-  flowers(cx, cy, h); if (full) flowers(cx + 4, cy - 3, h + 3);
+// What lies flat on a tile (cached with the island): soil marks, sand stipple, pools, cracks.
+function flat(p, c, cx, cy, h) {
+  const dot = (x, y, r, f) => ell(x, y, r, r * .6, f);
+  if (c.t === "bed") { inkEll(cx, cy, 22, 10, "#c9b48b", "rgba(110,85,50,.5)"); ell(cx - 2, cy - 1, 15, 6, "#ddcba5"); const k = "rgba(110,85,50,.55)";
+    line([[cx - 12, cy - 2], [cx - 5, cy + 1], [cx + 2, cy - 2]], k, 1.2); line([[cx + 4, cy + 3], [cx + 11, cy], [cx + 14, cy + 3]], k, 1.2); return }
+  if (c.t === "lake") { // an empty basin waiting to fill
+    ctx.save(); ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.ellipse(cx, cy, 25, 12.5, 0, 0, 7); ink("#2c5f80", 1.6); ctx.restore();
+    line([[cx - 14, cy], [cx - 5, cy + 2], [cx + 3, cy - 3], [cx + 13, cy + 1]], "rgba(110,85,50,.45)", 1.2); return }
+  if (c.t === "spring") { inkEll(cx, cy + 1, 18, 9, "#5aa9d0", "#2c5f80", 1.4); ell(cx - 4, cy - 1, 9, 3.5, "rgba(255,255,255,.35)"); return }
+  if (c.t === "marsh") { const on = marshBy(p); inkEll(cx - 7, cy + 3, 12, 5.5, on ? "#5aa9d0" : "#7fa6a1", "#2c5f80", 1); inkEll(cx + 11, cy - 6, 7, 3.3, on ? "#5aa9d0" : "#7fa6a1", "#2c5f80", 1); return }
+  if (c.beaver === 2) { inkEll(cx, cy + 1, 23, 11, "#5aa9d0", "#2c5f80", 1.4); return }
+  if (c.pool) { inkEll(cx + 1, cy + 2, 19, 9, "#5aa9d0", "#2c5f80", 1.4); ell(cx - 5, cy, 7, 2.6, "rgba(255,255,255,.35)"); return }
+  if (c.ro && c.t === "bare" && !c.river) { inkEll(cx, cy + 2, 15, 7, c.ro === 2 ? "#5aa9d0" : "#6cb3cf", "#2c5f80", 1.2); ell(cx - 3, cy + 1, 7, 2.5, "rgba(255,255,255,.35)") }
+  if (c.g >= TREES || c.alp) { ell(cx, cy + 2, 26, 11, "rgba(46,74,38,.12)"); return }
+  if (c.g || (c.bloom && c.t !== "spring" && c.t !== "meadow")) return;
+  if (c.t === "meadow") { [[-11, 1, 9, 4], [9, -5, 8, 3.6], [2, 8, 7, 3]].forEach(([a, b, rx, ry], i) => { if ((h + i) % 4 !== 3) ell(cx + a, cy + b, rx, ry, "#d9eaa6") }); return }
+  if (c.moss) { ell(cx - 10, cy + 2, 7, 3.5, "#6fa84a"); ell(cx + 8, cy - 5, 6, 3, "#7cb956"); ell(cx + 3, cy + 7, 5, 2.5, "#5f9a40") }
+  if (c.ash) { ell(cx - 8, cy + 2, 9, 4, "rgba(40,30,25,.45)"); ell(cx + 9, cy - 4, 7, 3, "rgba(40,30,25,.4)") }
+  if (M.salt && salty(p) && c.t === "bare") for (let i = 0; i < 6; i++) dot(cx - 16 + (hsh(i, h) % 32), cy - 7 + (hsh(h, i) % 15), 2.2, "#f7f3ea");
+  if (c.fert && c.t === "bare" && !c.ro) { for (let i = -1; i <= 1; i++) line([[cx - 16 + i * 6, cy - 2 + i * 7], [cx + 14 + i * 6, cy - 10 + i * 7]], "#5e3a20", 2); return }
+  if (c.t === "bare" || c.t === "source" || c.t === "rock") { const k = "rgba(120,84,48,.5)"; dot(cx + 12, cy + 6, 2.2, k); dot(cx - 6, cy - 9, 1.8, k); dot(cx - 15, cy + 3, 1.5, k); dot(cx + 3, cy + 9, 1.3, k);
+    if (c.rs) { const k2 = "rgba(90,60,30,.6)"; // cracked ground in the rain shadow
+      line([[cx + 4, cy - 8], [cx + 10, cy - 3], [cx + 18, cy - 5]], k2, 1.3); line([[cx + 10, cy - 3], [cx + 9, cy + 3]], k2, 1.1); line([[cx - 4, cy + 6], [cx + 2, cy + 10], [cx + 9, cy + 9]], k2, 1.3); line([[cx - 18, cy], [cx - 11, cy - 3], [cx - 9, cy - 9]], k2, 1.2) } }
+  if (c.t === "sand") for (let i = 0; i < 16; i++) dot(cx - 20 + (hsh(i, h) % 40), cy - 9 + (hsh(h + i, i) % 19), 1, "#a3814a");
+  if (c.t === "rock") { // a boulder with cracks
+    ell(cx + 3, cy + 7, 16, 5, "rgba(60,45,30,.2)"); ctx.beginPath(); ctx.moveTo(cx - 15, cy + 5); ctx.quadraticCurveTo(cx - 17, cy - 10, cx - 3, cy - 13); ctx.quadraticCurveTo(cx + 15, cy - 13, cx + 15, cy + 2); ctx.quadraticCurveTo(cx + 12, cy + 8, cx - 15, cy + 5);
+    ctx.fillStyle = "#a8a296"; ctx.fill(); ink(INK_M, 1.4); line([[cx - 4, cy - 12], [cx - 1, cy - 4], [cx - 6, cy + 2]], "rgba(77,62,48,.6)", 1.1); line([[cx + 6, cy - 7], [cx + 10, cy - 2]], "rgba(77,62,48,.5)", 1); ell(cx - 7, cy - 7, 4, 2, "rgba(255,255,255,.3)") }
+  if (c.t === "cave") ell(cx, cy + 6, 20, 6, "rgba(60,45,30,.2)");
 }
-function stones(cx, cy) {
-  [[-13, 3, 1], [9, -6, .8], [-1, 10, .6]].forEach(([a, b, s]) => { const x = cx + a, y = cy + b;
-    ell(x + 2, y + 3 * s, 13 * s, 4 * s, "rgba(0,0,0,.18)");
-    poly([[x - 12 * s, y + 3 * s], [x - 7 * s, y - 9 * s], [x + 5 * s, y - 11 * s], [x + 12 * s, y + s], [x + 3 * s, y + 6 * s]], "#8d887f");
-    poly([[x - 7 * s, y - 9 * s], [x + 5 * s, y - 11 * s], [x + s, y - 2 * s]], "#d3cdc2");
-    poly([[x + 5 * s, y - 11 * s], [x + 12 * s, y + s], [x + s, y - 2 * s]], "#aaa499") });
-}
-function mountain(cx, cy, t, side) {
-  ell(cx + 6, cy + 8, 32, 9, "rgba(0,0,0,.22)");
-  poly([[cx + 10, cy + 8], [cx + 20, cy - 20], [cx + 32, cy + 5]], "#857f77");
-  poly([[cx - 28, cy + 6], [cx - 5, cy - 48], [cx + 5, cy + 11]], "#6f6a64");
-  poly([[cx + 5, cy + 11], [cx - 5, cy - 48], [cx + 27, cy + 4]], "#a29b92");
-  poly([[cx - 5, cy - 48], [cx - 14, cy - 27], [cx - 7, cy - 31], [cx - 1, cy - 25]], "#e8eef4");
-  poly([[cx - 5, cy - 48], [cx - 1, cy - 25], [cx + 4, cy - 30], [cx + 11, cy - 25]], "#ffffff");
-  if (side) { // the water side (LOU-269): a wet, darker strip of rock with moss, and a thin waterfall down that one face
-    const sx = (side[0] - side[1]) * TW / 4, sy = (side[0] + side[1]) * TH / 4, x0 = cx + sx * .2, y0 = cy - 30, x1 = cx + sx * .75, y1 = cy + sy * .75;
-    const nx = -(y1 - y0), ny = x1 - x0, nl = Math.hypot(nx, ny) || 1, wx = nx / nl * 7, wy = ny / nl * 7;
-    poly([[x0 - wx * .5, y0 - wy * .5], [x0 + wx * .5, y0 + wy * .5], [x1 + wx, y1 + wy], [x1 - wx, y1 - wy]], "rgba(40,52,60,.45)");
-    ell(x1 - wx * 1.1, y1 - wy * 1.1 - 2, 4.5, 2.6, "#5f9a40"); ell(x1 + wx * 1.2, y1 + wy * 1.2 - 3, 3.8, 2.2, "#6fa84a"); ell((x0 + x1) / 2 + wx * .8, (y0 + y1) / 2 + wy * .8, 2.6, 1.6, "#5f9a40");
-    line([[x0, y0], [(x0 + x1) / 2 + 3, (y0 + y1) / 2], [x1, y1]], "#7ccbf7", 3.5);
-    ctx.save(); ctx.setLineDash([4, 7]); ctx.lineDashOffset = -t * 30; line([[x0, y0], [(x0 + x1) / 2 + 3, (y0 + y1) / 2], [x1, y1]], "#ffffff", 1.6); ctx.restore();
-    ell(x1, y1 + 2, 7, 3.5, "#4aa3e8") }
-}
-function cloud(x, y, s) {
-  ell(x + 8 * s, y + 18 * s, 48 * s, 9 * s, "rgba(8,24,40,.18)");
-  for (const [a, b, r] of [[-30, 4, 17], [-11, -8, 22], [12, -3, 19], [31, 6, 14], [0, 9, 24]]) ell(x + a * s, y + b * s, r * s, r * s * .82, "#ffffff");
-  ell(x, y + 14 * s, 42 * s, 6 * s, "#dce8f2");
-}
-// Fish: one for every 4 river tiles once the river is 6 long (they also count toward the Perfection score).
-function fishCount() { const n = S.tiles.flat().filter(c => c.river && c.t !== "source" && c.t !== "ocean").length; return n >= 6 ? Math.floor(n / 4) : 0 }
-function deerSprite(x, y, b) { ell(x, y + 10, 12, 3, "rgba(0,0,0,.2)"); line([[x - 7, y + 9], [x - 7, y + 1]], "#6b4326", 2); line([[x + 6, y + 9], [x + 5, y + 1]], "#6b4326", 2);
-  ell(x, y, 10, 5, "#b0703c"); ell(x + 10, y - 6 + b, 4, 3.5, "#b0703c"); line([[x + 8, y - 2], [x + 10, y - 6 + b]], "#b0703c", 4); line([[x + 10, y - 9 + b], [x + 8, y - 15 + b], [x + 5, y - 17 + b]], "#6b4326", 1.6); line([[x + 11, y - 9 + b], [x + 14, y - 15 + b]], "#6b4326", 1.6); ell(x - 9, y - 2, 2, 2, "#ffffff") }
-function bee(x, y) { // a little striped bee with white wings
-  ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.ellipse(x - 1, y - 4, 3, 2, -.5, 0, 7); ctx.ellipse(x + 2, y - 4, 3, 2, .5, 0, 7); ctx.fill();
-  ctx.fillStyle = "#ffcf3a"; ctx.beginPath(); ctx.ellipse(x, y, 4.5, 3, 0, 0, 7); ctx.fill();
-  ctx.strokeStyle = "#3a2600"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 1, y - 3); ctx.lineTo(x - 1, y + 3); ctx.moveTo(x + 1.6, y - 2.6); ctx.lineTo(x + 1.6, y + 2.6); ctx.stroke() }
-function fish(x, y, dir) { ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
-  ctx.beginPath(); ctx.moveTo(-7, 0); ctx.quadraticCurveTo(0, -6, 7, 0); ctx.quadraticCurveTo(0, 6, -7, 0); ctx.moveTo(7, 0); ctx.lineTo(13, -4); ctx.lineTo(13, 4); ctx.closePath();
-  ctx.fillStyle = "rgba(10,44,92,.45)"; ctx.fill(); ctx.restore() }
-function prism(d, depth, top) {
-  poly([d[3], d[2], [d[2][0], d[2][1] + depth], [d[3][0], d[3][1] + depth]], shade(top, .38));
-  poly([d[2], d[1], [d[1][0], d[1][1] + depth], [d[2][0], d[2][1] + depth]], shade(top, .22));
-  poly(d, top); line([d[3], d[0], d[1]], mix(top, .3), 2);
-}
-// ---------- the sea around the island: deep water with waves and fish; goal tiles (~) are bright shallows
-const isWater = p => inside(...p) && TYPES[p[1]][p[0]] === "~"; // the sea goal (~) stays the brightest water so you can tell where to go
-function seaCell(p, t) {
-  const o = iso(p[0], p[1], 0), d = [[o.x, o.y - TH/2], [o.x + TW/2, o.y], [o.x, o.y + TH/2], [o.x - TW/2, o.y]], h = hsh(p[0], p[1]);
-  const far = Math.max(-p[0], -p[1], p[0] - W + 1, p[1] - H + 1); // 1..RING
-  let coast = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!isWater([p[0] + dx, p[1] + dy])) coast = true;
-  prism(d, 6, coast ? "#3d88cf" : COL.deep); if (far > 1) poly(d, `rgba(20,60,120,${.12 * (far - 1)})`);
-  if (coast && h % 3 === 0) { ctx.globalAlpha = .45 + .25 * Math.sin(t * 1.8 + h); line([[o.x - 10, o.y - 2], [o.x + 6, o.y - 2]], "#ffffff", 2); ctx.globalAlpha = 1 }
-  if (h % 5 === 0) fish(o.x + Math.sin(t * .7 + h) * 8, o.y + 2, Math.cos(t * .7 + h) > 0 ? 1 : -1);
-  else if (h % 4 === 2) { ctx.globalAlpha = .25 + .2 * Math.sin(t * 1.5 + h); line([[o.x - 12, o.y], [o.x - 6, o.y - 4], [o.x, o.y], [o.x + 6, o.y + 4], [o.x + 12, o.y]], "#ffffff", 2); ctx.globalAlpha = 1 }
-}
-// Foam where the island's front faces meet the water.
-function foam(p, d, lv, t) {
-  for (const [dx, dy, a, b] of [[0, 1, 3, 2], [1, 0, 2, 1]]) { if (!isWater([p[0] + dx, p[1] + dy])) continue;
-    const y = lv * ZH, w = reduce ? 0 : Math.sin(t * 2 + p[0] + p[1]) * 1.5;
-    line([[d[a][0], d[a][1] + y + 2 + w], [(d[a][0] + d[b][0]) / 2, (d[a][1] + d[b][1]) / 2 + y + 4 - w], [d[b][0], d[b][1] + y + 2 + w]], "rgba(255,255,255,.75)", 2.5) }
-}
-// ---------- banks: the river is a channel cut into the land, lakes get a shoreline
-const gp = (x, y, u, v, lv) => { const o = iso(x + u, y + v, lv); return [o.x, o.y] };
+// ---------- the river (A4): one smooth Catmull-Rom curve through the tile centres, in layers
 const same = (q, p) => !!q && q + "" === p + "";
 const linked = (a, b) => { const A = at(a), B = at(b); return A.river && B.river && (same(B.from, a) || same(A.from, b) || same(A.to, b) || same(B.to, a)) };
-// Water flows in: a new tile first fills the arm of the tile it comes from, then its own arm to the centre.
-// The river (LOU-268): a channel cut into the land (banks in the tile's own colour), light water at the edges and deep blue
-// down the middle, rounded at the bends, with ripples drifting downstream (faster with more flow) and glints on the surface.
-const RW = {bank:31, edge:22, deep:11}, RCOL = {edge:"#62b9f0", deep:"#2f86c9", foam:"rgba(255,255,255,.85)"};
-// The shape of the river on one tile. All river tiles are drawn together in layers after the land (banks, then water,
-// then ripples), so one tile's bank never covers the next tile's water: no seams at tile edges.
-function chanGeom(p, lv, top) {
-  const [x, y] = p, me = at(p), kp = prog(p + "");
-  const arms = nbrs(p).filter(n => linked(p, n)).map(n => { const down = same(at(n).from, p) || same(me.to, n);
-    return {n, dx:n[0] - x, dy:n[1] - y, down, sea:at(n).t === "ocean", k:down ? clamp01(prog(n + "") * 2) : clamp01(kp * 2 - 1)} });
-  const up = arms.some(a => !a.down), kc = up ? clamp01(kp * 2 - 1) : 1;
-  const P = (u, v) => gp(x, y, u, v, lv), C = P(0, 0);
-  const full = !arms.some(a => a.sea) && arms.length === 2 && arms.every(a => a.k >= 1) && kc >= 1;
-  const ups = arms.filter(a => !a.down), downs = arms.filter(a => a.down);
-  const curve = full ? (() => { const a = ups[0] || arms[0], b = downs.find(d => d !== a) || arms.find(d => d !== a);
-    return [P(a.dx * .5, a.dy * .5), C, P(b.dx * .5, b.dy * .5)] })() : null;
-  // each arm runs upstream -> downstream: an upstream arm edge -> centre, a downstream one centre -> edge
-  const segs = arms.map(a => { if (a.down) { const s = .5 * a.k; return s > 0 ? Object.assign([C, P(a.dx * s, a.dy * s)], {sea:a.sea && a.k >= 1}) : null }
-    const s = .5 * (1 - a.k); return a.k > 0 ? [P(a.dx * .5, a.dy * .5), P(a.dx * s, a.dy * s)] : null }).filter(Boolean);
-  return {p, me, arms, kc, P, C, curve, segs, top};
-}
-function chanStroke(g, w, col, dash) {
-  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col; ctx.lineWidth = w;
-  if (dash) { ctx.setLineDash(dash.d); ctx.lineDashOffset = dash.o }
-  ctx.beginPath();
-  if (g.curve) { ctx.moveTo(...g.curve[0]); ctx.quadraticCurveTo(...g.curve[1], ...g.curve[2]) }
-  else { for (const s of g.segs) { if (s.sea && !dash) continue; ctx.moveTo(...s[0]); ctx.lineTo(...s[1]) }
-    if (!dash && g.kc > 0) { ctx.moveTo(g.C[0] + .01, g.C[1]); ctx.lineTo(g.C[0], g.C[1]) } } // a round dot joins the arms at the centre
-  ctx.stroke();
-  if (!dash && g.segs.some(s => s.sea)) { ctx.lineCap = "butt"; ctx.beginPath(); for (const s of g.segs) if (s.sea) { ctx.moveTo(...s[0]); ctx.lineTo(...s[1]) } ctx.stroke() } // flat where it pours into the sea
-  ctx.restore() }
-function drawRivers(list, t) {
-  const gs = list.map(([p, lv, top]) => chanGeom(p, lv, top));
-  for (const g of gs) chanStroke(g, RW.bank, shade(g.top, .42));
-  for (const g of gs) chanStroke(g, RW.bank - 5, shade(g.top, .6));
-  for (const g of gs) chanStroke(g, RW.edge, RCOL.edge);
-  for (const g of gs) chanStroke(g, RW.deep, RCOL.deep);
-  for (const g of gs) { const [x, y] = g.p, f = Math.min(6, flowOf(g.me.rid >= 0 ? g.me.rid : S.active)); // ripples drift downstream; more flow, faster and brighter
-    chanStroke(g, 2.2, `rgba(225,244,255,${.55 + .06 * f})`, {d:[6, 13], o:reduce ? 0 : -t * (14 + 5 * f) - hsh(x, y) * .4}) }
-  for (const g of gs) { const [x, y] = g.p, {arms, P, me} = g;
-    // glints that come and go on the surface
-    if (g.kc >= 1 && arms.length) { const hh = hsh(x, y); for (let i = 0; i < 2; i++) { const k = reduce ? .5 : (t * .55 + hh * .13 + i * .5) % 1, a = Math.pow(Math.sin(k * Math.PI), 6);
-      if (a < .05) continue; const arm = arms[i % arms.length], s = .12 + .22 * ((hh + i * 3) % 5) / 5, [gx, gy] = P(arm.dx * s + (i ? .05 : -.05), arm.dy * s);
-      ctx.globalAlpha = a; poly([[gx, gy - 3.2], [gx + 1, gy - 1], [gx + 3.2, gy], [gx + 1, gy + 1], [gx, gy + 3.2], [gx - 1, gy + 1], [gx - 3.2, gy], [gx - 1, gy - 1]], "#ffffff"); ctx.globalAlpha = 1 } }
-    // joins: a foam line where the river meets a full lake or another river
-    for (const a of arms) { if (a.k < 1) continue; const n = at(a.n), other = n.river && n.rid >= 0 && me.rid >= 0 && root(n.rid) !== root(me.rid);
-      if (n.t !== "lake" && !other && !(n.river && n.rid !== me.rid && a.down)) continue;
-      const [ex, ey] = P(a.dx * .44, a.dy * .44), w = reduce ? 0 : Math.sin(t * 3 + x + y) * 1.2; ctx.globalAlpha = .8;
-      ell(ex - 3, ey + w * .5, 3.2, 1.8, "#ffffff"); ell(ex + 4, ey - 1 - w * .5, 2.6, 1.5, "#ffffff"); ell(ex, ey + 2, 2, 1.2, "#e6f6ff"); ctx.globalAlpha = 1 }
-    const o = iso(x, y, drawLevel(g.p));
-    if (me.t === "source") source(o, t); else if (me.beaver) lodge(o.x, o.y, me.beaver === 2, t, hsh(x, y)) }
-}
-// The river's mouth at the sea: the water fans out and foams instead of stopping at a hard edge.
-function mouth(p, t) { const [x, y] = p, from = nbrs(p).find(n => linked(p, n)); if (!from) return;
-  const dx = from[0] - x, dy = from[1] - y, P = (u, v) => gp(x, y, u, v, 0), px = -dy, py = dx, k = prog(p + "");
-  if (k <= 0) return; ctx.globalAlpha = k;
-  // a short waterfall from the land's edge down to the sea
-  const lv = drawLevel(from), top = topColor(at(from)), U = (u, v) => gp(x, y, u, v, lv);
-  const strip = (w, fill) => poly([U(dx * .5 + px * w, dy * .5 + py * w), U(dx * .5 - px * w, dy * .5 - py * w), P(dx * .5 - px * w, dy * .5 - py * w), P(dx * .5 + px * w, dy * .5 + py * w)], fill);
-  if (lv > 0) { strip(.29, shade(top, .42)); strip(.2, RCOL.edge); strip(.1, RCOL.deep);
-    ctx.save(); ctx.setLineDash([3, 5]); ctx.lineDashOffset = reduce ? 0 : -t * 30; const [ax, ay] = U(dx * .5, dy * .5), [bx, by] = P(dx * .5, dy * .5); line([[ax, ay], [bx, by]], "rgba(230,246,255,.9)", 2); ctx.restore() }
-  poly([P(dx * .5 + px * .2, dy * .5 + py * .2), P(dx * .5 - px * .2, dy * .5 - py * .2), P(dx * .05 - px * .42, dy * .05 - py * .42), P(dx * .05 + px * .42, dy * .05 + py * .42)], "rgba(124,200,245,.75)");
-  poly([P(dx * .5 + px * .1, dy * .5 + py * .1), P(dx * .5 - px * .1, dy * .5 - py * .1), P(dx * .15 - px * .25, dy * .15 - py * .25), P(dx * .15 + px * .25, dy * .15 + py * .25)], "rgba(74,163,232,.85)");
-  for (let i = 0; i < 5; i++) { const s = -.36 + i * .18, w = reduce ? 0 : Math.sin(t * 2.4 + i * 1.3) * .03, [fx, fy] = P(dx * (.06 + w) + px * s, dy * (.06 + w) + py * s);
-    ell(fx, fy, 3.4 - Math.abs(s) * 2, 1.7, RCOL.foam) }
-  ctx.globalAlpha = 1 }
-function shore(p, lv) {
-  const [x, y] = p, me = at(p);
-  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const n = [x + dx, y + dy];
-    if (inside(...n) && (at(n).lake === me.lake && me.lake >= 0 || linked(p, n))) continue;
-    const px = -dy, py = dx, a = .5, b = .37;
-    poly([gp(x, y, dx * a + px * .5, dy * a + py * .5, lv), gp(x, y, dx * a - px * .5, dy * a - py * .5, lv), gp(x, y, dx * b - px * .5, dy * b - py * .5, lv), gp(x, y, dx * b + px * .5, dy * b + py * .5, lv)], "#e6d29c");
-    ctx.strokeStyle = "#7d5f3c"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(...gp(x, y, dx * b + px * .5, dy * b + py * .5, lv)); ctx.lineTo(...gp(x, y, dx * b - px * .5, dy * b - py * .5, lv)); ctx.stroke() }
+// Each chain runs from a river's start (a source, a cave exit or a lake outlet) downstream to its end, a lake, the sea
+// or the tile where it joins another river. Newly built tiles grow in.
+function riverChains() {
+  const isLake = q => at(q).t === "lake", down = p => nbrs(p).filter(n => at(n).river && (same(at(n).from, p) || same(at(p).to, n)));
+  const starts = [];
+  for (const p of ORDER) { const c = at(p); if (!c.river || c.t === "lake" || c.t === "ocean") continue;
+    if (!c.from || !inside(...c.from) || !at(c.from).river) starts.push({p, pre:null, rid:c.rid}); else if (isLake(c.from)) starts.push({p, pre:c.from, rid:c.rid}) }
+  starts.sort((a, b) => root(a.rid) - root(b.rid) || a.rid - b.rid);
+  const seen = new Set(), out = [];
+  for (const s of starts) { const ch = s.pre ? [s.pre] : []; let p = s.p;
+    for (let i = 0; i < W * H; i++) { ch.push(p); if (seen.has(p + "") || isLake(p) || at(p).t === "ocean") break; seen.add(p + "");
+      const ds = down(p); if (!ds.length) break; p = ds.find(n => !isLake(n)) || ds[0] }
+    if (ch.length) out.push({tiles:ch, rid:s.rid}) }
+  return out }
+function chainPts(ch) { const pts = [];
+  for (let i = 0; i < ch.tiles.length; i++) { const q = ch.tiles[i], o = iso(...q), k = i ? prog(q + "") : 1, sea = at(q).t === "ocean";
+    let x = o.x, y = o.y; if (i && (k < 1 || sea)) { const a = pts[i - 1], f = sea ? Math.min(k, .55) : k; x = a[0] + (o.x - a[0]) * f; y = a[1] + (o.y - a[1]) * f }
+    pts.push([x, y]); if (k < 1) break }
+  return pts }
+// A Catmull-Rom spline through the points as cubic Béziers; also sampled, for the flow drops.
+function crPath(pts) { const P = new Path2D(), smp = [pts[0]]; if (!pts.length) return {P, smp}; P.moveTo(...pts[0]);
+  if (pts.length === 1) { P.lineTo(pts[0][0] + .01, pts[0][1]); return {P, smp} }
+  for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    P.bezierCurveTo(...c1, ...c2, ...p2);
+    for (let k = 1; k <= 8; k++) { const u = k / 8, v = 1 - u; smp.push([v*v*v*p1[0] + 3*v*v*u*c1[0] + 3*v*u*u*c2[0] + u*u*u*p2[0], v*v*v*p1[1] + 3*v*v*u*c1[1] + 3*v*u*u*c2[1] + u*u*u*p2[1]]) } }
+  return {P, smp} }
+function drawRivers(t) {
+  const chains = riverChains().map(ch => ({...ch, ...crPath(chainPts(ch))})).filter(ch => ch.smp.length);
+  const stroke = (w, col, a = 1, dash, offv) => { ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.lineWidth = w;
+    if (dash) { ctx.setLineDash(dash); ctx.lineDashOffset = offv || 0 } for (const ch of chains) ctx.stroke(ch.P); ctx.restore() };
+  stroke(26, "#5a8f5a", .35);                                            // bank wash
+  stroke(19.5, "#3d8fc4", .45, [2.5, 4.5], -(t % 6) * 1.5 * (reduce ? 0 : 1)); // a rippling edge
+  stroke(17, "#3d8fc4");                                                  // water
+  stroke(8, "#6fbde6", .8);                                               // core
+  stroke(2, "#f4fbff", .9, [6, 10, 2, 14], reduce ? 0 : -(t % 2) / 2 * 32);  // white streaks, a 2s loop
+  // the mouth: foam where the river meets the sea
+  for (const ch of chains) { const last = ch.tiles[ch.tiles.length - 1]; if (at(last).t !== "ocean" || prog(last + "") < 1) continue; const [x, y] = ch.smp[ch.smp.length - 1], a = .65 + .2 * osc(t, 4.5);
+    ctx.globalAlpha = a; for (let i = -2; i <= 2; i++) inkEll(x + i * 6, y + Math.abs(i) * 1.5, 4 - Math.abs(i) * .6, 2, "#f7fbf6", "rgba(44,95,128,.35)", .8); ctx.globalAlpha = 1 }
+  // flow drops ride from the source to the end, one about every 1.6s (hidden with reduced motion)
+  if (!reduce) for (const ch of chains) { if (!flowOf(ch.rid >= 0 ? ch.rid : S.active)) continue; const s = ch.smp, cum = [0];
+    for (let i = 1; i < s.length; i++) cum.push(cum[i - 1] + Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]));
+    const L = cum[cum.length - 1], v = 34, gap = v * 1.6; if (L < 20) continue;
+    for (let d = (t * v) % gap; d < L; d += gap) { let i = 1; while (i < cum.length - 1 && cum[i] < d) i++; const k = (d - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1), x = s[i - 1][0] + (s[i][0] - s[i - 1][0]) * k, y = s[i - 1][1] + (s[i][1] - s[i - 1][1]) * k;
+      ctx.globalAlpha = Math.min(1, d / 30, (L - d) / 30); inkEll(x, y, 3.6, 2.8, "#62e0c8", "#1d7f6c", 1.2); ctx.globalAlpha = 1 } }
 }
 // Distance along the river from its source, for the shimmer that runs down it when a turn ends.
 function riverDist() {
@@ -1175,222 +1180,246 @@ function riverDist() {
   while (q.length) { const p = q.shift(), d = dist.get(p + "");
     for (const n of nbrs(p)) if (!dist.has(n + "") && at(n).river && (linked(p, n) || (at(n).t === "lake" && at(p).t === "lake" && at(n).lake === at(p).lake))) { dist.set(n + "", d + 1); q.push(n) } }
   return dist }
+// ---------- standing things (drawn every frame, back to front): they sway, lean and twinkle around fixed roots; nothing drifts
+function pine(x, y, s, ph, t, wild) { // an inked pine that leans ±1.2° around the base of its trunk
+  ell(x + 4 * s, y + 1.5, 11 * s, 3.6 * s, "rgba(46,74,38,.28)");
+  ctx.save(); ctx.translate(x, y); ctx.rotate(osc(t, 3 + ph * 1.5, ph) * 1.2 * Math.PI / 180);
+  ctx.beginPath(); ctx.rect(-1.8 * s, -6 * s, 3.6 * s, 6 * s + 1); ctx.fillStyle = "#5a3d22"; ctx.fill(); ink(INK_T, 1);
+  const dk = wild ? "#3f7a3c" : "#4f8a4a", lt = wild ? "#5a9450" : "#6aa65a";
+  for (const [y0, y1, w] of [[-5, -27, 11], [-17, -40, 8.5]]) { const a = [-w * s, y0 * s], b = [0, y1 * s], c = [w * s, y0 * s];
+    ctx.beginPath(); ctx.moveTo(...a); ctx.quadraticCurveTo(-w * s * .4, (y0 + y1) / 2 * s, ...b); ctx.quadraticCurveTo(w * s * .4, (y0 + y1) / 2 * s, ...c); ctx.quadraticCurveTo(0, (y0 + 2) * s, ...a); ctx.fillStyle = dk; ctx.fill(); ink(INK_T, 1.3);
+    ctx.beginPath(); ctx.moveTo(...a); ctx.quadraticCurveTo(-w * s * .4, (y0 + y1) / 2 * s, ...b); ctx.lineTo(-1 * s, y0 * s + 1); ctx.closePath(); ctx.fillStyle = lt; ctx.fill() }
+  ctx.restore() }
+function tufts(cx, cy, h, t) { // grass tufts that rotate ±4° around their roots
+  [[-17, 2], [-6, -9], [12, -5], [2, 9], [17, 5]].forEach(([a, b], i) => { if ((h + i) % 5 === 4) return; const x = cx + a, y = cy + b;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(osc(t, 2.6 + (i % 3) * .5, (h + i) * .17) * 4 * Math.PI / 180);
+    ctx.beginPath(); ctx.moveTo(-4, -5); ctx.quadraticCurveTo(-2, -2, -1.5, 0); ctx.moveTo(.5, -8); ctx.lineTo(0, 0); ctx.moveTo(4.5, -5); ctx.quadraticCurveTo(2, -2, 1.5, 0); ink("#4a7a32", 1.6); ctx.restore() }) }
+const FLW = ["#f2a0b8", "#f5d04a", "#fffaf0", "#b59ae0"];
+function flowers(cx, cy, h, t, full) { // inked wildflowers that twinkle (opacity 1 → .65)
+  const spots = [[-16, 0], [-5, -9], [10, -4], [3, 8], [17, 4], [-8, 7], [6, -12], [-14, -6]].slice(0, full ? 8 : 6);
+  spots.forEach(([a, b], i) => { if ((h + i) % 7 === 6) return; const x = cx + a, y = cy + b;
+    line([[x, y + 3.5], [x, y]], "#4e8a3c", 1.2); ctx.globalAlpha = .825 + .175 * osc(t, 2.4 + (i % 4) * .4, (h * 3 + i) * .13);
+    inkEll(x, y - 1, 2.8, 2.2, FLW[(h + i) % 4], "rgba(90,64,41,.6)", .8); ell(x, y - 1, .9, .8, "#e0a030"); ctx.globalAlpha = 1 }) }
+function mountain(cx, cy, t, face) {
+  ell(cx + 4, cy + 9, 32, 9, "rgba(60,45,30,.22)");
+  const fx = face == null ? null : (() => { const a = -60 * face * Math.PI / 180, q = proj(R * .82 * Math.cos(a), R * .82 * Math.sin(a)); return [q.x, q.y] })();
+  const fall = () => { if (!fx) return; const x0 = cx + fx[0] * .3, y0 = cy - 30 + Math.max(0, fx[1]) * .2, x1 = cx + fx[0], y1 = cy + fx[1], mx = (x0 + x1) / 2 + 3, my = (y0 + y1) / 2;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(mx, my, x1, y1); ink("#2c5f80", 6); ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(mx, my, x1, y1); ink("#3d8fc4", 4);
+    ctx.save(); ctx.setLineDash([3, 5]); ctx.lineDashOffset = reduce ? 0 : -(t % 1.6) / 1.6 * 32; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(mx, my, x1, y1); ink("#ffffff", 1.4); ctx.restore();
+    inkEll(x1, y1 + 2, 8, 3.5, "#5aa9d0", "#2c5f80", 1) };
+  if (fx && fx[1] < 0) fall(); // a water side at the back shows behind the peak
+  inkPoly([[cx + 6, cy + 8], [cx + 19, cy - 24], [cx + 33, cy + 5]], "#9c958c", INK_M, 1.4);
+  poly([[cx + 19, cy - 24], [cx + 33, cy + 5], [cx + 20, cy + 7]], "#857e75");
+  inkPoly([[cx - 30, cy + 7], [cx - 4, cy - 50], [cx + 26, cy + 6]], "#9c958c", INK_M, 1.6);
+  poly([[cx - 4, cy - 50], [cx + 26, cy + 6], [cx + 4, cy + 10]], "#857e75");
+  for (let i = 0; i < 6; i++) { const k = .3 + i * .11; line([[cx - 4 + 30 * k * .7, cy - 50 + 56 * k], [cx - 4 + 30 * k * .7 + 6, cy - 50 + 56 * k + 5]], "rgba(77,62,48,.45)", 1) } // hatching on the shaded side
+  inkPoly([[cx - 4, cy - 50], [cx - 14, cy - 30], [cx - 8, cy - 33], [cx - 3, cy - 27], [cx + 3, cy - 32], [cx + 9, cy - 28]], "#fbf7ee", INK_M, 1.2);
+  inkPoly([[cx + 19, cy - 24], [cx + 14, cy - 15], [cx + 18, cy - 17], [cx + 23, cy - 13]], "#fbf7ee", INK_M, 1);
+  if (fx && fx[1] >= 0) fall() }
+function cloud(x, y, s) { // a paper cloud with an ink outline
+  const bumps = [[-30, 4, 15], [-12, -7, 19], [10, -3, 17], [28, 5, 12], [0, 7, 20]];
+  ctx.beginPath(); for (const [a, b, r] of bumps) { ctx.moveTo(x + (a + r) * s, y + b * s); ctx.ellipse(x + a * s, y + b * s, r * s, r * s * .78, 0, 0, 7) } ink("rgba(90,64,41,.6)", 3);
+  ctx.beginPath(); for (const [a, b, r] of bumps) { ctx.moveTo(x + (a + r) * s, y + b * s); ctx.ellipse(x + a * s, y + b * s, r * s, r * s * .78, 0, 0, 7) } ctx.fillStyle = "#fffaf0"; ctx.fill();
+  ell(x - 4 * s, y + 11 * s, 30 * s, 3 * s, "rgba(214,196,160,.5)") }
+// Fish: one for every 4 river tiles once the river is 6 long (they also count toward the Perfection score).
+function fishCount() { const n = S.tiles.flat().filter(c => c.river && c.t !== "source" && c.t !== "ocean").length; return n >= 6 ? Math.floor(n / 4) : 0 }
+function deerSprite(x, y, b) { ell(x, y + 10, 12, 3, "rgba(60,45,30,.2)"); line([[x - 7, y + 9], [x - 7, y + 1]], "#6b4326", 2); line([[x + 6, y + 9], [x + 5, y + 1]], "#6b4326", 2);
+  inkEll(x, y, 10, 5, "#b0703c"); inkEll(x + 10, y - 6 + b, 4, 3.5, "#b0703c"); line([[x + 10, y - 9 + b], [x + 8, y - 15 + b], [x + 5, y - 17 + b]], "#6b4326", 1.6); line([[x + 11, y - 9 + b], [x + 14, y - 15 + b]], "#6b4326", 1.6) }
+function bee(x, y, t, ph) { // a little inked bee; only its wings flicker
+  ctx.globalAlpha = .55 + .35 * osc(t, 1.2, ph); ell(x - 1, y - 4, 3, 2, "#ffffff"); ell(x + 2, y - 4, 3, 2, "#ffffff"); ctx.globalAlpha = 1;
+  inkEll(x, y, 4.5, 3, "#f5d04a", "#3a2600", 1); line([[x - 1, y - 2.5], [x - 1, y + 2.5]], "#3a2600", 1.2); line([[x + 1.6, y - 2.2], [x + 1.6, y + 2.2]], "#3a2600", 1.2) }
+function fish(x, y, dir) { ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+  ctx.beginPath(); ctx.moveTo(-7, 0); ctx.quadraticCurveTo(0, -5, 7, 0); ctx.quadraticCurveTo(0, 5, -7, 0); ctx.moveTo(7, 0); ctx.lineTo(12, -3.5); ctx.lineTo(12, 3.5); ctx.closePath();
+  ctx.fillStyle = "rgba(29,74,107,.45)"; ctx.fill(); ctx.restore() }
+function source(o, t) { // the source pool (#7cc4e6) with a ripple ring spreading out
+  inkEll(o.x, o.y + 1, 19, 9.5, "#7cc4e6", "#2c5f80", 1.5); ell(o.x - 5, o.y - 1, 9, 3.4, "rgba(255,255,255,.4)");
+  if (reduce) return; const k = (t / 2.4) % 1; ctx.globalAlpha = (1 - k) * .8; ctx.beginPath(); ctx.ellipse(o.x, o.y + 1, 5 + k * 14, 2.5 + k * 7, 0, 0, 7); ink("#f4fbff", 1.4); ctx.globalAlpha = 1 }
+function lodge(cx, cy, pond, t, h) { // a beaver lodge on the bank; once dammed, a stick dam across the water
+  if (pond) for (let i = 0; i < 5; i++) line([[cx - 14 + i * 6, cy + 4 + i * 1.5], [cx - 9 + i * 6, cy - 2 + i * 1.5]], "#6b4a2b", 3);
+  const x = cx + 13, y = cy - 6; ell(x + 1, y + 4, 11, 4, "rgba(60,45,30,.2)"); ctx.beginPath(); ctx.ellipse(x, y, 10, 8, 0, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#7a5233"; ctx.fill(); ink(INK_M, 1.2);
+  for (let i = 0; i < 4; i++) line([[x - 9 + i * 5, y], [x - 6 + i * 4, y - 6 - (i % 2) * 2]], "#4a2f1a", 1.4); ell(x, y - 1, 2.5, 2, "#2a1a0e") }
+function caveArch(cx, cy, c, t, h) { // an inked rock arch over a dark opening, with a numbered paper tag
+  ctx.beginPath(); ctx.moveTo(cx - 20, cy + 6); ctx.quadraticCurveTo(cx - 22, cy - 22, cx, cy - 26); ctx.quadraticCurveTo(cx + 22, cy - 22, cx + 20, cy + 6); ctx.closePath(); ctx.fillStyle = "#9c958c"; ctx.fill(); ink(INK_M, 1.5);
+  ctx.beginPath(); ctx.moveTo(cx + 2, cy - 26); ctx.quadraticCurveTo(cx + 22, cy - 22, cx + 20, cy + 6); ctx.lineTo(cx + 10, cy + 6); ctx.closePath(); ctx.fillStyle = "#857e75"; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - 10, cy + 6); ctx.quadraticCurveTo(cx - 11, cy - 12, cx, cy - 13); ctx.quadraticCurveTo(cx + 11, cy - 12, cx + 10, cy + 6); ctx.closePath(); ctx.fillStyle = "#2a221c"; ctx.fill(); ink(INK_M, 1.2);
+  if (c.river) { inkEll(cx, cy + 5, 9, 3, "#3d8fc4", "#2c5f80", 1); if (!reduce) { const k = (t / 1.8 + h / 10) % 1; ctx.globalAlpha = 1 - k; ctx.beginPath(); ctx.ellipse(cx, cy + 5, 4 + k * 6, 1.5 + k * 2, 0, 0, 7); ink("#f4fbff", 1); ctx.globalAlpha = 1 } }
+  if (c.dry) { ctx.globalAlpha = .6; ell(cx, cy - 2, 9, 7, "#ddcba5"); ctx.globalAlpha = 1 }
+  if (c.cave) tag(cx + 16, cy - 26, String(c.cave), "#3d2a17", 12) }
+// A small paper tag with an ink border and handwriting.
+function tag(x, y, text, col, size = 15) { ctx.save(); ctx.font = `${size}px ${HAND}`; const w = Math.max(16, ctx.measureText(text).width + 10), hh = size + 5;
+  ctx.fillStyle = "rgba(77,55,35,.25)"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - w / 2 + 2, y - hh / 2 + 2.5, w, hh, 3) : ctx.rect(x - w / 2 + 2, y - hh / 2 + 2.5, w, hh); ctx.fill();
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - w / 2, y - hh / 2, w, hh, 3) : ctx.rect(x - w / 2, y - hh / 2, w, hh); ctx.fillStyle = PAPER; ctx.fill(); ink("#6b4f33", 1.3);
+  ctx.fillStyle = col; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, x, y + 1); ctx.restore() }
+function deco(p, c, o, t, h) {
+  const {x: cx, y: cy} = o;
+  if (c.t === "cave") { caveArch(cx, cy, c, t, h); return }
+  if (c.t === "source") { source(o, t); return }
+  if (c.t === "spring" && !c.river && !reduce) { const k = (t / 2.6 + h / 13) % 1; ctx.globalAlpha = (1 - k) * .7; ctx.beginPath(); ctx.ellipse(cx, cy + 1, 4 + k * 12, 2 + k * 6, 0, 0, 7); ink("#f4fbff", 1.2); ctx.globalAlpha = 1 }
+  if (c.river && c.t === "lake" && !reduce && h % 3 === 0) { const k = (t / 5 + h / 9) % 1; ctx.globalAlpha = Math.sin(k * Math.PI) * .6; ctx.beginPath(); ctx.ellipse(cx, cy, 6 + k * 18, 3 + k * 9, 0, 0, 7); ink("#e8f6ff", 1.2); ctx.globalAlpha = 1 }
+  if (c.river) { if (c.beaver) lodge(cx, cy, c.beaver === 2, t, h); return } // river tiles are drawn with the river
+  if (c.t === "ocean") return;
+  if (c.t === "marsh") { const on = marshBy(p);
+    for (const [rx, ry, hgt] of [[-16, -4, 13], [-12, -7, 16], [4, 6, 12], [8, 3, 15], [14, 8, 11], [-2, -10, 12]]) { const x0 = cx + rx, y0 = cy + ry;
+      ctx.save(); ctx.translate(x0, y0); ctx.rotate(osc(t, 3.2, (rx + ry) * .05) * 4 * Math.PI / 180); line([[0, 0], [0, -hgt]], "#4a6b3a", 1.6);
+      if (hgt > 13) { ctx.beginPath(); ctx.ellipse(0, -hgt + 3, 1.9, 4, 0, 0, 7); ctx.fillStyle = "#7a4a2a"; ctx.fill(); ink(INK_M, .7) } ctx.restore() }
+    if (on && marshGreen(p)) tag(cx, cy - 26, "+1 flow", "#1d8f78", 13);
+    return }
+  if (c.fire) { pine(cx - 12, cy + 1, .75, 0, 0, true); pine(cx + 11, cy - 3, .8, 0, 0, true);
+    for (let i = 0; i < 4; i++) { const fx0 = cx - 15 + i * 10, fl = reduce ? 1 : .85 + .15 * osc(t, 1.1, i * .3), fy = cy - 6 - i % 2 * 8;
+      ctx.beginPath(); ctx.moveTo(fx0 - 6, fy + 8); ctx.quadraticCurveTo(fx0 - 7, fy - 8 * fl, fx0, fy - 20 * fl); ctx.quadraticCurveTo(fx0 + 7, fy - 8 * fl, fx0 + 6, fy + 8); ctx.fillStyle = "#f08a3a"; ctx.fill(); ink("#8a3a1a", 1);
+      ctx.beginPath(); ctx.moveTo(fx0 - 3, fy + 7); ctx.quadraticCurveTo(fx0 - 3, fy - 3 * fl, fx0, fy - 10 * fl); ctx.quadraticCurveTo(fx0 + 3, fy - 3 * fl, fx0 + 3, fy + 7); ctx.fillStyle = "#f5d04a"; ctx.fill() }
+    return }
+  if (c.alp) { tufts(cx, cy, h + 2, t); const sn = c.snow || 0;
+    for (const [dx, dy, s, i] of [[-14, 2, .9, 0], [12, -3, 1, 1], [0, 9, 1.1, 2], [3, -11, .8, 3]]) { const x = cx + dx, y = cy + dy, Hh = 30 * s, Wd = 7 * s;
+      ell(x + 3, y + 1, 7 * s, 2.5 * s, "rgba(46,74,38,.25)");
+      ctx.save(); ctx.translate(x, y); ctx.rotate(osc(t, 3.4 + i * .3, i * .21 + h * .01) * 1.2 * Math.PI / 180);
+      inkPoly([[-Wd, -3], [0, -Hh], [Wd, -3]], "#3f7a5a", INK_T, 1.2); poly([[0, -Hh], [Wd, -3], [0, -3]], "#2f6a4a");
+      inkPoly([[-3 * s, -Hh + 8 * s], [0, -Hh], [3 * s, -Hh + 8 * s]], "#fbf7ee", INK_T, .8); ctx.restore() }
+    for (let i = 0; i < sn; i++) inkEll(cx - 10 + i * 9, cy + 12 - (i % 2) * 3, 5, 2.4, "#fbf7ee", "rgba(90,64,41,.4)", .8);
+    if (sn) tag(cx + 18, cy - 22, `${sn} snow`, "#2f7fb8", 13);
+    return }
+  if (c.g >= TREES) { tufts(cx, cy, h + 2, t);
+    for (const [dx, dy, k, i] of [[2, -12, .72, 3], [13, -4, .86, 1], [-15, 1, .78, 0], [-1, 9, 1, 2]].filter(q => c.wild || q[3] !== 3)) pine(cx + dx, cy + dy, k, (h * 7 + i * 5) % 10 / 10, t, c.wild); return }
+  if ((c.t === "meadow" && !c.g) || c.g === MEADOW) { flowers(cx, cy, h, t, c.bloom || c.g === MEADOW); return }
+  if (c.g === 1 || (c.bloom && c.t !== "spring")) { tufts(cx, cy, h, t); return }
+  if (c.beaver === 1) { ell(cx + 2, cy + 6, 22, 7, "rgba(60,45,30,.2)"); ctx.beginPath(); ctx.ellipse(cx, cy, 20, 13, 0, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#7a5233"; ctx.fill(); ink(INK_M, 1.4);
+    for (let i = 0; i < 6; i++) line([[cx - 18 + i * 7, cy - 1], [cx - 12 + i * 6, cy - 10 - (i % 2) * 3]], "#4a2f1a", 1.8); ell(cx, cy - 1, 4, 3, "#2a1a0e"); return }
+  if (c.beaver === 2) { for (let i = 0; i < 5; i++) line([[cx + 10 + i * 2, cy + 9 - i * 3], [cx + 18 + i * 2, cy + 7 - i * 3]], "#6b4a2b", 2.5); return }
+  if (c.fert && c.t === "bare" && !c.ro) { for (const [sx, sy, i] of [[-10, 2, 0], [2, -4, 1], [10, 6, 2], [-2, 10, 3]]) { ctx.save(); ctx.translate(cx + sx, cy + sy); ctx.rotate(osc(t, 2.8, i * .2 + h * .01) * 4 * Math.PI / 180);
+    line([[0, 0], [0, -6]], "#4a7a32", 1.5); inkEll(-2, -6, 2.4, 1.3, "#93c565", "#4a7a32", .6); inkEll(2, -7, 2.4, 1.3, "#93c565", "#4a7a32", .6); ctx.restore() } return }
+  if (c.t === "boulder") mountain(cx, cy, t, c.ws);
+}
+
 function draw() {
   if (!S) return; objCheck();
   const T = now(), t = (T - t0) / 1000, mv = moves(), aim = objAim();
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#2b68b0"; ctx.fillRect(0, 0, cv.width, cv.height);
+  // the cached layers: the sea (paper, wash, shadow) and the island (cliff, tiles, ink), redrawn only when they change
+  const vk = [cv.width, cv.height, scale.toFixed(4), off.x.toFixed(1), off.y.toFixed(1)].join();
+  const lk = vk + "|" + S.tiles.map(r => r.map(c => [c.t, c.g, c.river ? 1 : 0, c.ro, c.rs ? 1 : 0, c.alp ? 1 : 0, c.beaver, c.pool ? 1 : 0, c.moss ? 1 : 0, c.ash ? 1 : 0, c.fire ? 1 : 0, c.dry ? 1 : 0, c.bloom ? 1 : 0, c.wild ? 1 : 0].join("")).join(",")).join(";")
+    + (HAS_MARSH ? S.tiles.flatMap((r, y) => r.map((c, x) => c.t === "marsh" && marshBy([x, y]) ? 1 : 0)).join("") : "");
+  for (const [cnv, key, paint, set] of [[seaC, vk, paintSea, k => seaKey = k], [landC, lk, paintLand, k => landKey = k]]) {
+    if ((cnv === seaC ? seaKey : landKey) === key) continue; if (cnv.width !== cv.width || cnv.height !== cv.height) { cnv.width = cv.width; cnv.height = cv.height }
+    ctx = cnv.getContext("2d"); ctx.save(); paint(); ctx.restore(); ctx = mainCtx; set(key) }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(seaC, 0, 0);
   ctx.setTransform(scale, 0, 0, scale, off.x, off.y);
-  const badges = [], wd = T - wave < 4000 ? riverDist() : null, riv = [], mouths = [];
-  // three passes: the land, then the river on top of it (so it runs as one piece), then everything standing on the land
-  for (const p of CELLS) {
-    if (!inside(...p)) { seaCell(p, t); continue }
-    const c = at(p), lv = drawLevel(p), d = diamond(p, lv), filling = c.t === "lake" && c.river && prog(p + "") < 1;
-    const base = filling ? COL.lake : topColor(c), o = iso(p[0], p[1], lv), h = hsh(...p);
-    prism(d, c.t === "ocean" ? 6 : lv * ZH + 14, base);
-    if (filling) { ctx.globalAlpha = prog(p + ""); poly(d, COL.river); ctx.globalAlpha = 1 }
-    if (c.t !== "ocean") foam(p, d, lv, t);
-    if (c.river && c.t === "lake") { shore(p, lv); if (h % 3 === 0 && !filling) { ell(o.x - 6, o.y + 3, 8, 4, "#4caf50"); ell(o.x + 12, o.y - 5, 4, 2, "#7fd36b") } }
-    else if (c.river && c.t !== "ocean") riv.push([p, lv, base]);
-    else if (c.river && c.t === "ocean") mouths.push(p);
-  }
-  drawRivers(riv, t); for (const q of mouths) mouth(q, t);
+  // inked wave marks that rock a few px in place, and the foam ring breathing around the shore
+  for (const [x, y, i] of WAVES) { const w = osc(t, 4 + (i % 3), i * .1) * 3; ctx.beginPath(); ctx.moveTo(x - 9 + w, y); ctx.quadraticCurveTo(x - 4.5 + w, y - 4, x + w, y); ctx.quadraticCurveTo(x + 4.5 + w, y - 4, x + 9 + w, y); ink("rgba(79,133,144,.7)", 1.4) }
+  if (foamPath) { ctx.save(); ctx.lineCap = "round"; ctx.globalAlpha = reduce ? .65 : .65 + .2 * osc(t, 4.5); ctx.strokeStyle = "#f7fbf6"; ctx.lineWidth = 7; ctx.stroke(foamPath);
+    ctx.globalAlpha *= .5; ctx.lineWidth = 13; ctx.stroke(foamPath); ctx.restore() }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(landC, 0, 0); ctx.setTransform(scale, 0, 0, scale, off.x, off.y);
+  const badges = [], wd = T - wave < 4000 ? riverDist() : null;
+  // a lake still filling shows its empty basin fading out
+  for (const p of ORDER) { const c = at(p); if (c.t === "lake" && c.river && prog(p + "") < 1) { ctx.globalAlpha = 1 - prog(p + ""); rpath(hexPts(p, R - 3), 8); ctx.fillStyle = COL.lake; ctx.fill(); ctx.globalAlpha = 1 } }
+  drawRivers(t);
   for (const p of ORDER) {
-    const c = at(p), lv = drawLevel(p), d = diamond(p, lv), o = iso(p[0], p[1], lv), h = hsh(...p);
-    const kg = prog("g:" + p), s = kg < 1 ? easeBack(kg) : 1;
+    const c = at(p), o = iso(...p), h = hsh(...p);
+    const kg = prog("g:" + p);
+    if (kg < 1) { ctx.globalAlpha = 1 - kg; ctx.beginPath(); ctx.ellipse(o.x, o.y, 10 + kg * 34, 5 + kg * 17, 0, 0, 7); ink("#6aa65a", 3); ctx.globalAlpha = 1 } // the green ripple
+    const s = kg < 1 ? easeBack(kg) : 1;
     if (s !== 1) { ctx.save(); ctx.translate(o.x, o.y); ctx.scale(s, s); ctx.translate(-o.x, -o.y) }
     deco(p, c, o, t, h);
     if (s !== 1) ctx.restore();
-    if (aim && !aim.has(p + "")) poly(d, "rgba(8,20,32,.2)"); // the objective's target stays bright, the rest dims a little
-    if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .45; poly(d, "#e6f6ff"); ctx.globalAlpha = 1 } }
+  }
+  if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = "rgba(61,42,23,.2)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
+  for (const p of ORDER) {
+    const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4);
+    if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .4; rpath(d(), 8); ctx.fillStyle = "#f4fbff"; ctx.fill(); ctx.globalAlpha = 1 } }
     const m = hsel && S.phase === "play" ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
-    if (m || pk) {
-      const ok = pk || S.water >= m.cost, pulse = reduce ? 1 : .6 + .4 * Math.sin(t * 4);
-      poly(d, ok ? `rgba(255,255,255,${.12 + .1 * pulse})` : "rgba(150,160,168,.28)");
-      ctx.strokeStyle = ok ? `rgba(255,255,255,${pulse})` : "rgba(205,212,217,.85)"; ctx.lineWidth = 3.5; ctx.stroke();
-      badges.push({o, pk, ok, text: pk ? `+${c.yield}` : m.cost, sand: !!m && c.t === "sand"});
+    if (m || pk) { // a target tile: an amber wash with a marching dashed outline and a cost bubble; grey if you can't afford it
+      const ok = pk || S.water >= m.cost; rpath(d(), 8); ctx.fillStyle = ok ? "rgba(240,180,60,.28)" : "rgba(140,140,140,.25)"; ctx.fill();
+      ctx.save(); ctx.setLineDash([6, 5]); ctx.lineDashOffset = reduce ? 0 : -(t % 1.2) / 1.2 * 11; ink(ok ? "#c9842b" : "#8f9498", 2.2); ctx.restore();
+      badges.push({o, pk, ok, text: pk ? `+${c.yield}` : m.cost ? `−${m.cost}` : "0", sand: !!m && c.t === "sand"});
     } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true});
     } else if (PLACE && S.phase === "pick" && placeable(p)) { // tiles you can place a source on glow softly (LOU-263)
-      poly(d, `rgba(255,255,255,${.1 + (reduce ? 0 : .06 * Math.sin(t * 2.5 + h))})`);
+      rpath(d(), 8); ctx.fillStyle = `rgba(251,244,226,${.22 + .12 * osc(t, 2.5, h * .05)})`; ctx.fill();
     } else if (plantable(p)) {
-      ctx.save(); ctx.setLineDash([5, 6]); ctx.strokeStyle = S.water >= PLANT_COST ? "rgba(214,255,170,.6)" : "rgba(255,255,255,.2)"; ctx.lineWidth = 2; poly(d, "rgba(0,0,0,0)"); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.setLineDash([4, 5]); rpath(d(), 8); ink(S.water >= PLANT_COST ? "rgba(74,122,50,.75)" : "rgba(120,120,120,.45)", 1.8); ctx.restore();
       badges.push({o, plant:true, ok:S.water >= PLANT_COST});
     }
   }
-  // Landscape mode: the river's path next water cycle, a moving dashed line and numbered circles
-  if (LAND && S.phase === "play" && !flowing) { const pts = [S.head, ...preview.map(e => e.p)].map(q => { const o = iso(q[0], q[1], drawLevel(q)); return [o.x, o.y] });
-    if (pts.length > 1) { ctx.save(); ctx.setLineDash([7, 7]); ctx.lineDashOffset = reduce ? 0 : -t * 22; line(pts, "rgba(255,255,255,.85)", 3.5); ctx.restore() }
-    preview.forEach(e => { if (e.end && at(e.p).t !== "ocean") { const o = iso(e.p[0], e.p[1], drawLevel(e.p)); badges.push({o, step:e.cyc}) } });
-    if (preview.stop && preview.stop !== "sea") { const q = preview.length ? preview[preview.length - 1].p : S.head, o = iso(q[0], q[1], drawLevel(q)); badges.push({o, stopX:true}) } }
-  // groves: a golden thread through the tiles and the flow they give; bees hover over the meadows that pollinate them
-  for (const k of combos()) { for (const q of k.bees) { const o = iso(q[0], q[1], drawLevel(q)), h = hsh(...q), b = reduce ? 0 : t * 2.2 + h;
-      bee(o.x - 10 + Math.cos(b) * 12, o.y - 16 + Math.sin(b * 1.7) * 5); bee(o.x + 12 + Math.sin(b * .8) * 9, o.y - 8 + Math.cos(b * 1.3) * 4) } const pts = k.tiles.map(q => { const o = iso(q[0], q[1], drawLevel(q)); return [o.x, o.y + 6] });
-    ctx.save(); ctx.setLineDash([3, 6]); ctx.lineDashOffset = reduce ? 0 : -t * 12; line(pts, "rgba(255,209,102,.95)", 3); ctx.restore();
-    const mid = pts[Math.floor(pts.length / 2)]; badges.push({o:{x:mid[0], y:mid[1] - 30}, combo:`+${k.bonus}`}) }
+  // Landscape mode: the river's whole run, an inked dashed line with a number where each water cycle ends
+  if (LAND && S.phase === "play" && !flowing) { const pts = [S.head, ...preview.map(e => e.p)].map(q => { const o = iso(...q); return [o.x, o.y] });
+    if (pts.length > 1) { ctx.save(); ctx.setLineDash([7, 7]); ctx.lineDashOffset = reduce ? 0 : -(t % 1.4) / 1.4 * 14; line(pts, "rgba(44,95,128,.85)", 3); ctx.restore() }
+    preview.forEach(e => { if (e.end && at(e.p).t !== "ocean") badges.push({o:iso(...e.p), step:e.cyc}) });
+    if (preview.stop && preview.stop !== "sea") { const q = preview.length ? preview[preview.length - 1].p : S.head; badges.push({o:iso(...q), stopX:true}) } }
+  // groves: a golden thread through the tiles and the flow they give; bees over the meadows that pollinate them
+  for (const k of combos()) { for (const q of k.bees) { const o = iso(...q), h = hsh(...q); bee(o.x - 9, o.y - 18, t, h * .1); bee(o.x + 11, o.y - 10, t, h * .1 + .5) }
+    const pts = k.tiles.map(q => { const o = iso(...q); return [o.x, o.y + 6] });
+    ctx.save(); ctx.setLineDash([3, 6]); ctx.lineDashOffset = reduce ? 0 : -(t % 1.5) / 1.5 * 9; line(pts, "rgba(201,132,43,.95)", 2.6); ctx.restore();
+    const mid = pts[Math.floor(pts.length / 2)]; badges.push({o:{x:mid[0], y:mid[1] - 34}, combo:`+${k.bonus}`}) }
   // fish come to long rivers
   const rl = fishCount(); if (rl) { let i = 0; for (const p of ORDER) { const c = at(p); if (!c.river || c.t === "source" || c.t === "ocean" || c.t === "lake" || hsh(...p) % 3) continue; if (i++ >= rl) break;
-    const o = iso(p[0], p[1], drawLevel(p)), k = reduce ? 0 : Math.sin(t * 1.4 + hsh(...p)); fish(o.x + k * 10, o.y + 1, Math.cos(t * 1.4 + hsh(...p)) > 0 ? 1 : -1) } }
+    const o = iso(...p), k = osc(t, 4.5, hsh(...p) * .1); fish(o.x + k * 8, o.y + 1, Math.cos((t / 4.5 + hsh(...p) * .1) * TAU) > 0 ? 1 : -1) } }
   for (let i = deer.length - 1; i >= 0; i--) { const d = deer[i], k = (T - d.t0) / 2600; if (k >= 1 || reduce) { deer.splice(i, 1); continue }
-    const o = iso(d.p[0], d.p[1], drawLevel(d.p)); ctx.globalAlpha = Math.min(1, Math.sin(k * Math.PI) * 2); deerSprite(o.x + 8 - k * 20, o.y - 4, Math.sin(t * 6) * 2); ctx.globalAlpha = 1 }
+    const o = iso(...d.p); ctx.globalAlpha = Math.min(1, Math.sin(k * Math.PI) * 2); deerSprite(o.x + 8 - k * 20, o.y - 4, 0); ctx.globalAlpha = 1 }
   for (let i = bolts.length - 1; i >= 0; i--) { const b = bolts[i], k = (T - b.t0) / 700; if (k >= 1 || reduce) { bolts.splice(i, 1); continue }
-    const o = iso(b.p[0], b.p[1], drawLevel(b.p)); ctx.globalAlpha = 1 - k; line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#fff6b0", 5); line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#ffffff", 2); ctx.globalAlpha = 1 }
-  // the end of each stream: a soft pulse says "tap me"; selected, it gets a bold white ring with a teal edge
-  for (const i of liveRivers()) for (const q of headTiles(i)) { const d = diamond(q, drawLevel(q)), on = hsel && i === S.active, k = reduce ? 1 : .5 + .5 * Math.sin(t * (on ? 6 : 3));
-    if (on) { const o = iso(q[0], q[1], drawLevel(q)), s = 1.04 + .05 * k, dd = d.map(([x, y]) => [o.x + (x - o.x) * s, o.y + (y - o.y) * s]);
-      poly(dd, "rgba(98,224,200,.18)"); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6; ctx.stroke(); poly(dd, "rgba(0,0,0,0)"); ctx.strokeStyle = "#62e0c8"; ctx.lineWidth = 2.5; ctx.stroke() }
-    else { ctx.save(); ctx.setLineDash([7, 6]); ctx.lineDashOffset = reduce ? 0 : -t * 10; poly(d, "rgba(0,0,0,0)"); ctx.strokeStyle = `rgba(255,255,255,${.45 + .4 * k})`; ctx.lineWidth = 3; ctx.stroke(); ctx.restore() } }
-  if (aim) { const k = reduce ? 1 : .55 + .45 * Math.sin(t * 4.5); for (const key of aim) { const q = key.split(",").map(Number), d = diamond(q, drawLevel(q)), o = iso(q[0], q[1], drawLevel(q)), s = 1.02 + .06 * k;
-    poly(d.map(([x, y]) => [o.x + (x - o.x) * s, o.y + (y - o.y) * s]), "rgba(0,0,0,0)"); ctx.strokeStyle = `rgba(255,209,102,${.5 + .5 * k})`; ctx.lineWidth = 4; ctx.stroke() } }
-  if (sel) { const d = diamond(sel); poly(d, "rgba(255,209,102,.22)"); ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 4.5; ctx.stroke() }
+    const o = iso(...b.p); ctx.globalAlpha = 1 - k; line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#f5d04a", 5); line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#fffaf0", 2); ctx.globalAlpha = 1 }
+  // the end of each stream: a dashed ink ring with marching dashes; selected, it's bolder with a teal wash
+  for (const i of liveRivers()) for (const q of headTiles(i)) { const o = iso(...q), on = hsel && i === S.active;
+    if (on) { ell(o.x, o.y, R * .78, R * .39, "rgba(98,224,200,.22)") }
+    ctx.save(); ctx.setLineDash(on ? [7, 4] : [5, 5]); ctx.lineDashOffset = reduce ? 0 : -(t % (on ? 1.1 : 2)) / (on ? 1.1 : 2) * (on ? 11 : 10);
+    ctx.beginPath(); ctx.ellipse(o.x, o.y, R * .78, R * .39, 0, 0, 7); ink("#2c5f80", on ? 3 : 2); ctx.restore() }
+  if (aim) { const k = reduce ? 1 : .6 + .4 * osc(t, 1.4); for (const key of aim) { const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ink("#e0a030", 3.5); ctx.globalAlpha = 1 } }
+  if (sel) { rpath(hexPts(sel, R - 3), 8); ctx.fillStyle = "rgba(240,180,60,.22)"; ctx.fill(); ink("#c9842b", 3) }
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
-    const d = diamond(r.p), o = iso(r.p[0], r.p[1], drawLevel(r.p)), s = 1 + k * .25;
-    poly(d.map(([x, y]) => [o.x + (x - o.x) * s, o.y + (y - o.y) * s]), "rgba(0,0,0,0)"); ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = 3; ctx.stroke() }
+    ctx.globalAlpha = 1 - k; rpath(hexPts(r.p, R * (1 + k * .25)), 9); ink("#6b4f33", 2.2); ctx.globalAlpha = 1 }
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (const b of badges) badge(b, t);
-  // drifting clouds at the corners, and wind streaks on maps with wind
-  const cs = [[B.x + B.w - 30, B.y + 40, 1.1], [B.x + 20, B.y + B.h - 10, 1.25], [B.x + B.w + 10, B.y + B.h * .7, .9]];
-  cs.forEach(([x, y, s], i) => { ctx.globalAlpha = .92; cloud(x + (reduce ? 0 : Math.sin(t * .15 + i * 2) * 14), y + (reduce ? 0 : Math.cos(t * .12 + i) * 4), s); ctx.globalAlpha = 1 });
-  if (WIND && !reduce) { const sx = -(WIND[0] - WIND[1]) * TW / 2, sy = -(WIND[0] + WIND[1]) * TH / 2, L = Math.hypot(sx, sy), ux = sx / L, uy = sy / L;
-    for (let i = 0; i < 4; i++) { const k = ((t * .1 + i / 4) % 1), cx = B.x + B.w * ((hsh(i, 3) % 70) / 100 + .15), cy = B.y + B.h * ((hsh(3, i) % 70) / 100 + .15);
-      const x = cx + ux * (k - .5) * 160, y = cy + uy * (k - .5) * 160, px = -uy, py = ux; // a short gust with a curl at the end
-      ctx.globalAlpha = Math.sin(k * Math.PI) * .55; ctx.beginPath(); ctx.moveTo(x - ux * 34, y - uy * 34);
-      ctx.quadraticCurveTo(x, y + 4, x + ux * 14 + px * 2, y + uy * 14 + py * 2); ctx.arc(x + ux * 14 + px * 8, y + uy * 14 + py * 8, 6, Math.atan2(-py, -px), Math.atan2(-py, -px) + 4.2);
-      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.stroke(); ctx.globalAlpha = 1 } }
-  // the water cycle: clouds drift from where they spilled to where they'll rain; rain falls in streaks
-  for (const c of S.clouds || []) { const k = clamp01(1 - (c.turn - S.turn - 1) / 2 + (reduce ? 0 : .08 * Math.sin(t * .8))), a = c.from || c.to, b = c.to || c.from; if (!a) continue;
-    const oa = iso(a[0], a[1], 0), ob = iso(b[0], b[1], 0), x = oa.x + (ob.x - oa.x) * k, y = oa.y + (ob.y - oa.y) * k - 92 + (reduce ? 0 : Math.sin(t * 1.3) * 3);
-    ctx.globalAlpha = .95; cloud(x, y, .5); ctx.globalAlpha = 1; ell(x + 26, y - 14, 15, 11, "#1f6fb0"); ctx.fillStyle = "#fff"; ctx.font = "700 13px Fredoka, Nunito, sans-serif"; ctx.fillText(`+${c.gal}`, x + 26, y - 13);
-    if (c.turn === S.turn + 1 && !reduce) { ctx.globalAlpha = .5; for (let i = 0; i < 5; i++) { const dx = -22 + i * 11, dy = ((t * 60 + i * 13) % 26); line([[x + dx, y + 12 + dy], [x + dx - 3, y + 20 + dy]], "#9fd4ff", 2) } ctx.globalAlpha = 1 } }
+  // paper clouds drift across, each with a shadow on the ground; inked birds cross now and then
+  if (!reduce) { for (let i = 0; i < 2; i++) { const per = 40 + i * 10, k = ((t / per) + i * .55) % 1, x = B.x - 160 + k * (B.w + 320), y = B.y + B.h * (.18 + i * .4);
+      ell(x + 10, y + 150, 46 * (1 - i * .2), 12 * (1 - i * .2), "rgba(47,70,60,.12)"); cloud(x, y, 1 - i * .2) }
+    const bk = (t % 34) / 12; if (bk < 1) { const x0 = B.x - 60 + bk * (B.w + 120), y0 = B.y + B.h * .3 - bk * 40;
+      for (const [dx, dy] of [[0, 0], [-16, 8], [-12, -9]]) { const x = x0 + dx, y = y0 + dy, f = osc(t, 1.1, dx * .02) * 3;
+        ctx.beginPath(); ctx.moveTo(x - 8, y - 2 - f); ctx.quadraticCurveTo(x - 4, y - 4 - f, x, y); ctx.quadraticCurveTo(x + 4, y - 4 - f, x + 8, y - 2 - f); ink("#4d3e30", 1.6) } } }
+  // the water cycle: clouds go from where they spilled to where they'll rain; rain falls in streaks
+  for (const c of S.clouds || []) { const k = clamp01(1 - (c.turn - S.turn - 1) / 2), a = c.from || c.to, b = c.to || c.from; if (!a) continue;
+    const oa = iso(...a), ob = iso(...b), x = oa.x + (ob.x - oa.x) * k, y = oa.y + (ob.y - oa.y) * k - 92;
+    cloud(x, y, .5); tag(x + 26, y - 14, `+${c.gal}`, "#2f7fb8", 14);
+    if (c.turn === S.turn + 1 && !reduce) { ctx.globalAlpha = .55; for (let i = 0; i < 5; i++) { const dx = -22 + i * 11, dy = ((t * 26 + i * 13) % 26); line([[x + dx, y + 12 + dy], [x + dx - 3, y + 20 + dy]], "#3d8fc4", 1.6) } ctx.globalAlpha = 1 } }
   for (let i = rains.length - 1; i >= 0; i--) { const r = rains[i], k = (T - r.t0) / 1600; if (k >= 1 || reduce) { rains.splice(i, 1); continue }
-    const o = iso(r.p[0], r.p[1], drawLevel(r.p)); ctx.globalAlpha = Math.sin(k * Math.PI); cloud(o.x, o.y - 100, .6);
-    for (let j = 0; j < 9; j++) { const dx = -30 + j * 7.5, dy = ((k * 400 + j * 17) % 70); line([[o.x + dx, o.y - 86 + dy], [o.x + dx - 4, o.y - 74 + dy]], "#9fd4ff", 2.2) } ctx.globalAlpha = 1 }
+    const o = iso(...r.p); ctx.globalAlpha = Math.sin(k * Math.PI); cloud(o.x, o.y - 100, .6);
+    for (let j = 0; j < 9; j++) { const dx = -30 + j * 7.5, dy = ((k * 400 + j * 17) % 70); line([[o.x + dx, o.y - 86 + dy], [o.x + dx - 4, o.y - 74 + dy]], "#3d8fc4", 1.8) } ctx.globalAlpha = 1 }
   for (let i = birds.length - 1; i >= 0; i--) { const b = birds[i], k = (T - b.t0) / 1100; if (k >= 1 || reduce) { birds.splice(i, 1); continue } if (k < 0) continue;
-    const oa = iso(b.from[0], b.from[1], 0), ob = iso(b.to[0], b.to[1], 0), x = oa.x + (ob.x - oa.x) * k, y = oa.y + (ob.y - oa.y) * k - 40 - Math.sin(k * Math.PI) * 50, f = Math.sin(t * 22) * 6;
-    line([[x - 11, y - f], [x - 4, y - 2], [x, y + 1], [x + 4, y - 2], [x + 11, y - f]], "#2a2f3a", 2.6); ell(x + 2, y + 6, 2.2, 2.2, "#ffe066") }
+    const oa = iso(...b.from), ob = iso(...b.to), x = oa.x + (ob.x - oa.x) * k, y = oa.y + (ob.y - oa.y) * k - 40 - Math.sin(k * Math.PI) * 50, f = Math.sin(k * TAU * 2) * 4;
+    ctx.beginPath(); ctx.moveTo(x - 10, y - f); ctx.quadraticCurveTo(x - 4, y - 4, x, y + 1); ctx.quadraticCurveTo(x + 4, y - 4, x + 10, y - f); ink("#4d3e30", 2); inkEll(x + 2, y + 6, 2.2, 2.2, "#f5d04a", "#4d3e30", .8) }
   if (sky && !reduce) { const k = (T - sky.t0) / 2200; if (k >= 1) sky = null; else { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const a = Math.sin(k * Math.PI);
-    if (sky.kind === "rain") { ctx.strokeStyle = `rgba(200,230,255,${.55 * a})`; ctx.lineWidth = 2 * lay.dpr; ctx.beginPath(); for (let j = 0; j < 70; j++) { const x = (hsh(j, 1) / 97) * cv.width, y = ((hsh(1, j) / 97) * cv.height + k * cv.height * 1.6) % cv.height; ctx.moveTo(x, y); ctx.lineTo(x - 6 * lay.dpr, y + 22 * lay.dpr) } ctx.stroke() }
-    else { ctx.fillStyle = `rgba(255,190,90,${.22 * a})`; ctx.fillRect(0, 0, cv.width, cv.height) }
+    if (sky.kind === "rain") { ctx.strokeStyle = `rgba(61,143,196,${.45 * a})`; ctx.lineWidth = 1.6 * lay.dpr; ctx.beginPath(); for (let j = 0; j < 70; j++) { const x = (hsh(j, 1) / 97) * cv.width, y = ((hsh(1, j) / 97) * cv.height + k * cv.height * 1.6) % cv.height; ctx.moveTo(x, y); ctx.lineTo(x - 6 * lay.dpr, y + 22 * lay.dpr) } ctx.stroke() }
+    else { ctx.fillStyle = `rgba(240,180,60,${.2 * a})`; ctx.fillRect(0, 0, cv.width, cv.height) }
     ctx.restore() } }
-  // floating numbers: what a move gave or cost
+  // floating numbers: what a move gave or cost, in handwriting
   for (let i = fx.length - 1; i >= 0; i--) { const f = fx[i], k = (T - f.t0) / 1300; if (k >= 1) { fx.splice(i, 1); continue } if (k < 0) continue;
-    const o = iso(f.p[0], f.p[1], drawLevel(f.p)), y = o.y - 34 - 46 * (1 - Math.pow(1 - k, 2));
-    ctx.globalAlpha = k < .75 ? 1 : (1 - k) / .25; ctx.font = "700 19px Fredoka, Nunito, sans-serif";
-    ctx.lineWidth = 5; ctx.strokeStyle = "rgba(8,24,38,.85)"; ctx.lineJoin = "round"; ctx.strokeText(f.text, o.x, y); ctx.fillStyle = f.col; ctx.fillText(f.text, o.x, y); ctx.globalAlpha = 1 }
+    const o = iso(...f.p), y = o.y - 34 - 46 * (1 - Math.pow(1 - k, 2));
+    ctx.globalAlpha = k < .75 ? 1 : (1 - k) / .25; ctx.font = `22px ${HAND}`;
+    ctx.lineWidth = 5; ctx.strokeStyle = "rgba(61,42,23,.85)"; ctx.lineJoin = "round"; ctx.strokeText(f.text, o.x, y); ctx.fillStyle = f.col; ctx.fillText(f.text, o.x, y); ctx.globalAlpha = 1 }
 }
+// Wave marks sit on open water around the island (worked out once).
+const WAVES = []; for (let i = 0; i < 40; i++) { const x = B.x - 40 + (B.w + 80) * (hsh(i, 5) / 97), y = B.y + (B.h + 40) * (hsh(9, i) / 97);
+  if (!ORDER.some(q => { const o = iso(...q); return Math.abs(o.x - x) < 64 && Math.abs(o.y - y + 12) < 46 })) WAVES.push([x, y, i]) }
+function bubble(x, y, r, fill, text, col, font) { ell(x + 2, y + 2.5, r, r, "rgba(31,74,107,.35)"); ell(x, y, r, r, fill); ink(PAPER, 2.4); ctx.beginPath(); ctx.ellipse(x, y, r + 1.2, r + 1.2, 0, 0, 7); ink("rgba(61,42,23,.5)", 1);
+  ctx.fillStyle = col; ctx.font = font; ctx.fillText(text, x, y + 1) }
 function badge(b, t) {
   const {o} = b;
-  if (b.combo) { ctx.fillStyle = "#ffd166"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x - 24, o.y - 12, 48, 24, 12) : ctx.rect(o.x - 24, o.y - 12, 48, 24); ctx.fill();
-    ctx.fillStyle = "#3a2600"; ctx.font = "700 14px Fredoka, Nunito, sans-serif"; ctx.fillText(b.combo + " flow", o.x, o.y + 1); return }
-  if (b.stopX) { const x = o.x, y = o.y - 4, k = reduce ? 1 : 1 + .08 * Math.sin(t * 5); ell(x, y + 4, 12, 4, "rgba(0,0,0,.25)"); ell(x, y, 12 * k, 12 * k, "#e2513b"); ctx.lineWidth = 2.5; ctx.strokeStyle = "#ffffff"; ctx.stroke();
-    line([[x - 5, y - 5], [x + 5, y + 5]], "#ffffff", 3); line([[x + 5, y - 5], [x - 5, y + 5]], "#ffffff", 3); return }
-  if (b.step) { const x = o.x, y = o.y - 2; ell(x, y + 3, 11, 4, "rgba(0,0,0,.2)"); ell(x, y, 11, 11, "#ffffff"); ctx.lineWidth = 2.5; ctx.strokeStyle = "#2f86c9"; ctx.stroke();
-    ctx.fillStyle = "#2f86c9"; ctx.font = "700 13px Fredoka, Nunito, sans-serif"; ctx.fillText(b.step, x, y + 1); return }
-  if (b.drop) { const bob = reduce ? 0 : Math.sin(t * 2.6 + o.x * .05) * 2, x = o.x + 12, y = o.y - 22 + bob; // a teal "+1 flow" drop until the river claims it
-    ell(x, y + 14, 7, 2.5, "rgba(0,0,0,.2)");
-    ctx.beginPath(); ctx.moveTo(x, y - 13); ctx.bezierCurveTo(x + 4, y - 7, x + 10, y - 2, x + 10, y + 3); ctx.arc(x, y + 3, 10, 0, Math.PI); ctx.bezierCurveTo(x - 10, y - 2, x - 4, y - 7, x, y - 13);
-    ctx.fillStyle = "#62e0c8"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.stroke();
-    ctx.fillStyle = "#0b3a32"; ctx.font = "700 12px Fredoka, Nunito, sans-serif"; ctx.fillText("+1", x, y + 4); return }
-  if (b.plant) { const x = o.x, y = o.y + 1; ell(x, y + 2, 12, 12, "rgba(0,0,0,.25)"); ell(x, y, 12, 12, b.ok ? "#3f9a3f" : "rgba(8,24,38,.55)");
-    ctx.fillStyle = b.ok ? "#d6ffaa" : "#9bb6c6"; ctx.beginPath(); ctx.moveTo(x - 5, y + 5); ctx.quadraticCurveTo(x - 6, y - 6, x + 6, y - 6); ctx.quadraticCurveTo(x + 6, y + 5, x - 5, y + 5); ctx.fill(); return }
-  const r = b.pk ? 19 : 15, bob = reduce ? 0 : Math.sin(t * 3 + o.x * .05) * 1.5, y = o.y - 4 + bob;
-  ell(o.x, y + 3, r, r, "rgba(0,0,0,.3)"); ell(o.x, y, r, r, b.pk ? "#ffffff" : b.ok ? "#1f6fb0" : "#7d8a93");
-  ctx.lineWidth = 2.5; ctx.strokeStyle = "#ffffff"; ctx.stroke();
-  ctx.fillStyle = b.pk ? "#13222e" : "#fff"; ctx.font = `700 ${b.pk ? 16 : 18}px Fredoka, Nunito, sans-serif`; ctx.fillText(b.text, o.x, y + 1);
-  if (b.sand) { ctx.fillStyle = "#62e0c8"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x - 27, y + 15, 54, 20, 10) : ctx.rect(o.x - 27, y + 15, 54, 20); ctx.fill();
-    ctx.fillStyle = "#0b3a32"; ctx.font = "700 12px Fredoka, Nunito, sans-serif"; ctx.fillText("−1 flow", o.x, y + 26) }
-}
-function source(o, t) { // a bubbling spring at the source: a stone ring, rings of water spreading out, and a little fountain
-  const b = reduce ? 0 : Math.sin(t * 5) * 2;
-  ell(o.x, o.y + 2, 21, 10.5, "#7d8a93"); ell(o.x, o.y, 16, 8, "#4aa3e8"); ell(o.x - 3, o.y - 1, 9, 4, "#8fd0ff");
-  if (!reduce) for (let i = 0; i < 2; i++) { const k = (t * .7 + i * .5) % 1; ctx.globalAlpha = (1 - k) * .8; ctx.beginPath(); ctx.ellipse(o.x, o.y, 4 + k * 11, 2 + k * 5.5, 0, 0, 7); ctx.strokeStyle = "#e6f6ff"; ctx.lineWidth = 1.4; ctx.stroke(); ctx.globalAlpha = 1 }
-  ctx.beginPath(); ctx.moveTo(o.x, o.y - 2); ctx.quadraticCurveTo(o.x - 9, o.y - 13 - b, o.x, o.y - 30 - b); ctx.quadraticCurveTo(o.x + 9, o.y - 13 - b, o.x, o.y - 2); ctx.fillStyle = "#dff3ff"; ctx.fill();
-  ell(o.x - 8, o.y - 13 + b, 2, 2, "#ffffff"); ell(o.x + 8, o.y - 18 - b, 1.6, 1.6, "#ffffff");
-}
-function lodge(cx, cy, pond, t, h) { // a beaver lodge on the bank of a river tile; once dammed, a stick dam across the water
-  if (pond) { for (let i = 0; i < 5; i++) line([[cx - 14 + i * 6, cy + 4 + i * 1.5], [cx - 9 + i * 6, cy - 2 + i * 1.5]], "#6b4a2b", 3);
-    ctx.globalAlpha = .6 + .3 * Math.sin(t * 2 + h); ell(cx - 6, cy - 3, 3, 1.5, "#ffffff"); ctx.globalAlpha = 1 }
-  const x = cx + 13, y = cy - 6; ell(x + 1, y + 4, 11, 4, "rgba(0,0,0,.2)"); ctx.beginPath(); ctx.ellipse(x, y, 10, 8, 0, Math.PI, 0); ctx.fillStyle = "#7a5233"; ctx.fill();
-  for (let i = 0; i < 4; i++) line([[x - 9 + i * 5, y], [x - 6 + i * 4, y - 6 - (i % 2) * 2]], "#5a3a20", 1.6); ell(x, y - 1, 2.5, 2, "#2a1a0e") }
-function caveArch(cx, cy, c, t, h) { // a dark rock arch with a numbered tag; water spills out of the exit cave
-  ell(cx + 3, cy + 6, 22, 7, "rgba(0,0,0,.22)");
-  ctx.beginPath(); ctx.moveTo(cx - 20, cy + 6); ctx.quadraticCurveTo(cx - 22, cy - 22, cx, cy - 26); ctx.quadraticCurveTo(cx + 22, cy - 22, cx + 20, cy + 6); ctx.closePath(); ctx.fillStyle = "#7c766d"; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(cx + 2, cy - 26); ctx.quadraticCurveTo(cx + 22, cy - 22, cx + 20, cy + 6); ctx.lineTo(cx + 10, cy + 6); ctx.closePath(); ctx.fillStyle = "#666058"; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(cx - 10, cy + 6); ctx.quadraticCurveTo(cx - 11, cy - 12, cx, cy - 13); ctx.quadraticCurveTo(cx + 11, cy - 12, cx + 10, cy + 6); ctx.closePath(); ctx.fillStyle = "#1f1b18"; ctx.fill();
-  ell(cx - 12, cy - 18, 3, 2, "#a8a196"); ell(cx + 6, cy - 22, 2.5, 1.6, "#a8a196");
-  if (c.river) { ell(cx, cy + 5, 9, 3, "#4aa3e8"); const k = reduce ? 0 : (t * 1.2 + h / 10) % 1; ctx.globalAlpha = 1 - k; ell(cx, cy + 5, 4 + k * 6, 1.5 + k * 2, "#e6f6ff"); ctx.globalAlpha = 1 }
-  if (c.cave) { ctx.save(); const x = cx + 15, y = cy - 26; ell(x, y, 8, 8, "#2a2622"); ctx.lineWidth = 2; ctx.strokeStyle = "#e9e3d6"; ctx.stroke();
-    ctx.fillStyle = "#ffffff"; ctx.font = "800 10px Fredoka, Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(c.cave, x, y + .5); ctx.restore() } }
-function deco(p, c, o, t, h) {
-  const {x: cx, y: cy} = o, sway = reduce ? 0 : Math.sin(t * 1.6 + h) * 1.2;
-  if (c.t === "cave") { caveArch(cx, cy, c, t, h); if (c.dry) { ctx.globalAlpha = .55; ell(cx, cy - 2, 9, 7, "#cdb894"); ctx.globalAlpha = 1 } return }
-  if (c.t === "bed") { ell(cx, cy, 20, 9, "#b9a27a"); ell(cx - 1, cy - 1, 15, 6, "#d8c6a0"); const k = "rgba(110,85,50,.55)";
-    line([[cx - 12, cy - 2], [cx - 5, cy + 1], [cx + 2, cy - 2]], k, 1.4); line([[cx - 5, cy + 1], [cx - 4, cy + 5]], k, 1.2); line([[cx + 4, cy + 3], [cx + 11, cy], [cx + 14, cy + 3]], k, 1.4);
-    ell(cx + 7, cy - 4, 2.4, 1.6, "#9d978c"); ell(cx - 9, cy + 4, 2, 1.3, "#a9a296"); ell(cx + 1, cy + 6, 1.6, 1.1, "#8f897e"); return }
-  if (c.river) return; // river tiles are drawn with the river (drawRivers)
-  if (c.t === "ocean") { const w = reduce ? 0 : Math.sin(t * 2 + p[0] + p[1]) * 3; if (h % 3 === 0) line([[cx - 10 + w, cy - 2], [cx + 6 + w, cy - 2]], "rgba(255,255,255,.6)", 2);
-    ctx.globalAlpha = .5 + .3 * Math.sin(t * 2 + h); line([[cx - 16, cy + 6], [cx - 8, cy + 3], [cx, cy + 6], [cx + 8, cy + 3]], "#ffffff", 1.8); ctx.globalAlpha = 1; return }
-  if (c.t === "source") { source(o, t); return }
-  if (c.t === "marsh") { const on = marshBy(p), sw = reduce ? 0 : Math.sin(t * 1.6 + h) * 1.5;
-    ell(cx - 7, cy + 3, 11, 5, on ? "#3f8fc4" : "#467d86"); ell(cx - 8, cy + 2, 6, 2.6, on ? "#8fd2f5" : "#6fa7ad"); ell(cx + 10, cy - 6, 7, 3.2, on ? "#3f8fc4" : "#467d86");
-    for (const [rx, ry, hgt] of [[-16, -4, 13], [-12, -7, 16], [4, 6, 12], [8, 3, 15], [14, 8, 11], [-2, -10, 12]]) { const x0 = cx + rx, y0 = cy + ry;
-      line([[x0, y0], [x0 + sw, y0 - hgt]], "#3c6b3a", 1.8); if (hgt > 13) { ctx.beginPath(); ctx.ellipse(x0 + sw, y0 - hgt + 3, 1.9, 4, 0, 0, 7); ctx.fillStyle = "#7a4a2a"; ctx.fill() } }
-    if (on && marshGreen(p)) { const a = reduce ? 1 : .6 + .4 * Math.sin(t * 3 + h); ctx.globalAlpha = a; ell(cx + 2, cy - 22, 3, 3, "#62e0c8"); ctx.globalAlpha = 1 }
-    return }
-  if (c.fire) { pine(cx - 12, cy + 1, .75, true); pine(cx + 11, cy - 3, .8, true);
-    for (let i = 0; i < 4; i++) { const fx0 = cx - 15 + i * 10, fl = reduce ? 1 : .8 + .3 * Math.sin(t * 9 + i * 2), fy = cy - 6 - i % 2 * 8;
-      ctx.beginPath(); ctx.moveTo(fx0 - 6, fy + 8); ctx.quadraticCurveTo(fx0 - 7, fy - 8 * fl, fx0, fy - 20 * fl); ctx.quadraticCurveTo(fx0 + 7, fy - 8 * fl, fx0 + 6, fy + 8); ctx.fillStyle = "#ff7a2a"; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(fx0 - 3, fy + 7); ctx.quadraticCurveTo(fx0 - 3, fy - 3 * fl, fx0, fy - 10 * fl); ctx.quadraticCurveTo(fx0 + 3, fy - 3 * fl, fx0 + 3, fy + 7); ctx.fillStyle = "#ffe066"; ctx.fill() }
-    ctx.globalAlpha = .35; ell(cx + 4, cy - 40 - (t * 20 % 20), 10, 7, "#555"); ctx.globalAlpha = 1; return }
-  if (c.alp) { tufts(cx, cy, h + 2, sway); const sn = c.snow || 0;
-    for (const [dx, dy, s] of [[-14, 2, .9], [12, -3, 1], [0, 9, 1.1], [3, -11, .8]]) { const x = cx + dx, y = cy + dy, H = 30 * s, Wd = 7 * s;
-      ell(x + 3, y + 1, 7 * s, 2.5 * s, "rgba(0,0,0,.2)"); line([[x, y], [x, y - 4]], "#5a3a20", 2);
-      ctx.beginPath(); ctx.moveTo(x - Wd, y - 3); ctx.lineTo(x, y - H); ctx.lineTo(x + Wd, y - 3); ctx.closePath(); ctx.fillStyle = "#2f6a4a"; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(x, y - H); ctx.lineTo(x + Wd, y - 3); ctx.lineTo(x, y - 3); ctx.closePath(); ctx.fillStyle = "#245a3d"; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(x - 3 * s, y - H + 8 * s); ctx.lineTo(x, y - H); ctx.lineTo(x + 3 * s, y - H + 8 * s); ctx.closePath(); ctx.fillStyle = "#ffffff"; ctx.fill() }
-    for (let i = 0; i < sn; i++) ell(cx - 10 + i * 9, cy + 12 - (i % 2) * 3, 5, 2.4, "#f4fbff");
-    if (sn) { ctx.save(); const x = cx + 18, y = cy - 20; ell(x, y, 9, 9, "#ffffff"); ctx.lineWidth = 2; ctx.strokeStyle = "#8fc3e6"; ctx.stroke();
-      ctx.fillStyle = "#2a6a9a"; ctx.font = "800 11px Fredoka, Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(sn, x, y + .5); ctx.restore() }
-    return }
-  if (c.g >= TREES) { tufts(cx, cy, h + 2, sway); pine(cx - 15, cy + 1, .75, c.wild); pine(cx + 13, cy - 4, .85, c.wild); pine(cx - 1, cy + 9, 1, c.wild); if (c.wild) pine(cx + 2, cy - 12, .7, true); return }
-  if ((c.t === "meadow" && !c.g) || c.g === MEADOW) { meadow(cx, cy, h, c.bloom || c.g === MEADOW); return }
-  if (c.g === 1 || (c.bloom && c.t !== "spring")) { tufts(cx, cy, h, sway); return }
-  if (c.ro) { // runoff: a small pool fed by the mountain
-    ell(cx, cy + 1, 15, 7.5, c.ro === 2 ? "#2f86c9" : "#3e7fb3"); ell(cx - 2, cy, 9, 4.5, "#7ccbf7");
-    if (c.ro === 1) { const a = reduce ? 1 : .6 + .4 * Math.sin(t * 3 + h); ctx.globalAlpha = a; ell(cx + 9, cy - 8, 2, 2, "#ffffff"); ell(cx - 8, cy - 4, 1.5, 1.5, "#ffffff"); ctx.globalAlpha = 1 } }
-  if (c.beaver === 1) { ell(cx + 2, cy + 6, 22, 7, "rgba(0,0,0,.2)"); ctx.beginPath(); ctx.ellipse(cx, cy, 20, 13, 0, Math.PI, 0); ctx.fillStyle = "#7a5233"; ctx.fill();
-    for (let i = 0; i < 6; i++) line([[cx - 18 + i * 7, cy - 1], [cx - 12 + i * 6, cy - 10 - (i % 2) * 3]], "#5a3a20", 2); ell(cx, cy - 1, 4, 3, "#2a1a0e"); return }
-  if (c.beaver === 2) { ell(cx, cy + 1, 23, 11.5, "#2f86c9"); ell(cx - 3, cy, 15, 7, "#7ccbf7"); for (let i = 0; i < 5; i++) line([[cx + 10 + i * 2, cy + 9 - i * 3], [cx + 18 + i * 2, cy + 7 - i * 3]], "#6b4a2b", 2.5);
-    ctx.globalAlpha = .6 + .3 * Math.sin(t * 2 + h); ell(cx - 8, cy - 2, 3, 1.5, "#ffffff"); ctx.globalAlpha = 1; return }
-  if (c.pool) { ell(cx + 1, cy + 2, 19, 9, "#2f86c9"); ell(cx - 2, cy + 1, 13, 6, "#7ccbf7"); ell(cx - 7, cy - 1, 3, 1.4, "#ffffff");
-    const k = reduce ? 0 : (t * .8 + h / 10) % 1; ctx.globalAlpha = 1 - k; ctx.beginPath(); ctx.ellipse(cx + 5, cy + 2, 4 + k * 9, 2 + k * 4.5, 0, 0, 7); ctx.strokeStyle = "#e6f6ff"; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1; return }
-  if (c.moss && !c.g) { ell(cx - 10, cy + 2, 7, 3.5, "#6fa84a"); ell(cx + 8, cy - 5, 6, 3, "#7cb956"); ell(cx + 3, cy + 7, 5, 2.5, "#5f9a40") }
-  if (c.ash && !c.g) { ell(cx - 8, cy + 2, 9, 4, "rgba(40,30,25,.45)"); ell(cx + 9, cy - 4, 7, 3, "rgba(40,30,25,.4)"); line([[cx - 4, cy + 6], [cx + 6, cy + 1]], "#3a2a20", 2) }
-  if (M.salt && salty(p) && c.t === "bare" && !c.g) { for (let i = 0; i < 6; i++) ell(cx - 16 + (hsh(i, h) % 32), cy - 7 + (hsh(h, i) % 15), 2.2, 1.2, "#f4f1e8") }
-  if (c.fert && c.t === "bare" && !c.g && !c.ro) { const k = shade(COL.fertile, .3); // furrows and sprouts (LOU-273)
-    for (let i = -1; i <= 1; i++) line([[cx - 16 + i * 6, cy - 2 + i * 7], [cx + 14 + i * 6, cy - 2 + i * 7 - 8]], k, 2.2);
-    const sw = reduce ? 0 : Math.sin(t * 2 + h) * 1.2;
-    for (const [sx, sy] of [[-10, 2], [2, -4], [10, 6], [-2, 10]]) { line([[cx + sx, cy + sy], [cx + sx + sw, cy + sy - 6]], "#6fbf45", 1.8); ell(cx + sx + sw - 2, cy + sy - 6, 2.4, 1.3, "#8ed65a"); ell(cx + sx + sw + 2, cy + sy - 7, 2.4, 1.3, "#7cc94c") }
-    return }
-  if (c.t === "bare" && !c.ro) { line([[cx - 15, cy - 2], [cx - 6, cy + 2], [cx + 2, cy - 1]], shade(topColor(c), .25), 1.5); ell(cx + 12, cy + 6, 3, 2, shade(topColor(c), .3)); ell(cx - 6, cy - 10, 2.4, 1.6, mix(topColor(c), .25));
-    if (c.rs) { const k = "rgba(70,45,20,.5)"; // dry, cracked ground in the rain shadow
-      line([[cx + 4, cy - 8], [cx + 10, cy - 3], [cx + 18, cy - 5]], k, 1.6); line([[cx + 10, cy - 3], [cx + 9, cy + 3]], k, 1.3); line([[cx - 4, cy + 6], [cx + 2, cy + 10], [cx + 9, cy + 9]], k, 1.6);
-      line([[cx - 18, cy], [cx - 11, cy - 3], [cx - 9, cy - 9]], k, 1.4); line([[cx - 11, cy - 3], [cx - 6, cy + 1]], k, 1.2) } }
-  if (c.t === "sand") { const hi = mix(COL.sand, .5); ctx.beginPath(); ctx.moveTo(cx - 20, cy + 2); ctx.quadraticCurveTo(cx - 10, cy - 4, cx, cy + 2); ctx.moveTo(cx - 4, cy + 10); ctx.quadraticCurveTo(cx + 6, cy + 4, cx + 16, cy + 10);
-    ctx.strokeStyle = hi; ctx.lineWidth = 2; ctx.stroke(); ell(cx + 12, cy - 8, 2.6, 1.8, "#f39b6d") }
-  if (c.t === "rock") stones(cx, cy);
-  if (c.t === "boulder") mountain(cx, cy, t, c.ws);
-  if (c.t === "spring") { ell(cx, cy + 1, 17, 8.5, "#2f86c9"); ell(cx - 2, cy, 11, 5, "#7ccbf7");
-    const tw = reduce ? 1 : .55 + .45 * Math.sin(t * 3 + h); ctx.save(); ctx.globalAlpha = tw; ctx.translate(cx + 8, cy - 4); ctx.scale(tw, tw);
-    poly([[0, -7], [2, -2], [7, 0], [2, 2], [0, 7], [-2, 2], [-7, 0], [-2, -2]], "#ffffff"); ctx.restore() }
-  if (c.t === "lake") { line([[cx - 18, cy], [cx - 6, cy + 3], [cx + 2, cy - 4], [cx + 16, cy + 1]], shade(COL.lake, .3), 1.5); line([[cx - 6, cy + 3], [cx - 4, cy + 12]], shade(COL.lake, .3), 1.5);
-    ctx.save(); ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.ellipse(cx, cy, 25, 12.5, 0, 0, 7); ctx.strokeStyle = "#7ccbf7"; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore() }
+  if (b.combo) { tag(o.x, o.y, b.combo + " flow", "#1d8f78", 15); return }
+  if (b.stopX) { const x = o.x, y = o.y - 4; bubble(x, y, 11, "#c8553d", "", PAPER, ""); line([[x - 4.5, y - 4.5], [x + 4.5, y + 4.5]], PAPER, 2.6); line([[x + 4.5, y - 4.5], [x - 4.5, y + 4.5]], PAPER, 2.6); return }
+  if (b.step) { bubble(o.x, o.y - 2, 11, PAPER, b.step, "#2f6f9e", `600 13px ${NUM}`); return }
+  if (b.drop) { ctx.globalAlpha = .8 + .2 * osc(t, 2.2, o.x * .01); tag(o.x + 4, o.y - 24, "+1 flow", "#1d8f78", 15); ctx.globalAlpha = 1; return } // a paper "+1 flow" tag until the river claims it
+  if (b.plant) { const x = o.x, y = o.y + 1; bubble(x, y, 10, b.ok ? PAPER : "#d9d4c8", "", "", "");
+    ctx.beginPath(); ctx.moveTo(x - 4.5, y + 4.5); ctx.quadraticCurveTo(x - 5.5, y - 5.5, x + 5.5, y - 5.5); ctx.quadraticCurveTo(x + 5.5, y + 4.5, x - 4.5, y + 4.5); ctx.fillStyle = b.ok ? "#6aa65a" : "#9a9a92"; ctx.fill(); ink(b.ok ? INK_T : "#77746c", 1); return }
+  const y = o.y - 4;
+  if (b.pk) bubble(o.x, y, 16, PAPER, b.text, "#1d8f78", `24px ${HAND}`);
+  else bubble(o.x, y, 14, b.ok ? "#2f6f9e" : "#8f9498", b.text, PAPER, `22px ${HAND}`);
+  if (b.sand) tag(o.x, y + 25, "−1 flow", "#1d8f78", 14);
 }
 
 // ---------- input
 function tileAt(cx, cy) {
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
   const x = ((cx - r.left) * dpr - off.x) / scale, y = ((cy - r.top) * dpr - off.y) / scale;
-  for (let i = ORDER.length - 1; i >= 0; i--) { const d = diamond(ORDER[i]); if (inPoly(x, y, d)) return ORDER[i] }
-  return null }
+  // back to world space, then the nearest hex centre (a hex is everything nearer its centre than any other)
+  const a = x / .7071, b = y / .3536, wx = (a + b) / 2, wy = (b - a) / 2, ry = Math.round(wy / (1.5 * R)); let best = null, bd = 1e9;
+  for (let yy = ry - 1; yy <= ry + 1; yy++) { const rx = Math.round((wx - (yy & 1 ? SQ3 * R / 2 : 0)) / (SQ3 * R));
+    for (let xx = rx - 1; xx <= rx + 1; xx++) { if (!inside(xx, yy)) continue; const [cx, cy] = world(xx, yy), dd = Math.hypot(cx - wx, cy - wy); if (dd < bd) { bd = dd; best = [xx, yy] } } }
+  return best && bd <= R ? best : null }
 function inPoly(x, y, pts) { let ins = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j];
   if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins } return ins }
 // Drag to pan, pinch or wheel to zoom; a touch that barely moves is a tap.
@@ -1453,13 +1482,7 @@ addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
 function loop() { if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
 if (!load()) S = fresh();
-// The tutorial: remember a visit, and offer it to a first-time visitor at the site root (LOU-261)
-const lsGet = k => { try { return localStorage.getItem(k) } catch (_) { return null } }, lsSet = (k, v) => { try { localStorage.setItem(k, v) } catch (_) {} };
-if (M.tutorial) lsSet("flowtile.tutorial.seen", "1");
-const offer = M.offerTutorial && !lsGet("flowtile.tutorial.seen") && !lsGet("flowtile.tutorial.declined");
-$("offer").addEventListener("close", () => { lsSet("flowtile.tutorial.declined", "1"); if (S.phase === "pick" && !S.turn) showGoal() });
-if (offer) { try { $("offer").showModal() } catch (_) {} }
-else if (S.phase === "pick" && !S.turn) showGoal(); // a new run opens on the map's goal card
+if (S.phase === "pick" && !S.turn) showGoal(); // a new run opens on the map's goal card
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
@@ -1467,6 +1490,6 @@ if ("serviceWorker" in navigator) addEventListener("load", () => navigator.servi
 window.FT = {get lay() { return lay }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, selectHead() { hsel = true }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
-  tap(p) { const d = diamond(p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = (d[0][0] + d[2][0]) / 2, cy = (d[0][1] + d[2][1]) / 2;
+  tap(p) { const o = iso(...p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = o.x, cy = o.y;
     cv.dispatchEvent(new PointerEvent("pointerup", {clientX:r.left + (cx * scale + off.x) / dpr, clientY:r.top + (cy * scale + off.y) / dpr, bubbles:true})) }};
 })();

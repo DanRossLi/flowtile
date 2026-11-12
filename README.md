@@ -24,24 +24,9 @@ Every map opens on a **goal card**: what the map teaches and its three star goal
 
 Controls: tap your stream's **end** to select it, then tap a glowing tile to move the stream there; the end stays selected so you can keep going, and tapping it again (or empty space) lets go. Tapping any other tile opens a card showing what it does and what it costs, then choose an action (tap the same tile again to do the first one; a tile with only one option and nothing to warn about acts on the first tap). Tapping land never moves the stream. **Undo** steps back one action, **Restart** resets the map, **Next Water Cycle** (or Space on a keyboard) adds your **flow** to your **water**; its badge shows what you will get, and warns when some would spill. Water is blue and flow is teal everywhere. A finished run isn't restored: the next visit starts the map fresh. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
 
-## Tutorial
+## Look
 
-New players start at https://danrossli.github.io/flowtile/tutorial/: twelve short islands, one new rule each, each opening on its goal card and ending with **Next lesson**. The index shows a tick for each finished step and a **Continue** button. Each step teaches through objectives on the map, one at a time (Skip lesson moves on). The home page marks the tutorial "New here?" for a first-time visitor.
-
-| Step | URL | Teaches |
-|---|---|---|
-| 1 · First stream | https://danrossli.github.io/flowtile/tutorial/1/ | Move your stream (tap its end, then a tile), water vs flow, Next Water Cycle |
-| 2 · Grass | https://danrossli.github.io/flowtile/tutorial/2/ | Plant grass to store more water; storage and spill |
-| 3 · Meadow | https://danrossli.github.io/flowtile/tutorial/3/ | Grow grass into a meadow for more storage on the same tile |
-| 4 · Trees | https://danrossli.github.io/flowtile/tutorial/4/ | Grow a meadow into trees: one tile stores 3 extra gal |
-| 5 · Groves | https://danrossli.github.io/flowtile/tutorial/5/ | 3 trees in a row beside the river: +1 flow |
-| 6 · Pollinators | https://danrossli.github.io/flowtile/tutorial/6/ | A meadow touching a grove: +1 flow |
-| 7 · Sand | https://danrossli.github.io/flowtile/tutorial/7/ | Free to cross, −1 flow, greens the land around it |
-| 8 · Oases | https://danrossli.github.io/flowtile/tutorial/8/ | Plan a route from oasis to oasis that keeps your flow |
-| 9 · Rock | https://danrossli.github.io/flowtile/tutorial/9/ | Rock costs 2 gal; the way around the mountains costs more |
-| 10 · Lakes | https://danrossli.github.io/flowtile/tutorial/10/ | Fill all at once for 2 gal a tile; plant up to 2 tiles out |
-| 11 · Tributaries | https://danrossli.github.io/flowtile/tutorial/11/ | Build a tributary; it earns only once it connects |
-| 12 · Mountains | https://danrossli.github.io/flowtile/tutorial/12/ | Runoff on the windward side, rain shadow behind |
+Since Nov 11 the game uses the A4 storybook look: an isometric island of hex tiles drawn like a watercolour diorama, with paper-and-ink buttons and cards (Fraunces, Patrick Hand and Nunito). Every tile has six neighbours. The top bar's **water jar** shows the water you have (blue), your storage (the jar and its notches) and next cycle's flow (teal); when that flow won't fit, it pours over the lip and the text says how much will spill.
 
 ## Landscape mode
 
@@ -95,7 +80,7 @@ Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–22 below carry on fro
 | Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
 
-Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout). Each map's `index.html` (tutorial steps live in `tutorial/N/`; the site root is the home page) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
+Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the menu pages share `paper.css`. Each map's `index.html` (the site root is the home page) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
 
 ## Modes
 

@@ -1,0 +1,39 @@
+/* A4 storybook look for the menu pages (home, River mode, Landscape mode, World), Nov 11.
+   Loaded after each page's own <style>, so these rules win. Paper and ink, Fraunces / Patrick Hand / Nunito. */
+:root{--paper:#fbf4e2;--paper-2:#efe3c4;--ink:#3d2a17;--ink-b:#6b4f33;--label:#7a5c3c;--muted:#7a5c3c;--gold:#e0a030;--gold-d:#a8721c;
+  --green:#5f9a48;--blue:#2f6f9e;--blue-d:#1f4a6b;--sea:#5aa9d0;--deep:#2f7fb8;color-scheme:light}
+body{color:var(--ink);font-family:"Nunito",system-ui,sans-serif;
+  background:radial-gradient(130% 90% at 50% 0%,#f3e7c9 0%,#e6d5ad 55%,#d9c69c 100%) fixed}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;mix-blend-mode:multiply;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .09 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>")}
+h1,h2,.t b,.mode b,.isle b,a.go,.n{font-family:"Fraunces",Georgia,serif}
+h1{color:var(--ink);text-shadow:none;font-weight:700;letter-spacing:-.01em}
+h1 span{color:var(--deep)}
+h2{color:var(--ink)}
+.sub,.biome,.count{color:var(--label);opacity:1;font-family:"Patrick Hand","Nunito",cursive;font-weight:400;font-size:17px}
+.bar{background:#e2d3b0;box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.5)}
+.bar i{background:var(--gold)}
+a.go{color:var(--paper);background:var(--blue);border-radius:10px;box-shadow:0 0 0 2px var(--blue-d),3px 4px 0 var(--blue-d)}
+a.go:active{transform:translate(2px,3px);box-shadow:0 0 0 2px var(--blue-d)}
+a.go small{font-family:"Patrick Hand","Nunito",cursive;font-weight:400;font-size:15px}
+ol a,.mode,a.isle{color:var(--ink);background:var(--paper);border-radius:10px;box-shadow:0 0 0 1.5px var(--ink-b),3px 4px 0 rgba(107,79,51,.45)}
+ol a:active,.mode:active,a.isle:active{transform:translate(2px,3px);box-shadow:0 0 0 1.5px var(--ink-b)}
+.next,.mode.first,.isle.next{box-shadow:0 0 0 1.5px var(--ink-b),3px 4px 0 rgba(107,79,51,.45),0 0 0 5px rgba(224,160,48,.55) !important}
+.n{background:var(--paper-2);color:var(--ink-b);box-shadow:inset 0 0 0 1.5px var(--ink-b)}
+.done .n{background:#93c565;color:#2e4a26}
+.t small,.mode small,.isle small{color:var(--label);font-family:"Patrick Hand","Nunito",cursive;font-weight:400;font-size:15px}
+.mode em,.skip{color:var(--label)}
+.mode i{box-shadow:0 0 0 1.5px var(--ink-b)}
+.tick path{stroke:#4f8a4a}
+.st svg,.stars path{fill:#e2d3b0;stroke:#a8906a}
+.st svg.on,.stars .on path{fill:#f2c14e;stroke:var(--gold-d)}
+.total{background:#f5d98a;color:#5a3d12;box-shadow:inset 0 0 0 1.2px var(--gold-d);font-family:"Patrick Hand","Nunito",cursive;font-weight:400}
+.lock{background:var(--ink-b);color:var(--paper)}
+.best{background:var(--blue);color:var(--paper)}
+.blob{box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.45)}
+.blob::after{background:var(--sea)}
+footer{color:var(--label);opacity:1;font-family:"Patrick Hand","Nunito",cursive;font-size:16px}
+footer a,.biome a{color:var(--deep)}
+:focus-visible{outline-color:var(--gold)}
+.more a{color:var(--ink-b);background:var(--paper);box-shadow:0 0 0 1.2px var(--ink-b),2px 3px 0 rgba(107,79,51,.35);font-family:"Patrick Hand","Nunito",cursive;font-weight:400;font-size:16px;border-radius:8px}
+.mode .tag{background:#f5d98a;color:#5a3d12;box-shadow:inset 0 0 0 1.2px var(--gold-d)}

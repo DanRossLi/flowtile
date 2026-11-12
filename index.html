@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
 <style>
   :root{--sea:#2b68b0;--deep:#1f4f8c;--paper:#f4f1e8;--ink:#13222e;--gold:#ffd166;--gold-d:#d9a93c;--green:#7cc94c;--muted:#6c7b83;--blue:#2f9be8;--blue-d:#1d6aa6}
   *{box-sizing:border-box}
@@ -57,14 +57,14 @@
   .more a{color:#fff;font-weight:800;font-size:14px;background:rgba(0,0,0,.18);border-radius:999px;padding:8px 12px;text-decoration:none}
   @media (max-width:340px){.modes{grid-template-columns:1fr}}
 </style>
+<link rel="stylesheet" href="paper.css">
 </head>
 <body>
 <main>
   <h1>Flow <span>Tile</span></h1>
   <p class="sub">Grow a river from its source to the sea.</p>
-  <!-- Home (LOU-265): the tutorial (guided) and River mode (Dan's original maps, free control) side by side; Landscape mode (LOU-266) next to them -->
+  <!-- Home (LOU-265): River mode (Dan's original maps, free control) and Landscape mode (LOU-266) side by side; the tutorial was removed (Dan, Nov 11) -->
   <div class="modes">
-    <a class="mode" id="mTut" href="tutorial/"><i style="background:#5cb844"><svg viewBox="0 0 24 24"><path d="M4 6l8-3 8 3-8 3z"/><path d="M7 8v5c0 1.5 2.5 3 5 3s5-1.5 5-3V8"/><path d="M20 6v6"/></svg></i><b>Tutorial</b><small>Twelve short islands, one new rule each, with goals on the map.</small><em id="tTut"></em></a>
     <a class="mode" id="mRiver" href="river/"><i style="background:#2f9be8"><svg viewBox="0 0 24 24"><path d="M3 8c3-2 6-2 9 0s6 2 9 0M3 14c3-2 6-2 9 0s6 2 9 0"/></svg></i><b>River mode</b><small>The original maps in order. You choose where the river goes.</small><em id="tRiver"></em></a>
     <a class="mode" id="mLand" href="landscape/"><i style="background:#c9893d"><svg viewBox="0 0 24 24"><path d="M3 19l6-9 4 5 3-4 5 8z"/><path d="M3 19h18"/></svg></i><b>Landscape</b><small>The river flows on its own. You shape the land to guide it.</small><em id="tLand"></em></a>
     <a class="mode" href="daily/"><i style="background:#e2a41c"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></i><b>Daily island</b><small>A new island every day, the same for everyone.</small><em id="tDaily"></em></a>
@@ -75,18 +75,14 @@
 <script>
 const get = k => { try { return localStorage.getItem(k) } catch (_) { return null } };
 const num = k => +get(k) || 0;
-const TUT = ["tut-1-first-stream","tut-2-grass","tut-3-meadow","tut-4-trees","tut-5-groves","tut-6-pollinators","tut-7-sand","tut-8-oases","tut-9-rock","tut-10-lakes","tut-11-tributaries","tut-12-mountains"];
 const RIVER = ["map-1-flat","map-1a-sand-v2","map-3-lake","map-4-grass","map-4a-trees","map-5-desert","map-6-tributary","map-7-rock","map-8-grove","map-9-pollinators","map-10-mountains","map-11-forest","map-12-rain","map-13-spread","map-14-floodplain","map-15-harvest","map-16-wildlife","map-17-wildfire","map-18-fertile","map-19-marsh","map-20-alpine","map-21-caves","map-22-rechannel"];
-const tDone = TUT.filter(id => num("flowtile.stars." + id) > 0).length, rDone = RIVER.filter(id => num("flowtile.stars." + id) > 0).length;
-document.getElementById("tTut").textContent = tDone ? `${tDone} of 12 finished` : "Start here";
+const rDone = RIVER.filter(id => num("flowtile.stars." + id) > 0).length;
 document.getElementById("tRiver").textContent = `${rDone} of ${RIVER.length} maps · ${RIVER.reduce((s, id) => s + num("flowtile.stars." + id), 0)} stars`;
 const LAND = ["land-1-springs","land-2-green","land-3-nosand","land-sandbox"], lDone = LAND.filter(id => num("flowtile.stars." + id) > 0).length;
 document.getElementById("tLand").textContent = lDone ? `${lDone} of ${LAND.length} done` : "3 puzzles and a sandbox";
 const d = new Date(), day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, db = num("flowtile.best.daily-" + day);
 document.getElementById("tDaily").textContent = db ? `Today's best: ${db}` : "Not played today";
 const pb = num("flowtile.best.perfection-island"); document.getElementById("tPerf").textContent = pb ? `Best: ${pb} points` : "No score yet";
-// A first-time visitor is pointed at the tutorial (canon: the site root offers the tutorial)
-if (!tDone && !get("flowtile.tutorial.seen")) { const m = document.getElementById("mTut"); m.classList.add("first"); m.insertAdjacentHTML("beforeend", '<em class="tag">New here?</em>') }
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
 </body>
