@@ -35,19 +35,20 @@ window.MAP = {
     "111111110",
     "111111110",
     "111111110"],
-  storage: 3,
+  storage: 5,
   bloomGoal: 2,
-  bloomLabel: "Grass",
+  bloomLabel: "Meadows",
+  bloomKind: "meadows",
   turnGoal: 4,
   tileCost: 1,
   showBloom: true,
   startHint: "Tap the spring on the left to start.",
   next: "../8/",
   help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
     "<b>Rock</b> is hard ground: it costs <b>2 gal</b> to cross instead of 1. Going around the mountains is free of rock, but much longer.",
-    "Water over your storage <b>spills</b> at the next water cycle. Plant grass by the stream (1 gal) to store more and waste less.",
-    "Stars: reach the sea, grow <b>2 grass</b>, and arrive by turn <b>4</b>."]
+    "Water over your storage <b>spills</b> at the next water cycle. Grass by the stream is free; a meadow (1 gal) stores +1 for each tree beside it.",
+    "Stars: reach the sea, grow <b>2 meadows</b>, and arrive by turn <b>4</b>."]
 };
 </script>
 <script src="../play.js"></script>

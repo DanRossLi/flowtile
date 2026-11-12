@@ -39,7 +39,7 @@
   const types = g.map(r => r.join("")), elev = types.map(r => [...r].map(c => "~L".includes(c) ? "0" : "1").join(""));
   const say = {rain:"rain", drought:"a drought", fire:"lightning"};
   window.MAP = {id:"daily-" + day, label:"Daily island · " + day.slice(5), lesson:"A new island every day, the same for everyone. Every rule is on: score as many points as you can.", mode:"perfection", turns:20, scoreStars:[30, 45, 60], share:true, placeSource:true,
-    types, elev, storage:3, wind, cycle:true, weather, spread:true, floodplain:true, snowmelt:true, moss:true, deer:true,
+    types, elev, storage:5, wind, cycle:true, weather, spread:true, floodplain:true, snowmelt:true, moss:true, deer:true,
     tileCost:1, showBloom:true, next:null,
     startHint:"A new island every day, the same for everyone. Tap a source on the left to start.", pickHint:"Tap a source on the left.",
     help:["A new island every day, the same for everyone. Every rule from the lessons is on.",

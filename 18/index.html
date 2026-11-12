@@ -17,12 +17,12 @@
 </head>
 <body>
 <script>
-// Map 18 · Fertile ground: dark, rich soil (f). Green on it stores 1 gal more, and its trees count double toward a grove.
+// Map 18 · Fertile ground: dark, rich soil (f). A meadow on it stores 1 gal more, and its trees count double toward a grove (LOU-279).
 // Map key: _ bare ground  f fertile ground  ~ sea  T source (3 gal/turn)
 window.MAP = {
   id: "map-18-fertile",
   label: "Map 18 · Fertile ground",
-  lesson: "<b>Fertile ground.</b> The dark soil is richer: grass on it stores <b>2</b> (meadow 3, trees 4), and its trees <b>count double</b> toward a grove, so <b>2 fertile trees</b> in a row along the river make one. Bend your river past it.",
+  lesson: "<b>Fertile ground.</b> The dark soil is richer: a <b>meadow</b> on it stores <b>1 more</b> (1 plus one per tree beside it), and its trees <b>count double</b> toward a grove, so <b>2 touching fertile trees</b> along the river make +1 flow. Bend your river past it.",
   types: [
     "____________~",
     "_____ff_____~",
@@ -35,7 +35,7 @@ window.MAP = {
     "1111111111110",
     "1111111111110",
     "1111111111110"],
-  storage: 3,
+  storage: 5,
   bloomGoal: 2,
   bloomLabel: "Trees",
   bloomKind: "trees",
@@ -45,9 +45,9 @@ window.MAP = {
   startHint: "Tap the spring on the left to start.",
   next: "../19/",
   help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
-    "<b>Fertile ground</b> is the dark, furrowed soil. Plant on it like bare ground (1 gal a step), but each green step stores <b>1 gal more</b>: grass 2, meadow 3, trees 4.",
-    "Trees on fertile ground <b>count double toward a grove</b>: 2 touching fertile trees along the river make a grove (+2 flow), where normal ground needs 3.",
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
+    "<b>Fertile ground</b> is the dark, furrowed soil. Grass on it is free like anywhere; a <b>meadow</b> on it stores <b>1 gal more</b> than its tree count.",
+    "Trees on fertile ground <b>count double toward a grove</b>: each counts as 2 toward the “every 3 trees: +1 flow” total, so 2 touching fertile trees along the river make +1 flow.",
     "The river washes away what it runs over, fertile or not, so run beside the soil, not through it."]
 };
 </script>

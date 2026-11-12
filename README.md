@@ -13,8 +13,8 @@ Plain HTML/JS, no build step, no framework.
 - **Sand** is **free** to enter and blooms the land around it (on storage maps, it turns the bare ground next to it into grass), but it cuts your **flow by 1** for the rest of the run.
 - **Rock** costs **2 gal** to cross, and tiles touching it don't turn green. **Mountains** block the river. **Springs** are free and add **+1 flow**.
 - **Lakes** cost **2 gal a tile** and fill all at once. A full lake lets the river leave from any side, and on storage maps you can plant up to **2 tiles** from it (reach).
-- **Bare ground** (maps 4 onward): you can **store 3 gal** at the start; water over that spills at the next water cycle. Plant **grass** on bare ground next to the river (1 gal, +1 storage), grow it into a **meadow** (1 gal, +1 more), then **trees** (1 gal, +1 more): one tile stores up to 3 extra gal. A river running over grass or trees washes them away, and you lose that storage.
-- **Groves:** 3+ **touching trees** (on any hex side; planted or wild forest) beside the river give **+1 flow**, +1 per extra tree. **Pollinators:** each **meadow** (wild or grown) touching a grove adds **+1 flow** more. Trees cost the normal price to cross; they're for storage and groves, not defense.
+- **Bare ground** (maps 4 onward): you can **store 5 gal** at the start; water over that spills at the next water cycle. **Grass** on bare ground next to the river is free and stores nothing. Grow it into a **meadow** (1 gal): beside the river it stores **+1 gal for each tree touching it**. Grow a meadow into **trees** (1 gal): no storage, but they make groves. A river running over green washes it away (LOU-279).
+- **Groves:** 3+ **touching trees** (on any hex side; planted or wild forest) beside the river give **+1 flow for every 3 trees** (fertile trees count double). Meadows add no flow (pollinators were removed in LOU-279). Trees cost the normal price to cross; they're for storage and groves, not defense.
 - **Tributaries** (map 6): tap a second source to start a tributary. It has no water, flow or storage of its own: you build it with the main river's water, and it earns nothing until it connects. Once it reaches the main river (or the main river reaches it), its source and anything it picked up join your flow. Tap a river, or its pill at the top, to choose which one you build.
 - **Ideas** (Nov 10), each switched on by a map: the **water cycle** (spilled water rises as a cloud and rains back 2 turns later) and a **weather forecast** (a rainstorm gives +2 gal, a drought cuts flow by 1 for 2 turns), shown in the Sky chip; **living spread** (grass beside the river greens a bare bank tile next to it at the next water cycle, always when a meadow is next to it, and every 3rd turn a bird carries a seed from each grove); the **floodplain** (at full storage the spill floods a bare bank tile and greens it); **harvests** (collect a rain pool beside the river for +2 gal, snowmelt gives +3 gal the first time you reach a mountain's water side, moss turns rock beside the river into soil for 1 gal); **wildlife** (beavers dam a pond for +1 flow when your river runs through their colony with trees next to it; deer graze a grass tile with no trees beside it every 3rd turn; fish come to long rivers); **nature pushes back** (lightning on a forecast turn sets dry trees alight and fire spreads from tiles with no water beside them; salt stops land next to the sea from greening).
 - **Wind** (map 10): rain runs off the windward side of each mountain into a pool. Run the river through or beside it for **+1 flow**. The far side is in rain shadow: nothing grows there.
@@ -54,7 +54,7 @@ Dan's original maps in their original order, with no guidance: you choose where 
 | 6 · Tributary | https://danrossli.github.io/flowtile/6/ |
 | 7 · Rock | https://danrossli.github.io/flowtile/7/ |
 | 8 · Grove | https://danrossli.github.io/flowtile/8/ |
-| 9 · Pollinators | https://danrossli.github.io/flowtile/9/ |
+| 9 · Shade | https://danrossli.github.io/flowtile/9/ |
 | 10 · Mountains | https://danrossli.github.io/flowtile/10/ |
 
 Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–23 below carry on from Map 10.
@@ -71,7 +71,7 @@ Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–23 below carry on fro
 | 15 · Harvest | https://danrossli.github.io/flowtile/15/ | Rain pools, snowmelt and moss: make room in storage before you collect |
 | 16 · Wildlife | https://danrossli.github.io/flowtile/16/ | Route through a beaver colony and grow trees by it for a pond (+1 flow); trees keep deer off your grass |
 | 17 · Wildfire | https://danrossli.github.io/flowtile/17/ | Lightning sets dry forest alight; keep your trees away from it |
-| 18 · Fertile ground | https://danrossli.github.io/flowtile/18/ | Rich soil: green on it stores 1 more, its trees count double toward a grove |
+| 18 · Fertile ground | https://danrossli.github.io/flowtile/18/ | Rich soil: a meadow on it stores 1 more, its trees count double toward a grove |
 | 19 · Marsh | https://danrossli.github.io/flowtile/19/ | Run beside a marsh: it stores 2; green on both sides adds +1 flow |
 | 20 · Alpine | https://danrossli.github.io/flowtile/20/ | Grow alpine trees by the mountains; melt their snow to fill the lake |
 | 21 · Caves | https://danrossli.github.io/flowtile/21/ | A mountain wall: take the cave shortcut or the long way round |
@@ -88,7 +88,7 @@ Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the me
 **Map generator:** https://danrossli.github.io/flowtile/generator/ builds a seeded island from your options (size, goal, sources, storage, how much of each terrain, wind and weather), previews it, and plays it on the Custom page or copies it as a map code.
 
 - **Islands** (https://danrossli.github.io/flowtile/world/): the campaign. Islands are grouped by biome, show your best stars, and each one opens when the one before it has a star.
-- **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, green tile and fish, 3 per grove, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
+- **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, meadow you grow and fish, 3 per grove, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
 - **Daily island** (`/daily/`): generated from the date, so everyone gets the same island. Add `?d=YYYY-MM-DD` to play another day's island. **Share score** copies your result.
 - **Hard mode**: tick it in the **?** menu to get 3 undos per map.
 - **Map codes**: **?** → **Copy map code** copies a link that plays the map at `/custom/#<code>`.

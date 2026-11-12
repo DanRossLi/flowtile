@@ -42,10 +42,16 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Map 3** is flat with a **lake**.
 - **Map 1a** introduces **sand**. ~~Sand costs 1 to enter~~ *(superseded Nov 10: sand is free to enter)* but takes away 1 flow. On the desert map with storage (5), sand also turns the bare ground next to it into grass.
 - **Bare ground:** a stream through it costs 1 gal.
-  - **Grass:** 1 gal turns bare ground next to the river into grass, for +1 storage.
+  - ~~**Grass:** 1 gal turns bare ground next to the river into grass, for +1 storage.~~ *Superseded Nov 12 by the growth rebalance below.*
   - ~~**Trees:** 1 more gal turns grass into trees, for +1 more storage.~~ *Superseded Nov 10 by the meadow chain below.*
-  - **Grass → meadow → trees** (Dan, Nov 10, LOU-261, on every map): 1 gal turns grass into a meadow, then 1 more gal turns the meadow into trees, +1 storage each step, so one tile stores up to 3 extra gal. A grown meadow counts as a meadow for pollinators.
-  - Start at **3 flow and 3 storage**.
+  - ~~**Grass → meadow → trees** (Dan, Nov 10, LOU-261, on every map): 1 gal turns grass into a meadow, then 1 more gal turns the meadow into trees, +1 storage each step, so one tile stores up to 3 extra gal. A grown meadow counts as a meadow for pollinators.~~ *Superseded Nov 12 by the growth rebalance below.*
+  - **Growth rebalance** (Dan, LOU-279, built Nov 12): storage comes from meadows, flow from trees, and grass is the free ground you build on.
+    - **Grass:** free (0 gal), only on bare ground next to your river; it stores nothing. Cutting grass back to bare ground is free.
+    - **Meadow** (grass → meadow, 1 gal): no storage of its own. If it touches a river tile it stores **+1 for each tree touching it** (0 to 5; wild forest counts); away from the river it stores 0. Meadows add no flow (pollinators removed).
+    - **Trees** (meadow → trees, 1 gal): no storage. A grove (touching trees, all beside the river) gives **+1 flow per full 3 trees** (`floor(trees ÷ 3)`).
+    - Turning a meadow into trees loses its storage but adds +1 to each meadow beside the new tree. Cutting trees back to a meadow gets the meadow's storage back.
+    - Tile texts: Grass "Free next to your river. The ground you grow on." Meadow "Beside your river: +1 storage for each tree next to it." Trees "No storage. Every 3 touching trees beside your river: +1 flow."
+  - Start at **3 flow and ~~3~~ 5 storage** (LOU-279 raised storage from 3 to 5 on every map with storage).
   - A river can flow through grass or trees, but washes them away.
   - Water over storage **spills** at the end of the turn.
 - **Clicking tiles:** tiles are clickable. Tap one to see what it does, then choose. A tile with only one option builds on the first tap.
@@ -68,15 +74,15 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - You select a river by tapping it.
   - When a tributary meets the main river, it **pours into the main river** and adds its flow.
 - **Nov 10 rules** (on maps with storage):
-  - **Groves:** ~~3 or more trees in a row beside the river.~~ *Superseded Nov 11 (Dan: "adjust flow such that it calculates correctly on adjacent tiles for trees given its a hexagon"):* 3 or more trees that **touch each other** on any of the six hex sides, all beside the river, make a grove (no straight line needed). +1 flow, +1 per extra tree; fertile trees count double.
-  - ~~**Wildflower patches:** 4 or more meadows in a row.~~ *Superseded Nov 10 by pollinators: a meadow next to a grove adds +1 flow.*
+  - **Groves:** ~~3 or more trees in a row beside the river.~~ *Superseded Nov 11 (Dan: "adjust flow such that it calculates correctly on adjacent tiles for trees given its a hexagon"):* 3 or more trees that **touch each other** on any of the six hex sides, all beside the river, make a grove (no straight line needed). ~~+1 flow, +1 per extra tree~~ *(LOU-279: +1 flow per full 3 trees)*; fertile trees count double.
+  - ~~**Wildflower patches:** 4 or more meadows in a row.~~ *Superseded Nov 10 by pollinators: a meadow next to a grove adds +1 flow.* *Pollinators removed Nov 12 (LOU-279).*
   - **Sand** greens its neighbours.
   - **Mountain runoff** on the windward side, with a rain shadow on the other. Since Nov 11 (LOU-269) this is each mountain's **water side**: see below.
   - ~~**Trees as defense:** trees cost 3 gal to cut through~~, rock 2. *Superseded Nov 10: trees no longer defend; sediment is the defense tile.*
 - **Wild forest** counts toward groves (Nov 10).
 - **Map greens you can change** (Dan, Nov 11: "for default tiles generated on maps, let me adjust the trees, meadows…", answered "Change them in play"): a map's own grass, meadows, trees and wild forest can be **grown** a step (1 gal) wherever they are, with no river needed beside them, and **cut back** a step (1 gal): trees → meadow → grass → bare ground. ~~Cutting wild forest makes it an ordinary meadow that stores water.~~ **No storage from cut forest** (Dan, Nov 11: "No storage from it"): a tile cut back from wild forest stores only what it grows beyond the forest it was. The river running through still washes them away.
 - **Oases (springs)** (Nov 10): an oasis just adds +1 flow and doesn't green the ground around it. The oasis tile itself can still bloom when sand next to it blooms, and it counts toward the bloom goal. Sand keeps blooming the sand around it and greening the bare ground beside it.
-- **Fertile ground** (Linear spec LOU-214, built as LOU-273, Nov 11): map code `f`, dark furrowed soil. Green on it stores 1 gal more (grass 2, meadow 3, trees 4), and its trees count double toward a grove. Map 18 teaches it.
+- **Fertile ground** (Linear spec LOU-214, built as LOU-273, Nov 11): map code `f`, dark furrowed soil. ~~Green on it stores 1 gal more (grass 2, meadow 3, trees 4)~~ *(LOU-279: a meadow on it stores 1 more than its tree count, 1 to 6)*, and its trees count double toward a grove. Map 18 teaches it.
 - **Marsh** (Linear spec LOU-215, built as LOU-274, Nov 11): map code `M`. Next to your river it stores 2 gal; with green on two opposite sides it adds +1 flow; a river running through it drains it. Map 19 teaches it. Reeds and rain flooding are still open questions.
 - **Terrain answers** (Dan, Nov 11):
   - **Alpine trees** (LOU-235): melt the snow **any time**.

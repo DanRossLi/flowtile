@@ -22,7 +22,7 @@
 window.MAP = {
   id: "map-8-grove",
   label: "Map 8 · Grove",
-  lesson: "<b>Groves.</b> Plant <b>3 trees touching each other</b> along your river for <b>+1 flow</b>, and more for bigger groves.",
+  lesson: "<b>Groves.</b> Plant <b>3 trees touching each other</b> along your river for <b>+1 flow</b>, 6 trees for +2. Trees store nothing, but meadows beside them do.",
   types: [
     "______B_______~",
     "______L_______~",
@@ -35,16 +35,16 @@ window.MAP = {
     "111111011111110",
     "111111011111110",
     "111111111111110"],
-  storage: 3,
+  storage: 5,
   bloomGoal: 0,
   turnGoal: 11,
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../9/",
   help: [
-    "Tap the spring on the left. Its <b>flow</b> is only <b>2 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
-    "The <b>lake</b> between the mountains costs <b>6 gal</b> all at once (2 a tile), so you need to store 6. Grass, then meadow, then trees beside the stream: each step adds <b>+1 storage</b> for 1 gal.",
-    "<b>Grove:</b> 3 or more <b>trees in a straight row</b>, all beside the river, add <b>+1 flow</b>, and +1 more for each extra tree in the row.",
+    "Tap the spring on the left. Its <b>flow</b> is only <b>2 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
+    "The <b>lake</b> between the mountains costs <b>6 gal</b> all at once (2 a tile), so you need to store 6. Grass is free; a <b>meadow</b> beside the stream stores <b>+1 gal for each tree</b> next to it.",
+    "<b>Grove:</b> touching trees, all beside the river, give <b>+1 flow for every 3</b> (3 trees +1, 6 trees +2). Trees store nothing, so mix meadows in.",
     "A stream running over a tree washes it away and breaks the grove, so keep them off your route. Stars: reach the sea, and arrive by turn <b>11</b>."]
 };
 </script>

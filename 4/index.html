@@ -17,12 +17,12 @@
 </head>
 <body>
 <script>
-// Map 4 · Grass: bare ground. Plant grass by the stream to store enough water for the lake.
+// Map 4 · Grass: bare ground. Grass is free; a meadow with trees beside it stores enough water for the lake (LOU-279).
 // Map key: _ bare ground  L lake  ~ sea  T source (3 gal/turn)
 window.MAP = {
   id: "map-4-grass",
   label: "Map 4 · Grass",
-  lesson: "<b>Storage.</b> Plant grass beside your stream so you can hold more water, enough to fill the big lake.",
+  lesson: "<b>Storage.</b> Grass is free beside your stream. Grow it into a <b>meadow</b>, then grow <b>trees</b> next to the meadow: each tree beside a meadow stores <b>+1 gal</b>. Store enough to fill the big lake.",
   types: [
     "_____B__~",
     "_____L__~",
@@ -35,20 +35,22 @@ window.MAP = {
     "111110110",
     "111110110",
     "111111110"],
-  storage: 3,
-  bloomGoal: 4,
-  bloomLabel: "Grass",
+  storage: 5,
+  bloomGoal: 2,
+  bloomLabel: "Meadows",
+  bloomKind: "meadows",
   turnGoal: 6,
   tileCost: 1,
   showBloom: true,
   startHint: "Tap the spring on the left to start.",
   next: "../4a/",
   help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>. Water over that spills at the next water cycle.",
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>. Water over that spills at the next water cycle.",
     "Tap your stream's <b>end</b>, then a glowing tile to extend it. Every tile costs <b>1 gal</b>. Run it <b>left to right</b> to the sea.",
-    "<b>Bare ground</b> next to the stream shows a leaf: tap it and choose <b>Plant grass</b> for 1 gal. Each grass lets you <b>store +1 gal</b>.",
-    "The <b>lake</b> fills all at once for <b>2 gal a tile</b>: <b>6 gal</b>, more than you can store at the start. Plant grass first. <b>Mountains</b> block the stream.",
-    "If the stream runs over grass it washes it away, and you lose that storage."]
+    "<b>Bare ground</b> next to the stream shows a leaf: tap it for <b>free grass</b>. Grass stores nothing, but it's the ground you grow on.",
+    "Tap grass and choose <b>Grow a meadow</b> (1 gal). A meadow beside your river stores <b>+1 gal for each tree touching it</b>: trees shade it and keep it damp. Grow trees on the grass next to it (meadow first, then trees, 1 gal each).",
+    "The <b>lake</b> fills all at once for <b>2 gal a tile</b>: <b>6 gal</b>, more than you can store at the start. Grow a meadow and a tree beside it first. <b>Mountains</b> block the stream.",
+    "If the stream runs over green it washes it away. Stars: reach the sea, grow <b>2 meadows</b>, and arrive by turn <b>6</b>."]
 };
 </script>
 <script src="../play.js"></script>

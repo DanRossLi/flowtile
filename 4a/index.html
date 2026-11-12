@@ -17,15 +17,15 @@
 </head>
 <body>
 <script>
-// Map 4a · Trees: a narrow pass with room for only two grass tiles. Grow grass into a meadow, then trees, to store enough for the lake.
+// Map 4a · Trees: a narrow pass with room for only a meadow and a tree side by side (LOU-279: the pass opened one tile so they fit).
 // Map key: _ bare ground  B mountain  L lake  ~ sea  T source (3 gal/turn)
 window.MAP = {
   id: "map-4a-trees",
   label: "Map 4a · Trees",
-  lesson: "<b>Trees.</b> When there's no room for more grass, grow your grass into a meadow, then trees, for even more storage (+1 each step).",
+  lesson: "<b>Shade.</b> Room is tight here. Put a <b>meadow</b> and a <b>tree</b> side by side above the stream: the tree stores nothing itself, but the meadow next to it holds <b>+1 gal</b>.",
   types: [
     "BBBBBBBB~",
-    "BB_BBBBB~",
+    "BB__BBBB~",
     "T___LLL_~",
     "BBB_BBBB~",
     "BBBBBBBB~"],
@@ -35,18 +35,18 @@ window.MAP = {
     "111100010",
     "111111110",
     "111111110"],
-  storage: 3,
+  storage: 5,
   bloomGoal: 0,
   turnGoal: 6,
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../5/",
   help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 3 gal</b>. Water over that spills at the next water cycle.",
+    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>. Water over that spills at the next water cycle.",
     "Tap your stream's <b>end</b>, then a glowing tile to extend it. Every tile costs <b>1 gal</b>. Run it <b>left to right</b> to the sea.",
-    "<b>Bare ground</b> next to the stream shows a leaf: tap it and choose <b>Plant grass</b> for 1 gal. Each grass lets you <b>store +1 gal</b>.",
-    "Tap grass and choose <b>Grow a meadow</b> for 1 more gal, then <b>Grow trees</b> for 1 more: <b>+1 storage</b> each time, on the same tile.",
-    "The <b>lake</b> costs <b>6 gal</b> and there is only room for two grass tiles, so you will need a meadow or trees. Once it's full, you can plant up to 2 tiles from it."]
+    "<b>Bare ground</b> next to the stream shows a leaf: tap it for <b>free grass</b>, the ground you grow on.",
+    "Tap grass and choose <b>Grow a meadow</b> (1 gal), then <b>Grow trees</b> (1 more). A meadow beside your river stores <b>+1 gal for each tree touching it</b>; trees themselves store nothing.",
+    "The <b>lake</b> costs <b>6 gal</b> and there is only room for two tiles above the stream: one meadow, one tree. Once it's full, you can plant up to 2 tiles from it."]
 };
 </script>
 <script src="../play.js"></script>

@@ -17,12 +17,12 @@
 </head>
 <body>
 <script>
-// Map 9 · Pollinators: a few meadows along the top. Grow a grove beside them and the bees add flow.
+// Map 9 · Shade (was Pollinators; pollinators were removed in LOU-279): meadows nestled into a grove store the most.
 // Map key: _ bare ground  . meadow  ~ sea  S source (2 gal/turn)
 window.MAP = {
   id: "map-9-pollinators",
-  label: "Map 9 · Pollinators",
-  lesson: "<b>Pollinators.</b> Each meadow next to a grove brings bees: <b>+1 flow</b> per meadow.",
+  label: "Map 9 · Shade",
+  lesson: "<b>Meadows in the grove.</b> Trees make flow (+1 for every 3), and each tree beside a meadow stores <b>+1 gal</b>. Nestle your meadows into your grove so the same trees do both.",
   types: [
     "_..._____________~",
     "_________________~",
@@ -35,16 +35,16 @@ window.MAP = {
     "111111111111111110",
     "111111111111111110",
     "111111111111111110"],
-  storage: 3,
+  storage: 5,
   bloomGoal: 0,
   turnGoal: 9,
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../10/",
   help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle, and you can <b>store 3 gal</b>.",
-    "<b>Grove:</b> 3 or more <b>touching trees</b> beside the river add <b>+1 flow</b>. Plant grass, then grow it into a meadow, then trees.",
-    "<b>Pollinators:</b> every <b>meadow</b> touching a grove adds <b>+1 more flow</b>. Grow your grove next to the wild meadows, or grow a meadow of your own beside it.",
+    "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
+    "<b>Grove:</b> touching trees beside the river give <b>+1 flow for every 3</b>. Grass is free; grow it into a meadow (1 gal), then trees (1 gal).",
+    "<b>Shade:</b> a <b>meadow</b> beside your river stores <b>+1 gal for each tree</b> touching it, up to 5. Turning a meadow into trees loses its storage but adds 1 to every meadow beside it, so the layout is the puzzle.",
     "Stars: reach the sea, and arrive by turn <b>9</b>."]
 };
 </script>

@@ -165,11 +165,11 @@ function generate(o) {
     gen:{seed:o.seed.slice(0, 30), size:sizeName, biome:o.biome}};
   if (o.biome === "alpine") map.snowmelt = true;
   if (o.biome === "desert") map.salt = true;
-  if (o.storage === "on") map.storage = 3;
+  if (o.storage === "on") map.storage = 5;
   if (o.src === "place") map.placeSource = true;
   if (o.wind === "on") map.wind = [[-1, 0], [0, -1], [0, 1]][ri(0, 2)];
   if (o.mode === "score") Object.assign(map, {mode:"perfection", turns:20, scoreStars:[Math.round(20 * W * H / 91), Math.round(30 * W * H / 91), Math.round(40 * W * H / 91)], spread:true, floodplain:true});
-  else { const goal = Math.max(4, Math.ceil(W / 3) + 1 + (o.B === "3" || o.L === "3" ? 1 : 0)); Object.assign(map, {turnGoal:goal, bloomGoal:o.storage === "on" ? Math.max(3, Math.round(W * H / 18)) : 0}) }
+  else { const goal = Math.max(4, Math.ceil(W / 3) + 1 + (o.B === "3" || o.L === "3" ? 1 : 0)); Object.assign(map, {turnGoal:goal, bloomGoal:o.storage === "on" ? Math.max(3, Math.round(W * H / 18)) : 0}); if (o.storage === "on") Object.assign(map, {bloomKind:"meadows", bloomLabel:"Meadows"}) }
   if (o.wx === "on") { const kinds = ["rain", "drought", "fire", "flood"], weather = {}, ts = new Set(), last = o.mode === "score" ? 18 : 10;
     while (ts.size < 3) ts.add(ri(3, last)); for (const t of ts) weather[t] = kinds[ri(0, 3)]; Object.assign(map, {cycle:true, weather}) }
   return map;
