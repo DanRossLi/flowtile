@@ -28,18 +28,7 @@ Controls: tap your stream's **end** to select it, then tap a glowing tile to mov
 
 Since Nov 12 the game uses the painterly look (LOU-280): an isometric island of hex tiles painted as one soft surface, with tree kinds, reeds, wildlife and white glass panels (M PLUS Rounded 1c). **The river is as wide as the flow it carries**, so you can see where springs, runoff, groves and tributaries join and where sand thins it. Every tile has six neighbours. The top bar's **water jar** shows the water you have (blue), your storage (the jar and its notches) and next cycle's flow (teal); when that flow won't fit, it pours over the lip and the text says how much will spill.
 
-## Landscape mode
-
-The river flows on its own and you shape the land. Each water cycle it moves as many tiles as its flow, always to the cheapest next tile (the sea first, then sand and springs, then ground, then rock), with ties going toward the sea. Build first: while you build, the river waits, and a dashed line shows its whole run, with a number where each water cycle ends and a red ✕ where it would get stuck. Tap land to change it, paid in water. Then tap **Flow** and it runs on its own until it reaches the sea or gets stuck; **Stop** pauses it. The list is at https://danrossli.github.io/flowtile/landscape/.
-
-| Level | URL | Goal |
-|---|---|---|
-| 1 · Two springs | https://danrossli.github.io/flowtile/landscape/1/ | Bend the river through both springs |
-| 2 · Ten green | https://danrossli.github.io/flowtile/landscape/2/ | Green 10 tiles before it reaches the sea |
-| 3 · Keep off the sand | https://danrossli.github.io/flowtile/landscape/3/ | Reach the sea without crossing sand |
-| Sandbox | https://danrossli.github.io/flowtile/landscape/sandbox/ | Shape an island, then copy it as a River mode map |
-
-## River mode
+## Single player (River mode)
 
 Dan's original maps in their original order, with no guidance: you choose where the river goes and what to grow. The list with your stars is at https://danrossli.github.io/flowtile/river/, and each map's win card goes on with **Next map**.
 

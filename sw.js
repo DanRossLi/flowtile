@@ -1,9 +1,9 @@
 // Flow Tile service worker: lets the game load offline after the first visit.
 // Bump VERSION whenever cached files change so old caches are dropped.
-const VERSION = "v68";
+const VERSION = "v69";
 const CACHE = `flowtile-${VERSION}`;
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap";
-const LOCAL = ["./", "./1/", "./1a/", "./3/", "./4/", "./4a/", "./5/", "./6/", "./7/", "./8/", "./9/", "./10/", "./11/", "./12/", "./13/", "./14/", "./15/", "./16/", "./17/", "./18/", "./19/", "./20/", "./21/", "./22/", "./23/", "./river/", "./spring-hill/", "./landscape/", "./landscape/1/", "./landscape/2/", "./landscape/3/", "./landscape/sandbox/", "./perfection/", "./daily/", "./world/", "./custom/", "./generator/", "./tutorial/", "./big/", "./play.js", "./play.css", "./paper.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+const LOCAL = ["./", "./1/", "./1a/", "./3/", "./4/", "./4a/", "./5/", "./6/", "./7/", "./8/", "./9/", "./10/", "./11/", "./12/", "./13/", "./14/", "./15/", "./16/", "./17/", "./18/", "./19/", "./20/", "./21/", "./22/", "./23/", "./river/", "./spring-hill/", "./perfection/", "./daily/", "./world/", "./custom/", "./generator/", "./tutorial/", "./big/", "./play.js", "./play.css", "./paper.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil((async () => {

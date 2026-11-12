@@ -346,13 +346,6 @@ button.oskip{flex:none;font:800 11px var(--body);padding:6px 8px;border-radius:1
 .rb.aim>i,.stat.aim{animation:aim 1.2s ease-in-out infinite}
 @keyframes aim{50%{box-shadow:0 0 0 5px rgba(255,209,102,.9),0 0 18px rgba(255,209,102,.6)}}
 @media (prefers-reduced-motion:reduce){.obj.tick .ock,.obj.tick .ock svg,.obj.tick .otext{animation:none}.rb.aim>i,.stat.aim{animation:none;box-shadow:0 0 0 4px var(--gold)}}
-/* Landscape mode (LOU-266): copy the finished landscape as a River mode map */
-.lcopy{display:block;width:100%;margin:10px 0 0;padding:10px 12px;border:2px dashed #c9893d;border-radius:14px;background:#fff6e6;color:#7a4d16;font:700 14px Fredoka,Nunito,sans-serif;cursor:pointer}
-.lcopy:active{transform:translateY(2px)}
-button.act.sand:not(:disabled){background:#d9a93c;box-shadow:0 4px 0 #a37a22}
-button.act.rock:not(:disabled){background:#8d877c;box-shadow:0 4px 0 #625d55}
-button.act.boulder:not(:disabled){background:#9a6f3f;box-shadow:0 4px 0 #6b4b28}
-button.act.bare:not(:disabled){background:#a9784a;box-shadow:0 4px 0 #765230}
 
 /* ---------- LOU-270: full screen on desktop, tidier top bar, water/storage, muted Next Water Cycle */
 @media (min-width:700px) and (min-height:541px){
@@ -376,12 +369,6 @@ button.oskip{font-size:11px;padding:4px 8px;border-radius:9px;background:transpa
 .rb.go.muted>span{color:var(--muted)}
 .rb.go.muted .gain{background:#3b6683;color:#e6f4ff}
 .rb.go.ready>i{background:var(--blue)}
-/* LOU-271: the Flow / Stop button in Landscape mode */
-.rb.go.land .ico-play{fill:currentColor;stroke:currentColor;stroke-width:1.5}
-.rb.go.land .ico-stop{display:none;stroke-width:3.4}
-.rb.go.land.flowing .ico-play{display:none}
-.rb.go.land.flowing .ico-stop{display:block}
-.rb.go.land.flowing>i{background:#e2794a;box-shadow:0 5px 0 #a8502a,0 0 0 4px var(--panel),0 8px 16px rgba(0,0,0,.3);animation:none}
 
 /* ==========================================================================
    A4 storybook theme (Nov 11): paper, ink and watercolour over everything above.
@@ -468,7 +455,6 @@ body{background:#d9c69c;color:var(--paper-ink)}
 .rb.go.muted .gain{background:var(--paper);color:var(--label)}
 .rb.go.ready>i{background:var(--blue);animation:ready 1.6s ease-in-out infinite}
 @keyframes ready{50%{box-shadow:0 0 0 2px var(--blue-d),3px 4px 0 var(--blue-d),0 0 0 9px rgba(47,111,158,.25)}}
-.rb.go.land.flowing>i{background:#c8553d;box-shadow:0 0 0 2px #7d2f1f,3px 4px 0 #7d2f1f,0 0 0 6px var(--paper-2)}
 @media (prefers-reduced-motion:reduce){.rb.go .cyc{animation:none}}
 /* buttons in cards and dialogs */
 button,a.btn{font-family:var(--display);color:var(--paper-ink);background:var(--paper);box-shadow:0 0 0 1.5px var(--ink-b),2px 3px 0 rgba(107,79,51,.45);border-radius:10px}
@@ -514,10 +500,6 @@ button.act:active:not(:disabled){box-shadow:0 0 0 1.5px var(--blue-d)}
 button.act.plant{background:#5f9a48;box-shadow:0 0 0 1.5px #2e4a26,2px 3px 0 #2e4a26}
 button.act.trib{background:#3f9aa8;box-shadow:0 0 0 1.5px #1f5a63,2px 3px 0 #1f5a63}
 button.act.moss{background:#7a9a4a;box-shadow:0 0 0 1.5px #44582a,2px 3px 0 #44582a}
-button.act.sand:not(:disabled){background:#c9a24a;box-shadow:0 0 0 1.5px #7a5a1c,2px 3px 0 #7a5a1c}
-button.act.rock:not(:disabled){background:#8d877c;box-shadow:0 0 0 1.5px #4d463c,2px 3px 0 #4d463c}
-button.act.boulder:not(:disabled){background:#8a6a48;box-shadow:0 0 0 1.5px #4d3e30,2px 3px 0 #4d3e30}
-button.act.bare:not(:disabled){background:#b07e4f;box-shadow:0 0 0 1.5px #5a3f28,2px 3px 0 #5a3f28}
 button.act:disabled{background:#e4ddcc;color:#8a7d68;box-shadow:0 0 0 1.5px #b8a888}
 .atext b{font-family:var(--display)}
 .acost{font-family:var(--hand);font-weight:400;font-size:16px;background:rgba(251,244,226,.2)}
@@ -525,7 +507,6 @@ button.act:disabled{background:#e4ddcc;color:#8a7d68;box-shadow:0 0 0 1.5px #b8a
 .rivers button{background:rgba(251,244,226,.85);color:var(--label);box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.45)}
 .rivers button small{color:var(--paper-ink)}
 .rivers button.on{box-shadow:inset 0 0 0 2px var(--water)}
-.lcopy{font-family:var(--hand);font-size:16px;font-weight:400;border-radius:8px}
 .stat.jar span{display:inline;font:inherit;letter-spacing:0;text-transform:none;color:inherit;text-shadow:none}
 .stat.jar .jnums{display:grid}
 
@@ -575,7 +556,6 @@ body{background:#cfe3ea;color:var(--paper-ink)}
 @keyframes ready2{50%{box-shadow:0 4px 0 #3f8a7a,0 0 0 8px rgba(98,224,200,.3)}}
 .rb.go .gain{font-family:var(--hand);font-weight:800;color:var(--flow);background:#fff;box-shadow:var(--soft);border-radius:999px}
 .rb.go.muted .gain{background:#fff;color:var(--label)}
-.rb.go.land.flowing>i{background:linear-gradient(180deg,#f2b8a2,#d27a5c);color:#3a140a;box-shadow:0 4px 0 #a2523a,var(--soft)}
 button,a.btn{font-family:var(--display);font-weight:800;color:var(--paper-ink);background:#fff;box-shadow:var(--soft);border-radius:14px}
 button:active:not(:disabled),a.btn:active{transform:translateY(2px);box-shadow:0 2px 6px rgba(40,70,80,.2)}
 .end{background:linear-gradient(180deg,#9fd7c9,#5fae9c) !important;color:#0f3a33 !important;box-shadow:0 4px 0 #3f8a7a,var(--soft) !important}
@@ -599,15 +579,10 @@ button.act:active:not(:disabled){box-shadow:0 1px 0 #2f6f94}
 button.act.plant{background:#5fae6c;box-shadow:0 3px 0 #3f8a4c}
 button.act.trib{background:#3f9aa8;box-shadow:0 3px 0 #1f5a63}
 button.act.moss{background:#7a9a4a;box-shadow:0 3px 0 #44582a}
-button.act.sand:not(:disabled){background:#c9a24a;box-shadow:0 3px 0 #7a5a1c}
-button.act.rock:not(:disabled){background:#8d877c;box-shadow:0 3px 0 #4d463c}
-button.act.boulder:not(:disabled){background:#8a8f99;box-shadow:0 3px 0 #555a63}
-button.act.bare:not(:disabled){background:#b9a46a;box-shadow:0 3px 0 #7a6a3a}
 button.act:disabled{background:#e3e8e8;color:#7d8b8b;box-shadow:none}
 .acost,.atext b{font-family:var(--display)}
 .rivers button{background:var(--glass);color:var(--label);box-shadow:var(--soft)}
 .rivers button small{color:var(--paper-ink)}
-.lcopy{font-family:var(--hand);font-weight:500}
 /* Directed tutorial (LOU-281): instruction card at the thumb, pointing hand, callouts, dimmed UI while a step is locked */
 .tut #msg,.tut #cScore,.tut #goals,.tut #cTurn small{display:none}
 .tutc{display:flex;align-items:center;gap:10px;max-width:420px;margin:0 auto;padding:10px 12px;border-radius:18px;background:rgba(255,255,255,.95);color:var(--paper-ink);box-shadow:var(--soft);font-family:var(--hand)}

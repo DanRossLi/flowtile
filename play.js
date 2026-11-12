@@ -63,7 +63,6 @@ const PLACE = !!M.placeSource, PLACE_FLOW = 3, SEA_GAP = 4; // LOU-263: place yo
 // Landscape mode (LOU-266): the river flows on its own, flow tiles per water cycle, always to the cheapest next tile (the
 // sea first, then sand and springs 0, ground 1, rock 2), ties toward the sea, never into mountains. You reshape the land
 // with water. MAP.budget adds water at the start; MAP.noSand fails the run if the river crosses sand.
-const LAND = !!M.landscape;
 // Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
 const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = false, FLOOD = false, // spread (grass and bird seeds) and floodplain greening are removed (Dan, Nov 12: "grass and tiles are randomly spawning...get rid of that mechanic")
   _unused = [M.spread, M.floodplain], MELT = !!M.snowmelt, MOSS = !!M.moss, DEER = !!M.deer;
@@ -128,7 +127,6 @@ document.body.innerHTML = `
       <div class="ribbon"><h2 id="winTitle">You reached the sea!</h2></div>
       <div class="wsub">${M.label}</div>
       <ul id="wGoals"></ul>
-      ${LAND ? `<button type="button" class="lcopy" id="landCopy">Copy this landscape as a River mode map</button>` : ""}
       <div class="row" id="wRow">
         <button id="again">Play again</button>
         ${M.share ? `<button class="end" id="share">Share score</button>` : M.next ? `<a class="btn end" id="next" href="${M.next}">${M.nextLabel || "Next map"}</a>` : ""}
@@ -139,8 +137,7 @@ document.body.innerHTML = `
     <button id="undo" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></i><span>Undo</span></button>
     <button id="restart" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5"/></svg></i><span>Restart</span></button>
     <button id="helpBtn" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 9a3 3 0 015.6 1.2c0 2-2.8 2.6-2.8 4.3"/><circle cx="12" cy="18.2" r=".6" fill="currentColor"/></svg></i><span>Help</span></button>
-    ${LAND ? `<button id="end" class="rb go land"><i><svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5l11 6.5-11 6.5z"/></svg><svg class="ico-stop" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6v12M16 6v12"/></svg><em class="gain" id="gain" hidden></em></i><span id="endLbl">Flow</span></button>`
-    : `<button id="end" class="rb go"><i><svg class="cyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3"/><path d="M18.2 2.8l-.9 3.9-3.9-.9"/></svg><em class="gain" id="gain" hidden></em></i><span>Next Water Cycle</span></button>`}
+    <button id="end" class="rb go"><i><svg class="cyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3"/><path d="M18.2 2.8l-.9 3.9-3.9-.9"/></svg><em class="gain" id="gain" hidden></em></i><span>Next Water Cycle</span></button>
   </div>
 </div>
 <dialog id="goal" class="goalcard" aria-labelledby="goalTitle">
@@ -156,14 +153,14 @@ document.body.innerHTML = `
   <ul>
     <li><b class="wtr">Water</b> (blue) is what you have right now, in gallons. Every cost is paid in water. <b class="flw">Flow</b> (teal, in brackets next to your water) is how much each water cycle brings. Tap <b>Water</b> at the top for your storage${TRIB ? " and each river" : ""}.</li>
     ${M.lesson ? `<li><b>This map:</b> ${M.lesson}</li>` : ""}
-    ${LAND ? `<li><b>Landscape mode:</b> build first, then tap <b>Flow</b>. While you build, the river waits. On Flow it <b>moves on its own</b>, one water cycle at a time, until it reaches the sea or gets stuck (tap <b>Stop</b> to pause and reshape). Each water cycle it flows as many tiles as its flow, always to the cheapest next tile: the sea first, then <b>sand</b> and springs (free), then ground (1), then <b>rock</b> (2). Ties go toward the sea. It never enters a <b>mountain</b>.</li><li>Tap land to reshape it, paid in water: sand draws the river in, rock pushes it away, a mountain blocks it. The dashed line shows the river's whole run: the numbers mark where each water cycle ends, and a red ✕ where it would get stuck.</li>` : `<li>To move the stream, tap its <b>end</b> (it gets a white ring), then a glowing tile. The number is its cost in water. Tap any other tile to see what it does and what it costs, then choose.</li>`}
+    <li>To move the stream, tap its <b>end</b> (it gets a white ring), then a glowing tile. The number is its cost in water. Tap any other tile to see what it does and what it costs, then choose.</li>
     ${PLACE ? `<li><b>Place your source:</b> before you start, tap a source, or any glowing land tile (bare ground, grass, meadow or sand, at least ${SEA_GAP} tiles from the sea) to start your river there with <b>+${PLACE_FLOW} flow</b>.</li>` : ""}
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
     <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, meadow you grow and fish, 3 per grove, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
   </ul>
   <div class="opts">
     <label class="hard"><input type="checkbox" id="hard"> Hard mode: <b>3 undos</b> per map</label>
-    <div class="orow"><a class="btn" href="${ROOT}world/">All islands</a><button type="button" id="codeBtn">${LAND ? "Copy as River map" : "Copy map code"}</button></div>
+    <div class="orow"><a class="btn" href="${ROOT}world/">All islands</a><button type="button" id="codeBtn">Copy map code</button></div>
   </div>
   <form method="dialog"><button class="end">Got it</button></form>
 </dialog>`;
@@ -389,8 +386,7 @@ function storageHint() { if (!STORE || S.phase !== "play") return "";
   const c = Math.min(...[...moves().values()].map(m => m.cost)); if (!(c > S.cap)) return "";
   return `The next tile costs ${c} gal but you can only store ${S.cap}. Grow meadows by the stream with trees beside them to store more` }
 
-let noSnap = false; // the river's own steps in Landscape mode share one undo with the water cycle
-function snapshot() { if (!noSnap) history.push(JSON.stringify(S)) }
+function snapshot() { history.push(JSON.stringify(S)) }
 function build(mv) {
   if (S.water < mv.cost) { say(`That tile costs ${mv.cost} gal and you have ${S.water} gal. Tap Next Water Cycle to collect your flow of ${S.income} gal.`, true); return }
   snapshot();
@@ -432,83 +428,12 @@ function build(mv) {
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.push(`This river can't go on. Tap your ${riverName(openRivers()[0]).toLowerCase()} to switch`); say(notes.join(". ") + ".", true); return }
   if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on: the island is scored. Undo to try another way."); return }
   if (!moves().size && RECH) { notes.push("Dead end. Tap a tile upstream on your river to rechannel from there (it costs all your water)"); say(notes.join(". ") + ".", true); return }
-  if (!moves().size && !LAND) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
-  if (S.income === 0 && (LAND || !affordable())) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
+  if (!moves().size) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
+  if (S.income === 0 && !affordable()) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
   const sh = storageHint();
   if (sh) notes.push(sh); else if (!affordable() && !canPlant()) notes.push(`Out of water. Tap Next Water Cycle for +${S.income} gal`);
   say(notes.length ? notes.join(". ") + "." : "Keep building, or tap Next Water Cycle.");
 }
-// ---------- Landscape mode (LOU-266)
-const DIR_RANK = [0, 2, 4, 5, 3, 1]; // last tie-break by hex face: east, south-east, north-east, south-west, north-west, west
-function landNext() { let best = null, bk = null;
-  for (const m of moves().values()) { const c = at(m.p); if (c.river) continue;
-    const k = [c.t === "ocean" ? -1 : m.cost, seaGap(m.p), DIR_RANK[faceOf(m.from, m.p)] ?? 6];
-    if (!bk || k[0] < bk[0] || (k[0] === bk[0] && (k[1] < bk[1] || (k[1] === bk[1] && k[2] < bk[2])))) { best = m; bk = k } }
-  return best }
-// The river's own move: as many tiles as its flow at the start of the cycle.
-let landStopped = false; // the last cycle ended early: the river is blocked
-function landFlow() { const n = S.income, f0 = S.income; let k = 0; noSnap = true; const t1 = now(); landStopped = false;
-  try { for (; k < n && S.phase === "play"; k++) { const nx = landNext(); if (!nx) break; const sand = at(nx.p).t === "sand";
-      build({...nx, cost:0}); if (!reduce) anim.set(nx.p + "", t1 + k * 260);
-      if (sand && M.noSand) { S.phase = "stuck"; return "The river crossed sand. This landscape has to keep it off sand: undo and reshape it." } } }
-  finally { noSnap = false }
-  if (S.phase === "won") { wave = now(); return `The river reached the sea on turn ${S.turn}.` }
-  if (S.phase === "stuck") return S.msg;
-  preview = landPreview();
-  const fl = S.income !== f0 ? ` Flow is now +${S.income}.` : ""; landStopped = k < n;
-  return k < n ? `The river is stuck${k ? ` after ${k} tile${k > 1 ? "s" : ""}` : ""}: nowhere cheaper to flow. Reshape the land next to its end, then tap Flow.${fl}` : `The river flowed ${k} tile${k > 1 ? "s" : ""}.${fl}` }
-// The river's whole run if you tap Flow now (LOU-271), worked out on a copy of the board: each step knows its water
-// cycle, and out.stop says how it ends: "sea", "blocked", "dry" (flow 0) or "sand" (on a no-sand level).
-let preview = [];
-function landPreview() { if (!LAND || S.phase !== "play") return []; const keep = S, out = []; S = JSON.parse(JSON.stringify(S));
-  try { for (let cyc = 1; cyc <= 80; cyc++) { const n = S.income; if (!n) { out.stop = "dry"; break }
-      for (let i = 0; i < n; i++) { const nx = landNext(); if (!nx) { out.stop = "blocked"; return out } const c = at(nx.p);
-        if (c.t === "sand" && M.noSand) { out.push({p:nx.p, cyc, end:false}); out.stop = "sand"; return out }
-        out.push({p:nx.p, cyc, end:i === n - 1});
-        if (c.t === "ocean") { out[out.length - 1].end = true; out.stop = "sea"; return out }
-        if (c.t === "lake") { S.lakes[c.lake].filled = true; for (const q of S.lakes[c.lake].tiles) { at(q).river = true; at(q).rid = 0 } }
-        c.river = true; c.rid = 0; S.head = nx.p;
-        if (c.t === "spring") S.income++; if (c.t === "sand") S.income = Math.max(0, S.income - 1);
-        for (const q of [nx.p, ...nbrs(nx.p)]) if (at(q).ro === 1) { at(q).ro = 2; S.income++ } } } }
-  finally { S = keep } return out }
-function previewNote() { const p = preview, cyc = p.length ? p[p.length - 1].cyc : 0, s = cyc === 1 ? "" : "s";
-  if (p.stop === "sea") return `Right now it would reach the sea in ${cyc} water cycle${s} (turn ${S.turn + cyc}).`;
-  if (p.stop === "sand") return "The river would cross sand (red ✕). Reshape the land first.";
-  if (p.stop === "dry") return "Its flow would drop to 0 (red ✕): it would stop there.";
-  return p.length ? `The river would get stuck after ${p.length} tile${p.length > 1 ? "s" : ""} (red ✕).` : "The river is stuck where it is: reshape the land next to its end." }
-// Flow (LOU-271): the river runs one water cycle at a time until it reaches the sea or gets stuck; Stop pauses it.
-let flowing = false, flowT = 0;
-function stopFlow(msg) { flowing = false; clearTimeout(flowT); if (msg) say(msg); else sync() }
-function flowStep() { if (!flowing) return; endTurn();
-  if (S.phase !== "play" || landStopped) { flowing = false; sync(); return }
-  flowT = setTimeout(flowStep, reduce ? 450 : 1100) }
-function toggleFlow() { if (S.phase !== "play") return; closeCard();
-  if (flowing) { stopFlow(`Stopped on turn ${S.turn}. Reshape the land, then tap Flow. ${previewNote()}`); return }
-  flowing = true; sync(); flowStep() }
-// What you can make a tile into, paid in water.
-const LAND_KINDS = {sand:["Sand", 1, "Draws the river in: it's free to cross. Crossing it cuts flow by 1 and blooms the meadows around it."],
-  rock:["Rock", 1, "Pushes the river away: it costs 2 to cross, so the river goes round if it can."],
-  boulder:["Mountain", 3, "Blocks the river completely."], bare:["Bare ground", 1, "Plain ground: 1 to cross."]};
-const landKind = c => c.t === "bare" ? ["bare", "grass", "meadow", "trees"][Math.min(c.g, TREES)] : c.t;
-function landActs(p) { const c = at(p), out = [];
-  if (S.phase !== "play" || c.river || ["ocean", "source", "lake", "spring"].includes(c.t) || (M.fixed || []).some(q => q + "" === p + "")) return out;
-  const k0 = landKind(c), away = k0 === "boulder" ? 3 : 0;
-  if (k0 === "bare") out.push({k:"plant", name:"Grass", cost:1, sub:"Green ground: 1 to cross, like bare ground. Counts as green.", warn:"", run:() => setLand(p, "grass", 1)});
-  if (k0 === "grass") out.push({k:"plant", name:"Grow a meadow", cost:1, sub:"Still green, still 1 to cross.", warn:"", run:() => setLand(p, "meadow", 1)});
-  if (k0 === "meadow" && c.t === "bare") out.push({k:"plant", name:"Grow trees", cost:1, sub:"Still green, still 1 to cross.", warn:"", run:() => setLand(p, "trees", 1)});
-  for (const [k, [name, cost, sub]] of Object.entries(LAND_KINDS)) if (k !== k0)
-    out.push({k, name, cost:Math.max(cost, away), sub, warn:"", run:() => setLand(p, k, Math.max(cost, away))});
-  return out }
-function setLand(p, to, cost) { const c = at(p); if (S.water < cost) return; snapshot(); S.water -= cost; bump("cWater");
-  if (["grass", "meadow", "trees"].includes(to)) { c.t = "bare"; c.g = {grass:1, meadow:MEADOW, trees:TREES}[to]; c.bloom = true }
-  else { c.t = to; c.g = 0; c.bloom = false }
-  c.wild = false; c.pr = -1; c.ro = 0; c.rs = false; c.ws = null; anim.set("g:" + p, now()); ring(p); float(p, `−${cost} gal`, "#bfe4ff");
-  preview = landPreview();
-  say(`${{grass:"Grass planted", meadow:"Meadow grown", trees:"Trees grown"}[to] || LAND_KINDS[to][0] + " placed"}. ${previewNote()}`) }
-// A landscape as a map: the board as it is now, playable in River mode on the Custom page.
-function landTypes() { return S.tiles.map((r, y) => r.map((c, x) => { const o = TYPES[y][x];
-  if (["S", "T", "~", "L", "o"].includes(o)) return o;
-  return c.t === "bare" ? ["_", "g", "m", "t"][Math.min(c.g, TREES)] : {meadow:".", sand:"s", rock:"r", boulder:"B", spring:"o"}[c.t] || "_" }).join("")) }
 // What the next end of turn brings: flow, weather, and any cloud raining back.
 function forecast(turn = S.turn + 1) {
   const wx = WX && WX[turn], rain = (S.clouds || []).filter(c => c.turn === turn).reduce((n, c) => n + c.gal, 0);
@@ -531,9 +456,8 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
     notes.push(`Your cloud rained back ${got} gal${got < f.rain ? ` (${f.rain - got} soaked into the ground)` : ""}`) }
   if (sp && !reduce) { const e = $("cWater"); if (e) { e.classList.remove("spill"); void e.offsetWidth; e.classList.add("spill") } }
   for (const h of turnHooks) { const n = h(); if (n) notes.push(n) }
-  if (LAND && S.phase === "play") { const r = landFlow(); if (S.phase !== "play") { say(r, S.phase === "stuck"); return } notes.push(r.replace(/\.$/, "")) }
   if (PERF && S.turn > TURN_GOAL) { S.turn = TURN_GOAL; S.phase = "won"; wave = now(); notes.push(`That's ${TURN_GOAL} turns: the island is scored`) }
-  if (S.phase === "play" && !LAND) showBanner(`Turn ${S.turn}`, sp ? `+${f.gain - sp} gal · ${sp} gal ${CYCLE ? "to the clouds" : "spilled"}` : `+${f.gain} gal of water`);
+  if (S.phase === "play") showBanner(`Turn ${S.turn}`, sp ? `+${f.gain - sp} gal · ${sp} gal ${CYCLE ? "to the clouds" : "spilled"}` : `+${f.gain} gal of water`);
   const head = sp ? (up ? `Turn ${S.turn}: +${f.gain - sp} gal. ${up} gal spilled and rose as a cloud: it rains back on turn ${S.turn + 2}` : `Turn ${S.turn}: +${f.gain - sp} gal. Storage is full at ${cap0} gal, so ${sp} gal spilled`) : `Turn ${S.turn}: +${f.gain} gal of water`;
   say([head, ...notes].join(". ") + ".") }
 // ---------- floodplain: at full storage, spilled water floods one bare tile beside the river and greens it
@@ -645,15 +569,14 @@ function start(p, placed) { const c = at(p); closeCard();
   if (!placed) snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.phase = "play"; syncCap(); if (TUT) hsel = true; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield;
   anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal per water cycle`, "#bfe4ff");
   const ro = claimRunoff([p]);
-  if (LAND) { S.water += M.budget || 0; preview = landPreview(); say(`The river waits here. Reshape the land with your water, then tap Flow: it runs ${S.income} tiles each water cycle to the cheapest ground. ${previewNote()}`); zoomTo(1); return } // Landscape stays on the whole island (Dan, LOU-272)
   say(`${placed ? "Source placed. " : ""}Your source's flow is ${S.income} gal per water cycle${ro ? " (with mountain runoff)" : ""}. Tap your stream's end, then where it should go.`);
   zoomTo(lay.zAuto);
 }
 const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
-function undo() { if (flowing) stopFlow(); if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
+function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0; closeCard(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { if (flowing) stopFlow(); closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); if (TUT) { objShown = -1; tutWait = 0; $("callout").hidden = true; if (!reduce) tutArrive = {}; else zoomTo(lay.zAuto) } else { zoomTo(1); showGoal() } }
+function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); if (TUT) { objShown = -1; tutWait = 0; $("callout").hidden = true; if (!reduce) tutArrive = {}; else zoomTo(lay.zAuto) } else { zoomTo(1); showGoal() } }
 
 // ---------- UI
 let quiet = false; // set by the test solver: skip the screen
@@ -675,7 +598,7 @@ function jar() { const play = S.phase === "play", g = play ? forecast().gain : S
   $("cWater").classList.toggle("spilling", sp > 0 || (STORE && S.water >= S.cap && g > 0));
   tx("jNext", sp ? "" : " next cycle"); tx("jSpill", sp ? ` · ${sp} spill` : "") }
 // Next Water Cycle (LOU-270): muted while you can still afford something, bright and pulsing once you can't.
-const nothingLeft = () => LAND ? S.water < 1 : !affordable() && !canPlant();
+const nothingLeft = () => !affordable() && !canPlant();
 function sync() {
   tx("hWater", S.water); tx("hCap", S.cap); tx("hFlow", S.income); tx("hTurn", S.turn); tx("hScore", PERF ? score().total : bloomCount());
   jar();
@@ -693,8 +616,7 @@ function sync() {
     if (!reduce) { me.classList.remove("pop"); void me.offsetWidth; me.classList.add("pop") } }
   me.classList.toggle("warn", !!S.warn);
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length || (hard() && (S.undos || 0) >= UNDOS);
-  if (LAND) { $("end").classList.toggle("flowing", flowing); tx("endLbl", flowing ? "Stop" : "Flow"); $("end").classList.toggle("ready", S.phase === "play" && !flowing); gain.hidden = true }
-  else { const ready = S.phase === "play" && nothingLeft(); $("end").classList.toggle("ready", ready); $("end").classList.toggle("muted", S.phase === "play" && !ready) }
+  { const ready = S.phase === "play" && nothingLeft(); $("end").classList.toggle("ready", ready); $("end").classList.toggle("muted", S.phase === "play" && !ready) }
   const won = S.phase === "won"; $("win").hidden = !won; $("bottom").hidden = won; if (!won) $("wStars").dataset.n = "";
   if (won && PERF) {
     const sc = score(), n = perfStars(sc.total), prevBest = getNum(bestKey); if (sc.total > prevBest) setNum(bestKey, sc.total); if (n > getNum(starKey)) setNum(starKey, n);
@@ -717,7 +639,6 @@ function sync() {
     const trees = S.tiles.flat().filter(c => c.g >= TREES && !c.wild).length;
     $("wGoals").innerHTML = goals.map(([ok, t], i) => `<li class="${ok ? "got" : ""} g${i}"><i></i><span>${t}</span><b>${ok ? "★" : "☆"}</b></li>`).join("") + (trees ? `<li class="g3 extra"><i></i><span>Trees planted</span><b>${trees}</b></li>` : "");
   }
-  if (LAND) preview = landPreview();
   save(); resize();
   if (sel) { if (S.phase === "play" || (S.phase === "pick" && placeable(sel))) renderCard(); else closeCard() } else if (info) renderInfo();
   draw();
@@ -779,7 +700,6 @@ function tileText(p) {
     ocean:"Bring a stream here to finish the map.", source:"Where a river starts."}[c.t];
 }
 function actions(p) {
-  if (LAND) return landActs(p);
   const c = at(p), out = [], m = moves().get(p + "");
   if (m) { let name = "Extend the stream", sub = "", warn = "";
     if (c.river) { const g = Math.min(root(c.rid), root(S.active)), w = root(c.rid) === 0 ? flowOf(S.active) : flowOf(c.rid);
@@ -875,9 +795,8 @@ function headTiles(i) { const h = i === S.active ? S.head : S.rivers[i] && S.riv
 function liveRivers() { return S.phase !== "play" ? [] : TRIB ? S.rivers.map((_, i) => i).filter(i => !S.rivers[i].joined) : [S.active] }
 function headRiver(p) { for (const i of liveRivers()) if (headTiles(i).some(q => same(q, p))) return i; return -1 }
 function tapTile(p, hold = false) {
-  if (LAND && flowing) { say("The river is flowing. Tap Stop to reshape the land."); return }
   if (hold) { hsel = false; ring(p); sel = p; renderCard(); draw(); return }
-  const hr = LAND ? -1 : headRiver(p);
+  const hr = headRiver(p);
   if (hr >= 0) { closeCard(); if (hsel && hr === S.active) { hsel = false; draw(); return }
     if (hr !== S.active) activate(hr);
     hsel = true; ring(p); const who = TRIB && S.rivers.length > 1 ? `the ${riverName(hr).toLowerCase()}` : "your stream";
@@ -1126,7 +1045,7 @@ function resize() {
   const key = [w, h, topH, botH, dpr].join(); if (key === lastSize) return; lastSize = key;
   const availH = Math.max(40, h - topH - botH), fit = Math.min(w / B.w, availH / B.h), play = Math.min(1.35, Math.max(1, w / PLAY_W));
   Object.assign(lay, {w, h, topH, availH, dpr, fit, zAuto:Math.max(1, play / fit)});
-  if (view.z === null) { view.z = S.phase === "pick" || LAND ? 1 : lay.zAuto; const f = view.z === 1 ? {x:B.x + B.w / 2, y:B.y + B.h / 2} : focusPoint(); view.cx = f.x; view.cy = f.y }
+  if (view.z === null) { view.z = S.phase === "pick" ? 1 : lay.zAuto; const f = view.z === 1 ? {x:B.x + B.w / 2, y:B.y + B.h / 2} : focusPoint(); view.cx = f.x; view.cy = f.y }
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   $("fitBtn").style.top = topH + 6 + "px";
   applyView();
@@ -1152,7 +1071,7 @@ function focusPoint() {
   return iso(p[0], p[1]);
 }
 function follow(force) {
-  if (view.z === null || !lay.w || (LAND && view.z <= 1.02)) return; // Landscape's whole-island view stays put
+  if (view.z === null || !lay.w) return;
   const f = focusPoint(), s = lay.fit * view.z, hw = lay.w / s / 2, hh = lay.availH / s / 2;
   if (force || Math.abs(f.x - view.cx) > hw * .55 || Math.abs(f.y - view.cy) > hh * .55) {
     tgt = {x:f.x, y:f.y, n:0}; if (reduce) { view.cx = f.x; view.cy = f.y; tgt = null; applyView() } }
@@ -1649,10 +1568,6 @@ function draw() {
     }
   }
   // Landscape mode: the river's whole run, an inked dashed line with a number where each water cycle ends
-  if (LAND && S.phase === "play" && !flowing) { const pts = [S.head, ...preview.map(e => e.p)].map(q => { const o = iso(...q); return [o.x, o.y] });
-    if (pts.length > 1) { ctx.save(); ctx.setLineDash([7, 7]); ctx.lineDashOffset = reduce ? 0 : -(t % 1.4) / 1.4 * 14; line(pts, "rgba(255,255,255,.9)", 3); ctx.restore() }
-    preview.forEach(e => { if (e.end && at(e.p).t !== "ocean") badges.push({o:iso(...e.p), step:e.cyc}) });
-    if (preview.stop && preview.stop !== "sea") { const q = preview.length ? preview[preview.length - 1].p : S.head; badges.push({o:iso(...q), stopX:true}) } }
   // groves: a golden thread through the tiles and the flow they give
   for (const k of combos()) { for (const q of k.bees) { const o = iso(...q), h = hsh(...q); bee(o.x - 9, o.y - 18, t, h * .1); bee(o.x + 11, o.y - 10, t, h * .1 + .5) }
     const pts = k.tiles.map(q => { const o = iso(...q); return [o.x, o.y + 6] }), P = q => { const o = iso(...q); return [o.x, o.y + 6] };
@@ -1712,8 +1627,6 @@ function bubble(x, y, r, fill, text, col, font) { ell(x + 1, y + 2.5, r, r, "rgb
 function badge(b, t) {
   const {o} = b;
   if (b.combo) { tag(o.x, o.y, b.combo + " flow", "#1d8f78", 15); return }
-  if (b.stopX) { const x = o.x, y = o.y - 4; bubble(x, y, 11, "#c8553d", "", PAPER, ""); line([[x - 4.5, y - 4.5], [x + 4.5, y + 4.5]], PAPER, 2.6); line([[x + 4.5, y - 4.5], [x - 4.5, y + 4.5]], PAPER, 2.6); return }
-  if (b.step) { bubble(o.x, o.y - 2, 11, PAPER, b.step, "#4a8fb8", `800 12px ${NUM}`); return }
   if (b.drop) { ctx.globalAlpha = .8 + .2 * osc(t, 2.2, o.x * .01); tag(o.x + 4, o.y - 24, "+1 flow", "#1d8f78", 15); ctx.globalAlpha = 1; return } // a paper "+1 flow" tag until the river claims it
   if (b.plant) { const x = o.x, y = o.y + 4, f = b.ok ? "#7cc46a" : "#b9b6ac", k = b.ok ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.6)"; // a small inked sprout: you can plant here
     line([[x, y], [x, y - 7]], k, 1.4);
@@ -1775,20 +1688,16 @@ $("tcard").addEventListener("click", e => {
   const rb = e.target.closest("button[data-r]"); if (rb && !rb.disabled && S.phase === "play") { const i = +rb.dataset.r; if (i !== S.active) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } return }
   const b = e.target.closest("button[data-a]"); if (b && !b.disabled) runAct(cardActs[+b.dataset.a]);
 });
-$("end").onclick = () => tutGate("end") && (LAND ? toggleFlow() : endTurn()); $("undo").onclick = () => tutGate("undo") && undo(); $("restart").onclick = () => tutGate("restart") && restart(); $("again").onclick = restart;
+$("end").onclick = () => tutGate("end") && endTurn(); $("undo").onclick = () => tutGate("undo") && undo(); $("restart").onclick = () => tutGate("restart") && restart(); $("again").onclick = restart;
 addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
-addEventListener("keydown", e => { if (e.key === " " && !$("help").open && !$("goal").open) { e.preventDefault(); if (tutGate("end")) LAND ? toggleFlow() : endTurn() } });
+addEventListener("keydown", e => { if (e.key === " " && !$("help").open && !$("goal").open) { e.preventDefault(); if (tutGate("end")) endTurn() } });
 $("helpBtn").onclick = () => { $("hard").checked = hard(); $("help").showModal() };
 $("hard").onchange = e => { try { localStorage.setItem(HARD_KEY, e.target.checked ? "1" : "0") } catch (_) {} sync() };
 // Map codes: the map as a short text you can share; /custom/#<code> plays it.
 function mapCode() { const keep = {...M}; delete keep.help; delete keep.next; delete keep.share; delete keep.startHint;
-  if (LAND) { keep.types = landTypes(); keep.id = "land-" + keep.types.join("").split("").reduce((a, ch) => (Math.imul(a, 31) + ch.charCodeAt(0)) >>> 0, 7).toString(36); keep.label = "Landscape · " + M.label.replace(/^Landscape[^·]*· /, "");
-    for (const k of ["landscape", "budget", "noSand", "bloomKind", "bloomLabel", "showBloom", "fixed", "nextLabel", "objectives", "tutorial"]) delete keep[k]; keep.bloomGoal = 0 }
   const b = new TextEncoder().encode(JSON.stringify(keep)); let bin = ""; b.forEach(x => bin += String.fromCharCode(x)); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") }
-if ($("landCopy")) $("landCopy").onclick = async () => { const url = new URL("custom/#" + mapCode(), ROOT).href; let ok = false; try { await navigator.clipboard.writeText(url); ok = true } catch (_) {}
-  $("landCopy").textContent = ok ? "Link copied! Open it to play it in River mode" : "Copy failed"; if (!ok) prompt("River map link:", url) };
 $("codeBtn").onclick = async () => { const url = new URL("custom/#" + mapCode(), ROOT).href; let ok = false; try { await navigator.clipboard.writeText(url); ok = true } catch (_) {}
-  $("codeBtn").textContent = ok ? "Link copied!" : "Copy failed"; if (!ok) prompt("Map code link:", url); setTimeout(() => $("codeBtn").textContent = LAND ? "Copy as River map" : "Copy map code", 1800) };
+  $("codeBtn").textContent = ok ? "Link copied!" : "Copy failed"; if (!ok) prompt("Map code link:", url); setTimeout(() => $("codeBtn").textContent = "Copy map code", 1800) };
 if ($("share")) $("share").onclick = async () => { const sc = score(), n = perfStars(sc.total), txt = `Flow Tile · ${M.label}: ${sc.total} points ${"★".repeat(n)}${"☆".repeat(3 - n)}${sc.sea ? " · reached the sea" : ""}\n${location.href}`;
   try { if (navigator.share) await navigator.share({text:txt}); else { await navigator.clipboard.writeText(txt); $("share").textContent = "Copied!" } } catch (_) {} };
 $("help").addEventListener("click", e => { if (e.target === $("help")) $("help").close() }); // tap backdrop to close
