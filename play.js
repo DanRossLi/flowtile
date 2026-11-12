@@ -41,7 +41,8 @@ const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed n
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal;
 const ROOT = new URL("./", document.currentScript.src).href;
 // Green levels on bare ground (Dan, Nov 10, LOU-261): 0 bare, 1 grass, 2 meadow, 3 trees. 1 gal and +1 storage per step.
-const MEADOW = 2, TREES = 3, stor = c => c.g && !c.off ? c.g + (c.fert ? 1 : 0) : 0, gName = g => ["bare ground", "grass", "meadow", "trees"][Math.min(g, TREES)];
+// stor: storage a green tile gives; nos is storage a cut-back forest never gives (Dan, Nov 11)
+const MEADOW = 2, TREES = 3, stor = c => c.g && !c.off ? Math.max(0, c.g + (c.fert ? 1 : 0) - (c.nos || 0)) : 0, gName = g => ["bare ground", "grass", "meadow", "trees"][Math.min(g, TREES)];
 const meadowy = c => !c.river && (c.g === MEADOW || (c.t === "meadow" && !c.g)); // the site root, where play.js lives
 const LAKE_TILE_COST = 2, REACH = 2; // lakes (Nov 9): 2 gal a tile; a full lake lets you plant up to 2 tiles from it
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
@@ -227,6 +228,7 @@ function cutBack(p) {
   const c = at(p), from = c.wild ? "forest" : gName(c.g);
   if (S.water < PLANT_COST) { say(`Cutting back costs ${PLANT_COST} gal and you have ${S.water} gal. Tap Next Water Cycle to collect your flow.`, true); return }
   snapshot(); S.water -= PLANT_COST; const before = c.wild ? 0 : stor(c);
+  if (c.wild) c.nos = c.g - 1 + (c.fert ? 1 : 0); // cut forest stores nothing (Dan, Nov 11: "No storage from it")
   c.g--; c.wild = false; if (c.pr < 0) c.pr = 0; if (!c.g) c.bloom = false;
   const d = stor(c) - before; capAdd(c.pr, d); const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp;
   anim.set("g:" + p, now()); float(p, d ? `${d > 0 ? "+" : "−"}${Math.abs(d)} storage` : `−${PLANT_COST} gal`, d < 0 ? "#ffb27a" : "#b6f08a"); bump("cWater");
@@ -342,7 +344,7 @@ function startTributary(p) {
 function plant(p) {
   const c = at(p), what = ["Grass", "Meadow", "Trees"][c.g];
   if (S.water < PLANT_COST) { say(`${what} costs ${PLANT_COST} gal and you have ${S.water} gal. Tap Next Water Cycle to collect your flow.`, true); return }
-  const gain = c.g === 0 && c.fert ? 2 : 1;
+  const gain = stor({...c, g:c.g + 1}) - stor(c);
   snapshot(); S.water -= PLANT_COST; c.g++; c.bloom = true; c.pr = S.active; S.cap += gain; bump("cWater"); bump("cBloom");
   anim.set("g:" + p, now()); float(p, `+${gain} storage`, "#b6f08a");
   const cb = recombo(), bv = beavers(), sh = storageHint();
@@ -776,9 +778,9 @@ function actions(p) {
       if (bits) { if (d.cap < 0 || d.flow < 0) warn = (warn && c.t !== "marsh" ? warn + ". " : "") + bits[0].toUpperCase() + bits.slice(1); else sub = (sub ? sub + ". " : "") + bits[0].toUpperCase() + bits.slice(1) } }
     out.push({k:"stream", name, cost:m.cost, sub, warn, run:() => build(m)}) }
   if (plantable(p)) { const d = NEW && c.g ? comboPreview(p, k => { k.g++; k.pr = S.active }) : 0;
-    out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + (c.g === 0 && c.fert ? 2 : 1)} gal${d > 0 ? `. Grove: flow +${d}` : ""}${c.g === 0 && marshPreview(p, k => { k.g = 1 }).flow > 0 ? ". Marsh: flow +1" : ""}`,
+    out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:PLANT_COST, sub:`${stor({...c, g:c.g + 1}) > stor(c) ? `Store ${S.cap} → ${S.cap + stor({...c, g:c.g + 1}) - stor(c)} gal` : "Cleared forest: no storage from it"}${d > 0 ? `. Grove: flow +${d}` : ""}${c.g === 0 && marshPreview(p, k => { k.g = 1 }).flow > 0 ? ". Marsh: flow +1" : ""}`,
       warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)}) }
-  if (cuttable(p)) { const d = NEW ? comboPreview(p, k => { k.g--; k.wild = false; if (k.pr < 0) k.pr = 0 }) : 0, before = c.wild ? 0 : stor(c), after = c.g - 1 ? c.g - 1 + (c.fert ? 1 : 0) : 0;
+  if (cuttable(p)) { const d = NEW ? comboPreview(p, k => { k.g--; k.wild = false; if (k.pr < 0) k.pr = 0 }) : 0, before = c.wild ? 0 : stor(c), after = c.wild ? 0 : stor({...c, g:c.g - 1});
     out.push({k:"cut", name:c.wild ? "Cut the forest back" : `Cut back to ${c.g > 1 ? gName(c.g - 1) : "bare ground"}`, cost:PLANT_COST,
       sub:[STORE && after !== before ? `Store ${S.cap} → ${S.cap + after - before} gal` : "", d > 0 ? `Grove: flow +${d}` : ""].filter(Boolean).join(". ") || "Changes this tile one step",
       warn:d < 0 ? `Breaks a grove: flow −${-d}` : "", run:() => cutBack(p)}) }
