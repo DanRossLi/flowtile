@@ -68,7 +68,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - You select a river by tapping it.
   - When a tributary meets the main river, it **pours into the main river** and adds its flow.
 - **Nov 10 rules** (on maps with storage):
-  - **Groves:** 3 or more trees in a row beside the river.
+  - **Groves:** ~~3 or more trees in a row beside the river.~~ *Superseded Nov 11 (Dan: "adjust flow such that it calculates correctly on adjacent tiles for trees given its a hexagon"):* 3 or more trees that **touch each other** on any of the six hex sides, all beside the river, make a grove (no straight line needed). +1 flow, +1 per extra tree; fertile trees count double.
   - ~~**Wildflower patches:** 4 or more meadows in a row.~~ *Superseded Nov 10 by pollinators: a meadow next to a grove adds +1 flow.*
   - **Sand** greens its neighbours.
   - **Mountain runoff** on the windward side, with a rain shadow on the other. Since Nov 11 (LOU-269) this is each mountain's **water side**: see below.

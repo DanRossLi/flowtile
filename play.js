@@ -32,7 +32,7 @@
 //   waterSides: {"x,y": [dx, dy]} sets one mountain's water side (LOU-269); others take it from the wind. Each mountain has
 //     exactly one water side: one face with water on it and one runoff tile in front of it.
 // Tile costs (Nov 9): sand is free, rock costs +1, trees cost the normal price (they don't defend). Storage maps also: sand grows
-// grass on the bare ground around it, 3+ trees in a row along the river make a grove (+1 flow, +1 per extra tree)
+// grass on the bare ground around it, 3+ touching trees along the river make a grove (+1 flow, +1 per extra tree)
 // and each meadow touching a grove adds +1 flow to it (pollinators, Nov 9). Map code F = wild forest.
 (() => {
 const M = window.MAP;
@@ -233,23 +233,24 @@ const onMain = i => root(i) === 0;
 // Add flow to a river: straight into your flow if it's connected, otherwise it waits for the connection.
 function flowAdd(rid, d) { const g = root(rid); if (g <= 0) S.income = Math.max(0, S.income + d); else S.rivers[g].pend = Math.max(0, (S.rivers[g].pend || 0) + d) }
 const flowOf = rid => root(rid) <= 0 ? S.income : S.rivers[root(rid)].pend || 0;
-// ---------- combos: groves (3+ trees in a row along the river); meadows touching a grove pollinate it (+1 flow each)
+// ---------- combos: groves (3+ touching trees along the river); meadows touching a grove pollinate it (+1 flow each)
 const GROVE = 3;
 const groveTile = c => !c.river && c.g >= TREES && c.t === "bare";
 const byRiver = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0);
-// Every maximal straight run of matching tiles that all touch the river.
+// Groves on hexes (Dan, Nov 11): every connected patch of trees that all touch the river, joined through any of the six
+// hex sides (no straight line needed). links are the touching pairs, for drawing the grove's thread.
 function combos() {
   const out = []; if (!NEW || !S.rivers.length) return out;
-  for (const [kind, ok, min] of [["grove", groveTile, GROVE]])
-    for (const d of [0, 4, 5]) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { // the three hex axes
-      const good = q => inside(...q) && ok(at(q)) && !!byRiver(q);
-      if (!good([x, y]) || good(step([x, y], d + 3))) continue;
-      const run = []; for (let q = [x, y]; good(q); q = step(q, d)) run.push(q);
-      const len = run.reduce((n, q) => n + (at(q).fert ? 2 : 1), 0); // fertile trees count double (LOU-273)
-      if (len < min) continue;
-      const first = kind === "grove" && at(run[0]).pr >= 0 ? at(run[0]).pr : at(byRiver(run[0])).rid;
-      out.push({kind, tiles:run, len, rid:root(first), bonus:len - 2, bees:[]});
-    }
+  const good = q => inside(...q) && groveTile(at(q)) && !!byRiver(q), seen = new Set();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (seen.has(x + "," + y) || !good([x, y])) continue;
+    const run = [[x, y]], links = []; seen.add(x + "," + y);
+    for (let i = 0; i < run.length; i++) for (const n of nbrs(run[i])) if (!seen.has(n + "") && good(n)) { seen.add(n + ""); run.push(n); links.push([run[i], n]) }
+    const len = run.reduce((n, q) => n + (at(q).fert ? 2 : 1), 0); // fertile trees count double (LOU-273)
+    if (len < GROVE) continue;
+    const first = at(run[0]).pr >= 0 ? at(run[0]).pr : at(byRiver(run[0])).rid;
+    out.push({kind:"grove", tiles:run, links, len, rid:root(first), bonus:len - 2, bees:[]});
+  }
   // pollinators: each meadow next to a grove adds +1 flow to it (a meadow counts once)
   const used = new Set();
   for (const k of out) for (const q of k.tiles) for (const n of nbrs(q)) { const c = at(n);
@@ -715,7 +716,7 @@ function tileText(p) {
   if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees${inCombo.len > inCombo.tiles.length ? " (fertile trees count double)" : ""}: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : "";
   if (bee) return "Pollinators: bees from this meadow add +1 flow to the grove next to it.";
   if (c.alp) return `${alpBy(p) ? `Collects ${snowRate(c)} snow each water cycle${c.ro ? " (water side: double)" : ""}, up to 3` : "Collects snow only while your river runs beside it"}. Holding ${c.snow || 0} snow now. Snow doesn't count against storage and never spills; melt it into water any time. Alpine trees don't count toward groves.`;
-  if (c.wild) return "Wild trees. A stream can run through for the normal cost, but it clears them. 3 in a row along the river make a grove: +1 flow.";
+  if (c.wild) return "Wild trees. A stream can run through for the normal cost, but it clears them. 3 touching each other along the river make a grove: +1 flow.";
   if (c.g && c.off) return "No river beside it any more, so it stores nothing. It stores again once a river runs beside it.";
   if (c.g) return `Stores ${stor(c)} extra gal${c.fert ? " (fertile ground: +1)" : ""}. ${c.g < TREES && plantable(p) ? `Grow it into ${gName(c.g + 1)} for 1 gal: +1 storage. ` : ""}${NEW && c.g >= TREES ? (c.fert ? "Fertile trees count double toward a grove: 2 of them in a row along the river make one. " : "3 trees in a row along the river make a grove: +1 flow. ") : ""}${NEW && c.g === MEADOW ? "A meadow next to a grove adds +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= TREES) ? " Deer may graze it: no trees next to it." : ""}${c.g >= TREES && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
   if (c.beaver === 1) return "Beavers live here. Run your stream through the colony and grow trees next to it, and they dam a pond: +1 flow. Running beside it isn't enough.";
@@ -1344,8 +1345,8 @@ function draw() {
     if (preview.stop && preview.stop !== "sea") { const q = preview.length ? preview[preview.length - 1].p : S.head; badges.push({o:iso(...q), stopX:true}) } }
   // groves: a golden thread through the tiles and the flow they give; bees over the meadows that pollinate them
   for (const k of combos()) { for (const q of k.bees) { const o = iso(...q), h = hsh(...q); bee(o.x - 9, o.y - 18, t, h * .1); bee(o.x + 11, o.y - 10, t, h * .1 + .5) }
-    const pts = k.tiles.map(q => { const o = iso(...q); return [o.x, o.y + 6] });
-    ctx.save(); ctx.setLineDash([3, 6]); ctx.lineDashOffset = reduce ? 0 : -(t % 1.5) / 1.5 * 9; line(pts, "rgba(201,132,43,.95)", 2.6); ctx.restore();
+    const pts = k.tiles.map(q => { const o = iso(...q); return [o.x, o.y + 6] }), P = q => { const o = iso(...q); return [o.x, o.y + 6] };
+    ctx.save(); ctx.setLineDash([3, 6]); ctx.lineDashOffset = reduce ? 0 : -(t % 1.5) / 1.5 * 9; for (const [a, b] of k.links) line([P(a), P(b)], "rgba(201,132,43,.95)", 2.6); ctx.restore();
     const mid = pts[Math.floor(pts.length / 2)]; badges.push({o:{x:mid[0], y:mid[1] - 34}, combo:`+${k.bonus}`}) }
   // fish come to long rivers
   const rl = fishCount(); if (rl) { let i = 0; for (const p of ORDER) { const c = at(p); if (!c.river || c.t === "source" || c.t === "ocean" || c.t === "lake" || hsh(...p) % 3) continue; if (i++ >= rl) break;
