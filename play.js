@@ -1320,13 +1320,18 @@ function chainPts(ch) { const pts = [];
     let x = o.x, y = o.y; if (i && (k < 1 || sea)) { const a = pts[i - 1], f = sea ? Math.min(k, .55) : k; x = a[0] + (o.x - a[0]) * f; y = a[1] + (o.y - a[1]) * f }
     pts.push([x, y]); if (k < 1) break }
   return pts }
-// A Catmull-Rom spline through the points as cubic Béziers; also sampled, for the flow drops.
+// The river's centre line (Dan, Nov 12: "the river turning looks bad"): straight from one tile edge to the next, and at a
+// turn a round arc through the shared edge midpoints (the tile centre is the arc's control point), so a 60° hex turn is a
+// smooth bend instead of a pinched corner. Sampled 8 points per tile step: sample 8·i sits at tile i, nearest its centre.
 function crPath(pts) { const P = new Path2D(), smp = [pts[0]]; if (!pts.length) return {P, smp}; P.moveTo(...pts[0]);
   if (pts.length === 1) { P.lineTo(pts[0][0] + .01, pts[0][1]); return {P, smp} }
-  for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    P.bezierCurveTo(...c1, ...c2, ...p2);
-    for (let k = 1; k <= 8; k++) { const u = k / 8, v = 1 - u; smp.push([v*v*v*p1[0] + 3*v*v*u*c1[0] + 3*v*u*u*c2[0] + u*u*u*p2[0], v*v*v*p1[1] + 3*v*v*u*c1[1] + 3*v*u*u*c2[1] + u*u*u*p2[1]]) } }
+  const n = pts.length, mid = i => [(pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2];
+  // the curve through tile i: from the entry midpoint to the exit midpoint, bent by the centre (ends are straight)
+  const arc = (i, u) => { if (i === 0 || i === n - 1) { const a = pts[i], b = i === 0 ? mid(0) : mid(n - 2), k = i === 0 ? u : 1 - u; return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k] }
+    const a = mid(i - 1), b = mid(i), c = pts[i], v = 1 - u; return [v * v * a[0] + 2 * v * u * c[0] + u * u * b[0], v * v * a[1] + 2 * v * u * c[1] + u * u * b[1]] };
+  // the end tiles run straight to or from their centre; a middle tile's centre point is the arc's midpoint
+  const half = (i, first) => { const out = []; for (let k = 1; k <= 4; k++) { const q = k / 4; out.push(i === 0 ? arc(0, q) : i === n - 1 ? arc(n - 1, q) : arc(i, first ? .5 + q * .5 : q * .5)) } return out };
+  for (let i = 0; i < n - 1; i++) { for (const q of [...half(i, true), ...half(i + 1, false)]) { smp.push(q); P.lineTo(...q) } }
   return {P, smp} }
 // ---------- river width = flow (LOU-280). Walk each chain from its start keeping a running flow: a source gives its
 // yield, then each thing that adds flow adds it at the river tile where it attaches (springs, mountain runoff, groves,
@@ -1367,19 +1372,17 @@ function drawRivers(t) {
     const f = flows[ci].slice(0, n).map((v, i) => { const key = ci + ":" + ch.tiles[i]; let d = dispF.get(key); d = d == null || reduce ? v : d + (v - d) * Math.min(1, dt * 7); dispF.set(key, d); return d });
     return {...ch, ...cp, f, n, ci} }).filter(ch => ch.smp.length > 1);
   for (const ch of chains) { const s = ch.smp, m = s.length, L = [], Rt = [], C = [], W = [], T = [], hh = hsh(...ch.tiles[0]);
-    for (let j = 0; j < m; j++) { const a = s[Math.max(0, j - 1)], b = s[Math.min(m - 1, j + 1)]; let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+    for (let j = 0; j < m; j++) { const a = s[Math.max(0, j - 2)], b = s[Math.min(m - 1, j + 2)]; const gx = b[0] - a[0], gy = (b[1] - a[1]) * 2, l = Math.hypot(gx, gy) || 1; // the direction on the ground (the view squashes y by half)
       const a2 = s[Math.max(0, j - 4)], b2 = s[Math.min(m - 1, j + 4)], d1 = [s[j][0] - a2[0], s[j][1] - a2[1]], d2 = [b2[0] - s[j][0], b2[1] - s[j][1]];
       const turn = Math.atan2(d1[0] * d2[1] - d1[1] * d2[0], d1[0] * d2[0] + d1[1] * d2[1]) || 0; T.push(turn);
       const i = Math.floor(j / 8), u = (j % 8) / 8, fa = ch.f[Math.min(ch.n - 1, i)], fb = ch.f[Math.min(ch.n - 1, i + 1)], fl = fa + (fb - fa) * smooth((u - .6) / .4);
-      const me = Math.sin(u * Math.PI) * 3 * ((i + hh) % 2 ? 1 : -1);
-      const w = Math.max(4, 2.9 * fl + 1.6 * Math.min(1, Math.abs(turn) * 1.5) + .6 * Math.sin(j * 1.7 + hh));
-      const cx = s[j][0] + -dy * me, cy = s[j][1] + dx * me * .5; C.push([cx, cy, -dy, dx * .5]); W.push(w) }
+      const w = Math.max(4, 2.9 * fl + 1.2 * Math.min(1, Math.abs(turn) * 1.2) + .5 * Math.sin(j * .9 + hh));
+      C.push([s[j][0], s[j][1], -gy / l, gx / l * .5]); W.push(w) }
     const ribbon = (k, add, shift = 0) => { ctx.beginPath(); for (let j = 0; j < m; j++) { const [x, y, nx, ny] = C[j], w = W[j] * k / 2 + add, o = shift * T[j] * W[j]; ctx.lineTo(x + nx * (w + o), y + ny * (w + o)) }
       for (let j = m - 1; j >= 0; j--) { const [x, y, nx, ny] = C[j], w = W[j] * k / 2 + add, o = shift * T[j] * W[j]; ctx.lineTo(x - nx * (w - o), y - ny * (w - o)) } ctx.closePath() };
     const cap = (j, k, add, col) => { const [x, y] = C[j], r = W[j] * k / 2 + add; ell(x, y, r, r * .62, col) };
     for (const [k, add, col] of [[1, 4.5, "rgba(95,143,92,.4)"], [1, 2, "#d9cfa3"], [1, 0, "#8cc2d2"]]) { ribbon(k, add); ctx.fillStyle = col; ctx.fill(); cap(0, k, add, col); cap(m - 1, k, add, col) }
     ribbon(.48, 0, -.55); ctx.fillStyle = "#6fa9c4"; ctx.fill(); ribbon(.16, 0, -.95); ctx.fillStyle = "rgba(63,127,159,.55)"; ctx.fill();
-    ctx.globalAlpha = .3; ribbon(.14, 0, .9); ctx.fillStyle = "#f2fbff"; ctx.fill(); ctx.globalAlpha = 1;
     // cut banks on the outside of sharp bends, pebbly point bars on the inside; riffles over a couple of stones
     for (let i = 1; i < ch.n - 1; i++) { const j = i * 8; if (j >= m) break; const tn = T[j], [x, y, nx, ny] = C[j], w = W[j] / 2, h = hsh(...ch.tiles[i]); if (Math.abs(tn) > .5) { const sg = tn > 0 ? -1 : 1;
       ctx.beginPath(); for (let q = -3; q <= 3; q++) { const [a, b, mx, my] = C[Math.max(0, Math.min(m - 1, j + q))], ww = W[Math.max(0, Math.min(m - 1, j + q))] / 2 + 3; ctx.lineTo(a + mx * ww * sg, b + my * ww * sg) } ctx.strokeStyle = "#8a6a48"; ctx.lineWidth = 2.6; ctx.lineCap = "round"; ctx.stroke();
@@ -1393,7 +1396,8 @@ function drawRivers(t) {
     // a tributary's end flows into the river it joins: rings spread where they meet
     const last = ch.tiles[ch.tiles.length - 1]; if (ch.n === ch.tiles.length && at(last).t !== "ocean" && at(last).t !== "lake" && raw.some(o => o !== raw[ch.ci] && o.tiles.some((q, k) => k && same(q, last)))) joins.push(C[m - 1]) }
   if (!reduce) { // two layers of current streaks at different speeds, then a leaf, a fish
-    for (const [dash, sp, a, lw] of [[[5, 13, 2, 16], 26, .6, 1.5], [[3, 22], 15, .35, 1]]) { ctx.save(); ctx.setLineDash(dash); ctx.lineDashOffset = -t * sp; ctx.globalAlpha = a; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = lw; ctx.lineCap = "round";
+    // (Dan, Nov 12: "the white line looks bad"): no white streak; short, soft pale-blue glints drift with the current
+    for (const [dash, sp, a, lw] of [[[4, 34], 22, .32, 1.6], [[3, 47], 14, .22, 1.2]]) { ctx.save(); ctx.setLineDash(dash); ctx.lineDashOffset = -t * sp; ctx.globalAlpha = a; ctx.strokeStyle = "#dff1f8"; ctx.lineWidth = lw; ctx.lineCap = "round";
       for (const ch of chains) { ctx.beginPath(); ch.C.forEach(([x, y, nx, ny], j) => { const o = (lw > 1.2 ? -.18 : .2) * ch.W[j]; j ? ctx.lineTo(x + nx * o, y + ny * o) : ctx.moveTo(x + nx * o, y + ny * o) }); ctx.stroke() } ctx.restore() }
     for (const ch of chains) { if (!flowOf(ch.rid >= 0 ? ch.rid : S.active)) continue; const s = ch.C, cum = [0];
       for (let i = 1; i < s.length; i++) cum.push(cum[i - 1] + Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]));
