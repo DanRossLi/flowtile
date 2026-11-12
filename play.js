@@ -170,7 +170,7 @@ function fresh() {
   for (let y = 0; y < H; y++) { tiles.push([]); for (let x = 0; x < W; x++) {
     const ch = TYPES[y][x];
     const t = {"_":"bare",f:"bare",M:"marsh",C:"cave",F:"bare",g:"bare",m:"bare",t:"bare",p:"bare",v:"bare",".":"meadow",s:"sand",r:"rock",B:"boulder",o:"spring",L:"lake","~":"ocean",S:"source",T:"source"}[ch];
-    tiles[y].push({t, e:+ELEV[y][x], river:false, g:ch==="F"?TREES:{g:1,m:MEADOW,t:TREES}[ch]||0, bloom:"gmt".includes(ch), wild:ch==="F", pool:ch==="p", beaver:ch==="v" ? 1 : 0, fert:ch==="f", ro:0, rs:false, rid:-1, pr:"gmt".includes(ch) ? 0 : -1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
+    tiles[y].push({t, e:+ELEV[y][x], river:false, g:ch==="F"?TREES:{g:1,m:MEADOW,t:TREES}[ch]||0, bloom:"gmt".includes(ch), wild:ch==="F", pre:"gmtF".includes(ch), pool:ch==="p", beaver:ch==="v" ? 1 : 0, fert:ch==="f", ro:0, rs:false, rid:-1, pr:"gmt".includes(ch) ? 0 : -1, to:null, lake:-1, yield:ch==="S"?2:ch==="T"?3:0, from:null});
   }}
   // Caves (LOU-276): pairs, in reading order unless the map sets them
   { const cs = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (TYPES[y][x] === "C") cs.push([x, y]);
@@ -219,8 +219,19 @@ function cost(from, to) {
 function plantable(p) {
   if (!STORE || S.phase !== "play") return false;
   const c = at(p); if (c.t !== "bare" || c.river || c.g >= TREES || c.alp || c.rs || c.pool || c.beaver || c.fire || salty(p)) return false;
-  return nbrs(p).some(n => at(n).river && at(n).rid >= 0 && onMain(at(n).rid)) || lakeReach(p);
+  return !!c.pre || nbrs(p).some(n => at(n).river && at(n).rid >= 0 && onMain(at(n).rid)) || lakeReach(p); // a map's own greens grow anywhere (Dan, Nov 11)
 }
+// A map's own grass, meadows and trees (Dan, Nov 11: "let me adjust" them): grow them anywhere, or cut them back a step for 1 gal.
+const cuttable = p => { const c = at(p); return S.phase === "play" && !!c.pre && c.g > 0 && !c.river && !c.fire };
+function cutBack(p) {
+  const c = at(p), from = c.wild ? "forest" : gName(c.g);
+  if (S.water < PLANT_COST) { say(`Cutting back costs ${PLANT_COST} gal and you have ${S.water} gal. Tap Next Water Cycle to collect your flow.`, true); return }
+  snapshot(); S.water -= PLANT_COST; const before = c.wild ? 0 : stor(c);
+  c.g--; c.wild = false; if (c.pr < 0) c.pr = 0; if (!c.g) c.bloom = false;
+  const d = stor(c) - before; capAdd(c.pr, d); const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp;
+  anim.set("g:" + p, now()); float(p, d ? `${d > 0 ? "+" : "−"}${Math.abs(d)} storage` : `−${PLANT_COST} gal`, d < 0 ? "#ffb27a" : "#b6f08a"); bump("cWater");
+  const cb = recombo();
+  say(`Cut the ${from} back to ${c.g ? gName(c.g) : "bare ground"}${STORE ? `: you can store ${S.cap} gal` : ""}.${sp ? ` ${sp} gal spilled.` : ""}${cb ? " " + cb + "." : ""}`) }
 // A full lake's reach: ground up to 2 tiles from its water can be planted.
 function lakeReach(p) { return S.lakes.some(L => L.filled && L.tiles.some(q => hexDist(q, p) <= REACH && onMain(at(q).rid))) }
 // ---------- rivers: water, storage and flow (S.income) belong to the main river. Each river keeps its own head; the
@@ -767,6 +778,10 @@ function actions(p) {
   if (plantable(p)) { const d = NEW && c.g ? comboPreview(p, k => { k.g++; k.pr = S.active }) : 0;
     out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + (c.g === 0 && c.fert ? 2 : 1)} gal${d > 0 ? `. Grove: flow +${d}` : ""}${c.g === 0 && marshPreview(p, k => { k.g = 1 }).flow > 0 ? ". Marsh: flow +1" : ""}`,
       warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)}) }
+  if (cuttable(p)) { const d = NEW ? comboPreview(p, k => { k.g--; k.wild = false; if (k.pr < 0) k.pr = 0 }) : 0, before = c.wild ? 0 : stor(c), after = c.g - 1 ? c.g - 1 + (c.fert ? 1 : 0) : 0;
+    out.push({k:"cut", name:c.wild ? "Cut the forest back" : `Cut back to ${c.g > 1 ? gName(c.g - 1) : "bare ground"}`, cost:PLANT_COST,
+      sub:[STORE && after !== before ? `Store ${S.cap} → ${S.cap + after - before} gal` : "", d > 0 ? `Grove: flow +${d}` : ""].filter(Boolean).join(". ") || "Changes this tile one step",
+      warn:d < 0 ? `Breaks a grove: flow −${-d}` : "", run:() => cutBack(p)}) }
   if (c.pool && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.unshift({k:"collect", name:"Collect the rain pool", cost:0, sub:`+2 gal at once${STORE && S.water + 2 > S.cap ? ` (only ${Math.max(0, S.cap - S.water)} fit)` : ""}`, warn:"", run:() => collect(p)});
   if (canRechannel(p)) { const d = downstream(p); out.push({k:"rechannel", name:"Rechannel from here", cost:0, costText:"All water", sub:`${d.length} tile${d.length > 1 ? "s" : ""} downstream dry up. Your river ends here`, warn:S.water ? `Costs all your water (${S.water} gal)` : "Costs all your water: you have none, so it's free now", run:() => rechannel(p)}) }
   if (alpSite(p)) out.push({k:"alpine", name:"Grow alpine trees", cost:PLANT_COST, sub:`Collects ${snowRate(c)} snow each water cycle${c.ro ? " (water side)" : ""}, up to 3. Melt it any time`, warn:"Instead of a meadow: alpine trees don't grow on", run:() => growAlpine(p)});
@@ -779,6 +794,7 @@ const canDo = a => S.water >= a.cost;
 function shortBy(a) { return STORE && a.cost > S.cap ? `You can only store ${S.cap} gal. Plant to store more` : `You have ${S.water} gal. Next Water Cycle brings +${S.income}` }
 // Round icons for the tile card's actions (LOU-260)
 const ICON = {
+  cut:'<svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M7.8 16.2L18 4M16.2 16.2L6 4"/></svg>',
   plant:'<svg viewBox="0 0 24 24"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M12 15c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/></svg>',
   meadow:'<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="2.2"/><path d="M12 4.5v2.3M12 11.2v2.3M7.5 9h2.3M14.2 9h2.3M12 13.5V21M12 18c-2-2.5-4.5-3-6-2.5M12 17c2-2 4-2.5 5.5-2"/></svg>',
   trees:'<svg viewBox="0 0 24 24"><path d="M12 3l6 9h-3.5l4 6H5.5l4-6H6z"/><path d="M12 18v3"/></svg>',
