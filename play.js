@@ -20,6 +20,8 @@
 // Alpine trees (LOU-235): on storage maps with mountains, grass touching a mountain can grow alpine trees (1 gal). Each one
 //   beside your river collects 1 snow per water cycle (2 on a mountain's water side), up to 3. Snow doesn't count against
 //   storage and never spills; tap an alpine tree to melt all your snow into water at once, any time (Dan, Nov 11).
+// rechannel: true (LOU-238): tap a tile on your river to rechannel from there. Everything downstream becomes dry riverbed,
+//   that tile becomes the river's end, and it costs all your water (Dan, Nov 11). Not on tributary maps yet.
 // Map code C (LOU-276): caves, paired in reading order (1st with 2nd, 3rd with 4th). Run the river into one for the normal
 //   tile cost and it comes out of the other; the land between is skipped. caves: [[[x,y],[x,y]], ...] sets the pairs.
 // Map code M (LOU-274): marsh. Next to your river it stores 2 gal; with green on two opposite sides it adds +1 flow.
@@ -40,7 +42,7 @@ const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed n
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal;
 const ROOT = new URL("./", document.currentScript.src).href;
 // Green levels on bare ground (Dan, Nov 10, LOU-261): 0 bare, 1 grass, 2 meadow, 3 trees. 1 gal and +1 storage per step.
-const MEADOW = 2, TREES = 3, stor = c => c.g ? c.g + (c.fert ? 1 : 0) : 0, gName = g => ["bare ground", "grass", "meadow", "trees"][Math.min(g, TREES)];
+const MEADOW = 2, TREES = 3, stor = c => c.g && !c.off ? c.g + (c.fert ? 1 : 0) : 0, gName = g => ["bare ground", "grass", "meadow", "trees"][Math.min(g, TREES)];
 const meadowy = c => !c.river && (c.g === MEADOW || (c.t === "meadow" && !c.g)); // the site root, where play.js lives
 const LAKE_TILE_COST = 2, REACH = 2; // lakes (Nov 9): 2 gal a tile; a full lake lets you plant up to 2 tiles from it
 const SHOW_BLOOM = M.showBloom ?? BLOOM_GOAL > 0;
@@ -53,13 +55,14 @@ const PLACE = !!M.placeSource, PLACE_FLOW = 3, SEA_GAP = 4; // LOU-263: place yo
 const LAND = !!M.landscape;
 // Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
 const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = !!M.spread, FLOOD = !!M.floodplain, MELT = !!M.snowmelt, MOSS = !!M.moss, DEER = !!M.deer;
+const RECH = !!M.rechannel && !M.tributaries; // rechannel (LOU-238)
 const ALP = STORE > 0 && TYPES.some(r => r.includes("B")); // alpine trees (LOU-235)
 const turnHooks = []; // other end-of-turn effects (spread, wildlife, fire) add themselves here
 // A fixed roll per map, turn and tile, so undo and replays give the same result.
 const rnd = (...k) => { let h = 2166136261; for (const ch of [M.id, ...k].join("|")) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10007) / 10007 };
 const W = TYPES[0].length, H = TYPES.length, TW = 96, TH = 48, ZH = 12;
 const PLAY_TILE = 118; // LOU-262: a tile's width in px at play zoom, so 3–4 fit across a 390px phone (and stand ~59px tall)
-const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c",fertile:"#7a4f2e",marsh:"#4f8a7c",cave:"#9a948a"};
+const COL = {bare:"#b8875a",grass:"#7cc94c",trees:"#6fbf45",meadow:"#a3d977",sand:"#f2d68f",rock:"#b0aa9f",boulder:"#a88050",spring:STORE ? "#b8875a" : "#a3d977",lake:"#9a7650",ocean:"#58b6e6",deep:"#2f74c4",source:"#9aa7b0",river:"#4aa3e8",bloom:"#7cc94c",shadow:"#a7835c",fertile:"#7a4f2e",marsh:"#4f8a7c",cave:"#9a948a",bed:"#cdb894"};
 const BANKS = true; // river drawn as a channel with banks; lakes get a shore
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -192,7 +195,8 @@ function cost(from, to) {
   if (b.e > level(from)) return -1;
   if (merge) return M.tileCost ?? 1;
   if (b.t === "lake") return LAKE_TILE_COST * S.lakes[b.lake].tiles.length;
-  if (b.t === "cave" && (!b.mate || at(b.mate).river)) return -1; // its other end is already used
+  if (b.t === "cave" && (!b.mate || at(b.mate).river || b.dry || at(b.mate).dry)) return -1;
+  if (b.t === "bed") return -1; // dry riverbed: a used tile // its other end is already used
   let c = M.tileCost ?? 1; // flat maps: the tile type sets the cost
   if (b.t === "spring" || b.t === "sand") c = 0; // sand is free to enter; it cuts flow instead (see build)
   if (b.t === "rock") c += 1;   // hard ground
@@ -250,6 +254,28 @@ function marshState() { let cap = 0, flow = 0; if (!HAS_MARSH) return {cap, flow
   S.tiles.forEach((r, y) => r.forEach((c, x) => { if (!marshBy([x, y])) return; cap += 2; if (marshGreen([x, y])) flow++ })); return {cap, flow} }
 // What doing f() to tile p would change in marsh storage and flow (for the tile card).
 function marshPreview(p, f) { if (!HAS_MARSH) return {cap:0, flow:0}; const c = at(p), keep = {...c}, a = marshState(); f(c); const b = marshState(); Object.assign(c, keep); return {cap:b.cap - a.cap, flow:b.flow - a.flow} }
+// ---------- rechannel (LOU-238): cut the river back to a tile; downstream becomes dry riverbed; costs all your water
+const riverBy = p => nbrs(p).some(n => { const k = at(n); return k.river && k.rid >= 0 && k.t !== "ocean" });
+// The stretch downstream of p (head first), or null if p isn't upstream of the head or a lake is in the way.
+function downstream(p) { const out = []; let q = S.head;
+  for (let i = 0; q && i < W * H; i++) { if (same(q, p)) return out; const c = at(q); if (c.t === "lake" || c.t === "ocean") return null; out.push(q);
+    q = c.from || (c.t === "cave" && c.mate && at(c.mate).river ? c.mate : null) }
+  return null }
+function canRechannel(p) { const c = at(p); return RECH && S.phase === "play" && c.river && c.rid === S.active && !same(p, S.head) && !!downstream(p) && downstream(p).length > 0 }
+function rechannel(p) { const cut = downstream(p); if (!cut || !cut.length) return; snapshot(); const lostW = S.water; S.water = 0; let lostF = 0;
+  for (const q of cut) { const c = at(q);
+    if (c.t === "spring") { lostF++; c.t = "spring" }
+    if (c.beaver === 2) { lostF++; c.beaver = 1 }
+    Object.assign(c, {river:false, rid:-1, from:null, to:null}); if (c.t === "cave") c.dry = true; else if (c.t !== "spring") { c.t = "bed"; c.g = 0; c.bloom = false }
+    anim.set("g:" + q, now()) }
+  if (lostF) flowAdd(0, -lostF);
+  // green that only touched the abandoned stretch stops storing water
+  let lostS = 0; S.tiles.forEach((r, y) => r.forEach((c, x) => { if (!c.g || c.off || c.wild || c.river || riverBy([x, y]) || c.pr < 0) return; lostS += stor(c); S.cap -= stor(c); c.off = true }));
+  S.head = p; at(p).to = null; const cb = recombo(); bump("cWater"); if (lostF) bump("cFlow");
+  float(p, "Rechanneled", "#ffffff"); wave = now();
+  say(`Rechanneled: ${cut.length} tile${cut.length > 1 ? "s" : ""} downstream dried into riverbed${lostW ? ` and your ${lostW} gal of water is gone` : ", and it cost nothing: you had no water left"}.${lostF ? ` Flow −${lostF}.` : ""}${lostS ? ` Green beside the dry stretch stopped storing water: storage −${lostS}.` : ""}${cb ? " " + cb + "." : ""} Build on from here.`) }
+// Green that lost its river stores again once a river runs beside it.
+function rewet() { let n = 0; S.tiles.forEach((r, y) => r.forEach((c, x) => { if (!c.off || c.river || !riverBy([x, y])) return; c.off = false; S.cap += stor(c); n += stor(c) })); return n }
 function remarsh() { if (!HAS_MARSH || !S.rivers.length) return ""; const m = marshState(), dc = m.cap - (S.marshCap || 0), df = m.flow - (S.marshFlow || 0), out = [];
   if (dc) { S.cap += dc; S.marshCap = m.cap; if (S.water > S.cap) S.water = S.cap; bump("cWater"); out.push(dc > 0 ? `Marsh beside your river: storage +${dc}` : `Marsh drained: storage −${-dc}`) }
   if (df) { flowAdd(0, df); S.marshFlow = m.flow; bump("cFlow"); out.push(df > 0 ? `Marsh between green banks: flow +${df}` : `Marsh lost its green banks: flow −${-df}`) }
@@ -262,7 +288,8 @@ function recombo() {
     flowAdd(i, d); r.combo = now;
     if (i === S.active) note = d > 0 ? `Flow +${d} from your grove` : `Lost ${-d} flow from a broken grove`; });
   if (note) bump("cFlow");
-  const mn = remarsh(); return [note, mn].filter(Boolean).join(". ");
+  const rw = RECH ? rewet() : 0; if (rw) bump("cWater");
+  const mn = remarsh(); return [note, mn, rw ? `Green beside your river stores water again: storage +${rw}` : ""].filter(Boolean).join(". ");
 }
 // What doing f() would add to the active river's combo flow (for the tile card).
 function comboPreview(p, f) { const c = at(p), keep = {...c}; const a = comboBonus(root(S.active)); f(c); const b = comboBonus(root(S.active)); Object.assign(c, keep); return b - a }
@@ -368,6 +395,7 @@ function build(mv) {
   if (b.t === "ocean") { S.phase = "won"; wave = now(); float(mv.p, "Splash!", "#ffffff"); say(`You reached the sea on turn ${S.turn}.`); return }
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.push(`This river can't go on. Tap your ${riverName(openRivers()[0]).toLowerCase()} to switch`); say(notes.join(". ") + ".", true); return }
   if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on: the island is scored. Undo to try another way."); return }
+  if (!moves().size && RECH) { notes.push("Dead end. Tap a tile upstream on your river to rechannel from there (it costs all your water)"); say(notes.join(". ") + ".", true); return }
   if (!moves().size && !LAND) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
   if (S.income === 0 && (LAND || !affordable())) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
   const sh = storageHint();
@@ -648,6 +676,7 @@ function tileName(c) {
   if (c.rs) return "Rain shadow";
   if (c.fert && c.t === "bare") return "Fertile ground";
   if (c.t === "marsh") return "Marsh";
+  if (c.t === "bed") return "Dry riverbed";
   if (c.t === "cave") return `Cave ${c.cave || ""}`.trim();
   return {bare:"Bare ground", meadow:"Meadow", sand:"Sand", rock:"Rock", boulder:"Mountain", spring:"Spring", lake:"Empty lake", ocean:"The sea", source:"Source"}[c.t];
 }
@@ -655,12 +684,14 @@ function tileText(p) {
   const c = at(p), cs = combos(), inCombo = cs.find(k => k.tiles.some(q => q + "" === p + "")), bee = cs.find(k => k.bees.some(q => q + "" === p + ""));
   if (c.river && c.beaver === 1) return "Your river runs through the beaver colony. Grow trees next to it and they dam a pond: +1 flow.";
   if (c.river && c.beaver === 2) return "The beavers dammed a pond on your river. It adds +1 flow.";
+  if (c.t === "bed") return "Where your river ran before you rechanneled. It holds nothing, and the river can't run here again.";
   if (c.river && c.t === "cave") return "Your river runs underground between this cave and its pair.";
-  if (c.river) return c.rid === S.active ? "Part of the river you're building." : "Part of another river.";
+  if (c.river) return c.rid === S.active ? `Part of the river you're building.${canRechannel(p) ? " You can rechannel from here: the river downstream dries up and you build on from this tile in a new direction." : ""}` : "Part of another river.";
   if (inCombo) return inCombo.kind === "grove" ? `Part of a grove of ${inCombo.tiles.length} trees${inCombo.len > inCombo.tiles.length ? " (fertile trees count double)" : ""}: +${inCombo.bonus} flow. A stream running over it breaks the grove.` : "";
   if (bee) return "Pollinators: bees from this meadow add +1 flow to the grove next to it.";
   if (c.alp) return `${alpBy(p) ? `Collects ${snowRate(c)} snow each water cycle${c.ro ? " (water side: double)" : ""}, up to 3` : "Collects snow only while your river runs beside it"}. Holding ${c.snow || 0} snow now. Snow doesn't count against storage and never spills; melt it into water any time. Alpine trees don't count toward groves.`;
   if (c.wild) return "Wild trees. A stream can run through for the normal cost, but it clears them. 3 in a row along the river make a grove: +1 flow.";
+  if (c.g && c.off) return "No river beside it any more, so it stores nothing. It stores again once a river runs beside it.";
   if (c.g) return `Stores ${stor(c)} extra gal${c.fert ? " (fertile ground: +1)" : ""}. ${c.g < TREES && plantable(p) ? `Grow it into ${gName(c.g + 1)} for 1 gal: +1 storage. ` : ""}${NEW && c.g >= TREES ? (c.fert ? "Fertile trees count double toward a grove: 2 of them in a row along the river make one. " : "3 trees in a row along the river make a grove: +1 flow. ") : ""}${NEW && c.g === MEADOW ? "A meadow next to a grove adds +1 flow. " : ""}A stream running over it washes that away.${DEER && c.g === 1 && !nbrs(p).some(n => at(n).g >= TREES) ? " Deer may graze it: no trees next to it." : ""}${c.g >= TREES && WX && Object.values(WX).includes("fire") && !wet(p) ? " Dry: not touching water, so lightning can set it alight and fire spreads from it." : ""}`;
   if (c.beaver === 1) return "Beavers live here. Run your stream through the colony and grow trees next to it, and they dam a pond: +1 flow. Running beside it isn't enough.";
   if (c.beaver === 2) return "The beavers' pond. It adds +1 flow to your river.";
@@ -711,6 +742,7 @@ function actions(p) {
     out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:PLANT_COST, sub:`Store ${S.cap} → ${S.cap + (c.g === 0 && c.fert ? 2 : 1)} gal${d > 0 ? `. Grove: flow +${d}` : ""}${c.g === 0 && marshPreview(p, k => { k.g = 1 }).flow > 0 ? ". Marsh: flow +1" : ""}`,
       warn:m ? "A stream running here later washes it away" : "", run:() => plant(p)}) }
   if (c.pool && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.unshift({k:"collect", name:"Collect the rain pool", cost:0, sub:`+2 gal at once${STORE && S.water + 2 > S.cap ? ` (only ${Math.max(0, S.cap - S.water)} fit)` : ""}`, warn:"", run:() => collect(p)});
+  if (canRechannel(p)) { const d = downstream(p); out.push({k:"rechannel", name:"Rechannel from here", cost:0, costText:"All water", sub:`${d.length} tile${d.length > 1 ? "s" : ""} downstream dry up. Your river ends here`, warn:S.water ? `Costs all your water (${S.water} gal)` : "Costs all your water: you have none, so it's free now", run:() => rechannel(p)}) }
   if (alpSite(p)) out.push({k:"alpine", name:"Grow alpine trees", cost:PLANT_COST, sub:`Collects ${snowRate(c)} snow each water cycle${c.ro ? " (water side)" : ""}, up to 3. Melt it any time`, warn:"Instead of a meadow: alpine trees don't grow on", run:() => growAlpine(p)});
   if (c.alp && !c.river && S.phase === "play" && snowTotal()) { const n = snowTotal(); out.unshift({k:"melt", name:"Melt the snow", cost:0, sub:n ? `All your snow: +${n} gal now${STORE && S.water + n > S.cap ? ` (${S.water + n - S.cap} over storage: spend it this turn)` : ""}` : "No snow yet: it settles at each water cycle", warn:"", run:() => meltSnow()}) }
   if (MOSS && c.t === "rock" && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.push({k:"moss", name:"Grow moss", cost:1, sub:"Breaks the rock into soil you can plant", warn:"", run:() => moss(p)});
@@ -726,6 +758,7 @@ const ICON = {
   trees:'<svg viewBox="0 0 24 24"><path d="M12 3l6 9h-3.5l4 6H5.5l4-6H6z"/><path d="M12 18v3"/></svg>',
   collect:'<svg viewBox="0 0 24 24"><path d="M12 3c3.5 4.5 6 7.6 6 10.7a6 6 0 01-12 0C6 10.6 8.5 7.5 12 3z"/></svg>',
   alpine:'<svg viewBox="0 0 24 24"><path d="M12 2l-5 8h3l-4 7h12l-4-7h3z"/><path d="M12 17v5"/></svg>',
+  rechannel:'<svg viewBox="0 0 24 24"><path d="M4 20V10a6 6 0 016-6h8"/><path d="M14 1l4 3-4 3"/><path d="M4 14h5" stroke-dasharray="2 2"/></svg>',
   melt:'<svg viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></svg>',
   moss:'<svg viewBox="0 0 24 24"><path d="M4 18c2-6 7-10 16-12-1 8-6 13-13 13"/><path d="M4 21l7-8"/></svg>',
   trib:'<svg viewBox="0 0 24 24"><path d="M6 3v6c0 4 6 5 6 9v3"/><path d="M18 3v6c0 4-6 5-6 9"/></svg>',
@@ -741,7 +774,7 @@ function renderCard() {
   cardActs = S.phase === "pick" ? [{k:"src", name:"Place source here", cost:0, sub:`Your main river starts here: +${PLACE_FLOW} gal per water cycle`, warn:c.g ? `Covers the ${gName(c.g)}` : "", run:() => placeSrc(p0)}]
     : actions(sel).filter(a => a.k !== "stream"); // the stream moves only from its selected end
   el.innerHTML = `<div class="thead"><i class="swatch" style="background:${topColor(c)}"></i><div class="tname"><b>${tileName(c)}</b>${cardActs.length ? "" : `<small>${tileText(sel)}</small>`}</div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>` +
-    cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><i class="aico">${ICON[a.k === "plant" ? ["plant", "meadow", "trees"][at(sel).g] : a.k] || ""}</i><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.cost ? a.cost + " gal" : "Free"}</span></button>`).join("");
+    cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><i class="aico">${ICON[a.k === "plant" ? ["plant", "meadow", "trees"][at(sel).g] : a.k] || ""}</i><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.costText || (a.cost ? a.cost + " gal" : "Free")}</span></button>`).join("");
   el.hidden = false; placeCard();
 }
 function placeCard() {
@@ -1288,7 +1321,10 @@ function caveArch(cx, cy, c, t, h) { // a dark rock arch with a numbered tag; wa
     ctx.fillStyle = "#ffffff"; ctx.font = "800 10px Fredoka, Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(c.cave, x, y + .5); ctx.restore() } }
 function deco(p, c, o, t, h) {
   const {x: cx, y: cy} = o, sway = reduce ? 0 : Math.sin(t * 1.6 + h) * 1.2;
-  if (c.t === "cave") { caveArch(cx, cy, c, t, h); return }
+  if (c.t === "cave") { caveArch(cx, cy, c, t, h); if (c.dry) { ctx.globalAlpha = .55; ell(cx, cy - 2, 9, 7, "#cdb894"); ctx.globalAlpha = 1 } return }
+  if (c.t === "bed") { ell(cx, cy, 20, 9, "#b9a27a"); ell(cx - 1, cy - 1, 15, 6, "#d8c6a0"); const k = "rgba(110,85,50,.55)";
+    line([[cx - 12, cy - 2], [cx - 5, cy + 1], [cx + 2, cy - 2]], k, 1.4); line([[cx - 5, cy + 1], [cx - 4, cy + 5]], k, 1.2); line([[cx + 4, cy + 3], [cx + 11, cy], [cx + 14, cy + 3]], k, 1.4);
+    ell(cx + 7, cy - 4, 2.4, 1.6, "#9d978c"); ell(cx - 9, cy + 4, 2, 1.3, "#a9a296"); ell(cx + 1, cy + 6, 1.6, 1.1, "#8f897e"); return }
   if (c.river) return; // river tiles are drawn with the river (drawRivers)
   if (c.t === "ocean") { const w = reduce ? 0 : Math.sin(t * 2 + p[0] + p[1]) * 3; if (h % 3 === 0) line([[cx - 10 + w, cy - 2], [cx + 6 + w, cy - 2]], "rgba(255,255,255,.6)", 2);
     ctx.globalAlpha = .5 + .3 * Math.sin(t * 2 + h); line([[cx - 16, cy + 6], [cx - 8, cy + 3], [cx, cy + 6], [cx + 8, cy + 3]], "#ffffff", 1.8); ctx.globalAlpha = 1; return }
