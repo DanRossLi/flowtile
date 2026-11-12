@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · River mode</title>
+<title>Flow Tile · Single player</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Flow Tile">
@@ -48,7 +48,7 @@
 </head>
 <body>
 <main>
-  <h1>Flow <span>Tile</span> · River mode</h1>
+  <h1>Single <span>player</span></h1>
   <p class="sub">Dan's original maps, in order. No guidance: you choose where the river goes and what to grow.</p>
   <div class="bar" aria-hidden="true"><i id="fill"></i></div>
   <p class="count" id="count"></p>
@@ -91,7 +91,7 @@ document.getElementById("count").textContent = `${n} of ${MAPS.length} reached t
 document.getElementById("fill").style.width = (n / MAPS.length * 100) + "%";
 const go = document.getElementById("go");
 if (first < 0) { go.href = "../daily/"; go.innerHTML = "All done! Play the Daily island<small>A new island every day</small>" }
-else { go.href = `../${MAPS[first][0]}/`; go.innerHTML = `${n ? "Continue" : "Start River mode"}<small>Map ${MAPS[first][0]} · ${MAPS[first][2]}: ${MAPS[first][3]}</small>` }
+else { go.href = `../${MAPS[first][0]}/`; go.innerHTML = `${n ? "Continue" : "Start"}<small>Map ${MAPS[first][0]} · ${MAPS[first][2]}: ${MAPS[first][3]}</small>` }
 </script>
 </body>
 </html>

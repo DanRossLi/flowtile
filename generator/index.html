@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map generator</title>
+<title>Flow Tile · Custom island</title>
 <meta name="theme-color" content="#cfe3ea">
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -41,30 +41,39 @@
   .seedrow button{border:0;cursor:pointer;font-family:"Patrick Hand",cursive;font-size:16px;padding:6px 12px;border-radius:7px;color:#6b4f33;background:#efe3c4;box-shadow:inset 0 0 0 1.2px rgba(107,79,51,.55)}
   .note{font-family:"Patrick Hand",cursive;font-size:16px;color:#7a5c3c;margin:0 0 12px}
   .copied{min-height:1.3em}
+  /* Simple / Advanced settings (Dan, Nov 12) */
+  .lv{display:flex;gap:4px;padding:4px;margin:0 0 12px;border-radius:999px;background:rgba(255,255,255,.6);box-shadow:var(--soft)}
+  .lv button{flex:1;border:0;border-radius:999px;padding:9px;font:800 15px var(--font,inherit);color:var(--label,#5b7473);background:none;cursor:pointer}
+  .lv button[aria-selected="true"]{background:#fff;color:var(--ink,#1f3a3a);box-shadow:0 2px 6px rgba(40,70,80,.15)}
+  form[data-lv="simple"] .adv{display:none}
+  .seg[data-name="biome"] label{flex:1 1 30%}
 </style>
 <link rel="stylesheet" href="../paper.css">
 </head>
 <body>
 <main>
   <a class="back" href="../">← Home</a>
-  <h1>Map <span>generator</span></h1>
-  <p class="sub">Pick your options, then play the island or copy it as a map code.</p>
+  <h1>Custom <span>island</span></h1>
+  <p class="sub">Pick a few settings, or open Advanced for everything. Then play the island or share it.</p>
 
   <div class="prev"><canvas id="pv" width="1040" height="560" aria-label="Preview of the generated island"></canvas><span class="seed" id="seedTag"></span></div>
   <div class="row"><button class="go" id="play" type="button">Play this island</button></div>
   <div class="row"><button class="alt" id="reroll" type="button">New island</button><button class="alt" id="copy" type="button">Copy map code</button></div>
   <p class="note copied" id="msg" role="status"></p>
 
-  <form id="f">
+  <div class="lv" role="tablist" aria-label="Settings"><button type="button" role="tab" id="lvSimple" data-lv="simple">Simple</button><button type="button" role="tab" id="lvAdv" data-lv="adv">Advanced</button></div>
+  <form id="f" data-lv="simple">
     <fieldset><legend>Island</legend>
-      <div class="opt"><span>Seed</span><div class="seedrow"><input id="seed" name="seed" autocomplete="off" spellcheck="false" aria-label="Seed"><button type="button" id="dice" aria-label="Random seed">Random</button></div></div>
       <div class="opt"><span>Size</span><div class="seg" data-name="size"></div></div>
       <div class="opt"><span>Goal</span><div class="seg" data-name="mode"></div></div>
+      <div class="opt"><span>Biome</span><div class="seg" data-name="biome"></div></div>
+    </fieldset>
+    <fieldset class="adv"><legend>Setup</legend>
+      <div class="opt"><span>Seed</span><div class="seedrow"><input id="seed" name="seed" autocomplete="off" spellcheck="false" aria-label="Seed"><button type="button" id="dice" aria-label="Random seed">Random</button></div></div>
       <div class="opt"><span>Sources</span><div class="seg" data-name="src"></div></div>
       <div class="opt"><span>Storage</span><div class="seg" data-name="storage"></div></div>
     </fieldset>
-    <fieldset><legend>Terrain</legend>
-      <div class="opt"><span>Biome</span><div class="seg" data-name="biome"></div></div>
+    <fieldset class="adv"><legend>Terrain</legend>
       <div class="opt"><span>Mountains</span><div class="seg" data-name="B"></div></div>
       <div class="opt"><span>Rock</span><div class="seg" data-name="r"></div></div>
       <div class="opt"><span>Sand</span><div class="seg" data-name="s"></div></div>
@@ -78,7 +87,7 @@
       <div class="opt"><span>Beavers</span><div class="seg" data-name="v"></div></div>
       <div class="opt"><span>Caves</span><div class="seg" data-name="C"></div></div>
     </fieldset>
-    <fieldset><legend>Weather</legend>
+    <fieldset class="adv"><legend>Weather</legend>
       <div class="opt"><span>Wind</span><div class="seg" data-name="wind"></div></div>
       <div class="opt"><span>Weather</span><div class="seg" data-name="wx"></div></div>
     </fieldset>
@@ -113,6 +122,10 @@ const $ = id => document.getElementById(id);
 const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (_) {} };
 const load = k => { try { return localStorage.getItem(k) } catch (_) { return null } };
 
+// Simple shows size, goal and biome; Advanced adds the seed, sources, storage, every terrain and the weather.
+const setLv = lv => { $("f").dataset.lv = lv; for (const b of document.querySelectorAll(".lv button")) b.setAttribute("aria-selected", String(b.dataset.lv === lv)); store("ft-gen-level", lv) };
+for (const b of document.querySelectorAll(".lv button")) b.onclick = () => setLv(b.dataset.lv);
+setLv(load("ft-gen-level") === "adv" ? "adv" : "simple");
 // build the option buttons
 let saved = {}; try { saved = JSON.parse(load("ft-gen-opts") || "{}") || {} } catch (_) {}
 for (const seg of document.querySelectorAll(".seg")) { const n = seg.dataset.name, cur = OPTS[n].some(o => o[0] === saved[n]) ? saved[n] : DEF[n];

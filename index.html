@@ -7,85 +7,134 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="theme-color" content="#13222e">
+<meta name="theme-color" content="#cfe3ea">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<style>
-  :root{--sea:#2b68b0;--deep:#1f4f8c;--paper:#f4f1e8;--ink:#13222e;--gold:#ffd166;--gold-d:#d9a93c;--green:#7cc94c;--muted:#6c7b83;--blue:#2f9be8;--blue-d:#1d6aa6}
-  *{box-sizing:border-box}
-  body{margin:0;min-height:100dvh;background:radial-gradient(120% 80% at 50% 0%,#3a7cc4 0%,var(--sea) 45%,var(--deep) 100%);color:#fff;font-family:Nunito,system-ui,sans-serif}
-  main{max-width:560px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
-  h1{font-family:Fredoka,Nunito,sans-serif;font-size:30px;margin:6px 0 2px;text-shadow:0 3px 0 rgba(0,0,0,.25)}
-  h1 span{color:#8fdcff}
-  .sub{margin:0 0 14px;opacity:.9;font-weight:700}
-  .bar{height:12px;border-radius:999px;background:rgba(0,0,0,.22);overflow:hidden;margin:0 0 6px}
-  .bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:999px;transition:width .6s cubic-bezier(.3,1.2,.5,1)}
-  .count{font-weight:800;font-size:13px;opacity:.85;margin:0 0 14px}
-  a.go{display:block;text-align:center;text-decoration:none;font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:19px;color:#fff;background:var(--blue);border-radius:16px;padding:14px;box-shadow:0 5px 0 var(--blue-d);margin:0 0 18px}
-  a.go:active{transform:translateY(3px);box-shadow:0 2px 0 var(--blue-d)}
-  a.go small{display:block;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;opacity:.9}
-  ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-  ol a{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);background:var(--paper);border-radius:16px;padding:10px 12px;box-shadow:0 4px 0 #b9b19c}
-  ol a:active{transform:translateY(3px);box-shadow:0 1px 0 #b9b19c}
-  ol a:focus-visible,a.go:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
-  .n{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#e2ddd0;font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:16px;color:#4c5c65;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
-  .done .n{background:var(--green);color:#fff}
-  .next{box-shadow:0 4px 0 #b9b19c,0 0 0 3px var(--gold) !important}
-  .t{flex:1;min-width:0}
-  .t b{display:block;font-family:Fredoka,Nunito,sans-serif;font-size:17px;line-height:1.15}
-  .t small{display:block;color:var(--muted);font-weight:700;font-size:13px;line-height:1.3}
-  .tick{flex:none;width:22px;height:22px}
-  .tick path{fill:none;stroke:#3f8a4a;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
-  .skip{flex:none;font-style:normal;font-weight:800;font-size:12px;color:var(--muted)}
-  footer{margin-top:22px;font-size:13px;opacity:.85}
-  footer a{color:#fff}
-  @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
-  .modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}
-  .mode{display:flex;flex-direction:column;gap:4px;min-height:132px;text-decoration:none;color:var(--ink);background:var(--paper);border-radius:18px;padding:12px;box-shadow:0 5px 0 #b9b19c;position:relative}
-  .mode:active{transform:translateY(3px);box-shadow:0 2px 0 #b9b19c}
-  .mode:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
-  .mode i{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;margin-bottom:2px}
-  .mode i svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-  .mode b{font-family:Fredoka,Nunito,sans-serif;font-size:19px;line-height:1.1}
-  .mode small{color:var(--muted);font-weight:700;font-size:13px;line-height:1.3}
-  .mode em{margin-top:auto;font-style:normal;font-weight:800;font-size:12px;color:#3f5a68}
-  .mode.first{box-shadow:0 5px 0 #b9b19c,0 0 0 3px var(--gold)}
-  .mode .tag{position:absolute;top:10px;right:10px;font-style:normal;font-weight:800;font-size:11px;background:var(--gold);color:#3a2600;border-radius:999px;padding:2px 8px;margin:0}
-  .more{display:flex;flex-wrap:wrap;gap:8px}
-  .more a{color:#fff;font-weight:800;font-size:14px;background:rgba(0,0,0,.18);border-radius:999px;padding:8px 12px;text-decoration:none}
-  @media (max-width:340px){.modes{grid-template-columns:1fr}}
-  a.go[hidden]{display:none}
-</style>
 <link rel="stylesheet" href="paper.css">
+<style>
+  /* Home as a mobile dashboard (Dan, Nov 12): Tutorial on top, Single player with its stars, then New game. */
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100dvh}
+  main{max-width:520px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom))}
+  header{display:flex;align-items:center;gap:12px;margin:0 0 18px}
+  header .logo{flex:none;width:46px;height:46px;border-radius:14px;background:linear-gradient(180deg,#8cc2d2,#2f7fb8);display:grid;place-items:center;box-shadow:var(--soft)}
+  header .logo svg{width:26px;height:26px;fill:#fff}
+  h1{font-size:26px;margin:0;line-height:1.05}
+  .sub{margin:2px 0 0;font-size:14px}
+  h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--label);margin:22px 4px 8px}
+  .card{display:block;text-decoration:none;color:var(--ink);background:var(--glass);border-radius:22px;box-shadow:var(--soft);padding:14px 16px;position:relative}
+  a.card:active{transform:translateY(2px);box-shadow:0 2px 6px rgba(40,70,80,.2)}
+  a.card:focus-visible{outline:3px solid var(--gold-d);outline-offset:3px}
+  .ico{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:14px}
+  .ico svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+  .ttl{display:block;font-weight:800;font-size:18px;line-height:1.15}
+  .txt{display:block;color:var(--label);font-size:14px;line-height:1.3;margin-top:2px}
+  /* tutorial */
+  .tut{display:flex;align-items:center;gap:12px}
+  .grow{flex:1;min-width:0}
+  .pill{flex:none;font-weight:800;font-size:14px;color:#0f3a33;background:linear-gradient(180deg,var(--mint),var(--mint-d));border-radius:999px;padding:8px 14px;box-shadow:0 3px 0 var(--lip)}
+  .tut.done .pill{background:var(--paper-2);color:var(--label);box-shadow:none}
+  .tut.new{box-shadow:var(--soft),0 0 0 3px rgba(255,217,138,.95)}
+  .tag{position:absolute;top:-9px;left:16px;font-weight:800;font-size:11px;letter-spacing:.04em;background:#ffd98a;color:#5a3d06;border-radius:999px;padding:2px 9px}
+  /* single player */
+  .sp{padding:16px}
+  .sp .top{display:flex;align-items:center;gap:12px}
+  .stars{display:flex;align-items:baseline;gap:6px;margin:14px 0 8px}
+  .stars svg{width:26px;height:26px;align-self:center}
+  .stars svg path{fill:#ffd98a;stroke:var(--gold-d);stroke-width:1.4;stroke-linejoin:round}
+  .stars b{font-size:30px;line-height:1}
+  .stars span{color:var(--label);font-weight:500;font-size:15px}
+  .bar{height:10px;margin:0 0 6px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;transition:width .6s}
+  .meta{display:flex;justify-content:space-between;gap:8px;color:var(--label);font-size:13px;font-weight:500;margin:0 0 14px}
+  .sp .go{display:block;text-align:center;text-decoration:none;padding:13px 14px;font-size:18px}
+  .sp .go small{display:block;font-size:13px;margin-top:1px;opacity:.85}
+  .sp .all{display:block;text-align:center;margin:10px 0 0;font-weight:800;font-size:14px;color:var(--deep);text-decoration:none}
+  /* new game */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid .card{display:flex;flex-direction:column;gap:6px;min-height:150px;padding:14px}
+  .grid .card .txt{flex:1}
+  .grid .card em{font-style:normal;font-weight:800;font-size:12px;color:#3f5a68}
+  .grid .wide{grid-column:1/-1;flex-direction:row;align-items:center;min-height:0}
+  .chev{flex:none;width:18px;height:18px;fill:none;stroke:var(--label);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  @media (max-width:340px){.grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <main>
-  <h1>Flow <span>Tile</span></h1>
-  <p class="sub">Grow a river from its source to the sea.</p>
-  <!-- Home (LOU-265): River mode (Dan's original maps, free control) and Landscape mode (LOU-266) side by side.
-       Directed tutorial (LOU-281): a first-time visitor sees "New here?" above the modes; everyone else gets a Tutorial link below. -->
-  <a class="go" id="tut" href="tutorial/" hidden>New here? Start the tutorial<small>Two minutes, one step at a time</small></a>
-  <div class="modes">
-    <a class="mode" id="mRiver" href="river/"><i style="background:#2f9be8"><svg viewBox="0 0 24 24"><path d="M3 8c3-2 6-2 9 0s6 2 9 0M3 14c3-2 6-2 9 0s6 2 9 0"/></svg></i><b>River mode</b><small>The original maps in order. You choose where the river goes.</small><em id="tRiver"></em></a>
-    <a class="mode" id="mLand" href="landscape/"><i style="background:#c9893d"><svg viewBox="0 0 24 24"><path d="M3 19l6-9 4 5 3-4 5 8z"/><path d="M3 19h18"/></svg></i><b>Landscape</b><small>The river flows on its own. You shape the land to guide it.</small><em id="tLand"></em></a>
-    <a class="mode" href="daily/"><i style="background:#e2a41c"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></i><b>Daily island</b><small>A new island every day, the same for everyone.</small><em id="tDaily"></em></a>
-    <a class="mode" href="perfection/"><i style="background:#c56bd6"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></i><b>Perfection</b><small>Score as much as you can in 20 turns.</small><em id="tPerf"></em></a>
+  <header>
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.5S5 10.4 5 14.6a7 7 0 0014 0C19 10.4 12 2.5 12 2.5z"/></svg></span>
+    <div><h1>Flow Tile</h1><p class="sub">Grow a river from its source to the sea.</p></div>
+  </header>
+
+  <a class="card tut" id="tut" href="tutorial/">
+    <span class="ico" style="background:#5fae9c"><svg viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4z"/><path d="M8 9v5c0 1.5 2 3 4 3s4-1.5 4-3V9"/><path d="M20 7v6"/></svg></span>
+    <span class="grow"><span class="ttl">Tutorial</span><span class="txt" id="tutTxt">Learn to play in two minutes</span></span>
+    <span class="pill" id="tutPill">Start</span>
+  </a>
+
+
+  <div class="card sp" style="margin-top:14px">
+    <div class="top">
+      <span class="ico" style="background:#4a8fb8"><svg viewBox="0 0 24 24"><path d="M3 8c3-2 6-2 9 0s6 2 9 0M3 14c3-2 6-2 9 0s6 2 9 0"/></svg></span>
+      <span class="grow"><span class="ttl">Single player</span><span class="txt">One new idea per island. You choose where the river goes.</span></span>
+    </div>
+    <div class="stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg><b id="sNum">0</b><span id="sOf">of 66 stars</span></div>
+    <div class="bar"><i id="fill"></i></div>
+    <div class="meta"><span id="sMaps">0 of 22 islands</span><span id="sPct"></span></div>
+    <a class="go" id="spGo" href="1/">Start<small>Map 1 · Flat</small></a>
+    <a class="all" href="river/">All islands and stars</a>
   </div>
-  <div class="more"><a href="tutorial/" id="tutLink">Tutorial</a><a href="generator/">Map generator</a><a href="world/">All islands</a><a href="big/">Big map</a><a href="spring-hill/">Spring Hill</a></div>
+
+  <h2>New game</h2>
+  <div class="grid">
+    <a class="card" href="generator/">
+      <span class="ico" style="background:#5fae6c"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
+      <span class="ttl">Custom island</span><span class="txt">Pick size, goal and biome, or open Advanced for everything.</span><em>Simple or advanced</em>
+    </a>
+    <a class="card" href="perfection/">
+      <span class="ico" style="background:#c56bd6"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span>
+      <span class="ttl">Perfection</span><span class="txt">Score as much as you can in 20 turns.</span><em id="tPerf">No score yet</em>
+    </a>
+    <a class="card" href="daily/">
+      <span class="ico" style="background:#e2a41c"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>
+      <span class="ttl">Daily island</span><span class="txt">A new island every day, the same for everyone.</span><em id="tDaily">Not played today</em>
+    </a>
+    <a class="card" href="big/">
+      <span class="ico" style="background:#2f7fb8"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span>
+      <span class="ttl">Big map</span><span class="txt">An 18×18 island. Place your source anywhere.</span><em>A long game</em>
+    </a>
+    <a class="card wide" href="world/">
+      <span class="ico" style="background:#7fa6a1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></span>
+      <span class="grow"><span class="ttl">All islands</span><span class="txt">Every map in one place, including Spring Hill.</span></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </a>
+  </div>
 </main>
 <script>
 const get = k => { try { return localStorage.getItem(k) } catch (_) { return null } };
 const num = k => +get(k) || 0;
-const RIVER = ["map-1-flat","map-1a-sand-v2","map-3-lake","map-4-grass","map-4a-trees","map-5-desert","map-6-tributary","map-7-rock","map-8-grove","map-9-pollinators","map-10-mountains","map-11-forest","map-12-rain","map-15-harvest","map-16-wildlife","map-17-wildfire","map-18-fertile","map-19-marsh","map-20-alpine","map-21-caves","map-22-rechannel","map-23-flood"];
-const rDone = RIVER.filter(id => num("flowtile.stars." + id) > 0).length;
-document.getElementById("tRiver").textContent = `${rDone} of ${RIVER.length} maps · ${RIVER.reduce((s, id) => s + num("flowtile.stars." + id), 0)} stars`;
-const tutSeen = get("flowtile.tutorial"), tutRun = get("flowtile.run.v5.tutorial");
-if (!tutSeen && !rDone) document.getElementById("tut").hidden = false;
-if (tutRun && tutSeen !== "done") document.getElementById("tutLink").textContent = "Tutorial (continue)";
-const LAND = ["land-1-springs","land-2-green","land-3-nosand","land-sandbox"], lDone = LAND.filter(id => num("flowtile.stars." + id) > 0).length;
-document.getElementById("tLand").textContent = lDone ? `${lDone} of ${LAND.length} done` : "3 puzzles and a sandbox";
+// Single player is River mode (LOU-265): Dan's original maps in order, with their stars.
+const MAPS = [["1","map-1-flat","Flat"],["1a","map-1a-sand-v2","Sand"],["3","map-3-lake","Lake"],["4","map-4-grass","Grass"],["4a","map-4a-trees","Trees"],["5","map-5-desert","Desert"],
+  ["6","map-6-tributary","Tributary"],["7","map-7-rock","Rock"],["8","map-8-grove","Grove"],["9","map-9-pollinators","Shade"],["10","map-10-mountains","Mountains"],["11","map-11-forest","Forest"],
+  ["12","map-12-rain","Rain"],["15","map-15-harvest","Harvest"],["16","map-16-wildlife","Wildlife"],["17","map-17-wildfire","Wildfire"],["18","map-18-fertile","Fertile ground"],
+  ["19","map-19-marsh","Marsh"],["20","map-20-alpine","Alpine"],["21","map-21-caves","Caves"],["22","map-22-rechannel","Rechannel"],["23","map-23-flood","Flood"]];
+const got = MAPS.map(m => num("flowtile.stars." + m[1])), done = got.filter(s => s > 0).length, total = got.reduce((a, b) => a + b, 0), first = got.findIndex(s => !s), max = MAPS.length * 3;
+document.getElementById("sNum").textContent = total;
+document.getElementById("sOf").textContent = `of ${max} stars`;
+document.getElementById("sMaps").textContent = `${done} of ${MAPS.length} islands reached the sea`;
+document.getElementById("sPct").textContent = Math.round(total / max * 100) + "%";
+document.getElementById("fill").style.width = (total / max * 100) + "%";
+const go = document.getElementById("spGo");
+if (first < 0) { const low = got.findIndex(s => s < 3); go.href = low < 0 ? "river/" : `${MAPS[low][0]}/`; go.innerHTML = low < 0 ? "Every star found!<small>See all islands</small>" : `Find more stars<small>Map ${MAPS[low][0]} · ${MAPS[low][2]}</small>` }
+else { go.href = `${MAPS[first][0]}/`; go.innerHTML = `${done ? "Continue" : "Start"}<small>Map ${MAPS[first][0]} · ${MAPS[first][2]}</small>` }
+// Tutorial (LOU-281): first on the page; a first-time visitor sees it marked "New here?"
+const tut = get("flowtile.tutorial"), tutRun = get("flowtile.run.v5.tutorial"), T = document.getElementById("tut");
+if (tut === "done") { T.classList.add("done"); document.getElementById("tutTxt").textContent = "Done. Replay it any time."; document.getElementById("tutPill").textContent = "Replay" }
+else if (tutRun) { document.getElementById("tutTxt").textContent = "Pick up where you left off"; document.getElementById("tutPill").textContent = "Continue" }
+else if (!done) { T.classList.add("new"); T.insertAdjacentHTML("afterbegin", '<span class="tag">NEW HERE?</span>') }
+// New game
 const d = new Date(), day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, db = num("flowtile.best.daily-" + day);
 document.getElementById("tDaily").textContent = db ? `Today's best: ${db}` : "Not played today";
 const pb = num("flowtile.best.perfection-island"); document.getElementById("tPerf").textContent = pb ? `Best: ${pb} points` : "No score yet";
