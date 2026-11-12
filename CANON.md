@@ -125,6 +125,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Overnight plan** (Dan, Nov 11, before bed): work in this order without stopping: A4 polish pass against the canvas, generator follow-ups (biome presets, its own goal card, a New island button), then the Ideas Harvests (LOU-225) and Weather and seasons (LOU-222), each with a new map and no rival parts. The new catalog terrains (LOU-217) are **not** part of it.
 - **Open rules:** skip any rule a spec leaves open and list it for Dan instead of deciding it.
 - **Fallen log** (Dan, Nov 12: "don't worry about LOU-225, put that in the backlog"): LOU-225 stays in Backlog; don't build the fallen log. If it comes back, logs are placed in the map.
+- **Seasons** (Dan, Nov 12: "Backlog it too"): LOU-222 stays in Backlog; don't build seasons. Rain, drought, wind and flood stay as built.
 - **River maps on hexes:** adjust a map only where a playthrough shows its lesson no longer works or became trivial on hexes, and list every change.
 
 - **Landscape mode** (LOU-266): both a puzzle mode and a map builder (sandbox + puzzle levels, and a finished landscape copies as a map code for River mode). Terrain is paid for with **water**. The map **shows the river's path** for the next water cycle.
