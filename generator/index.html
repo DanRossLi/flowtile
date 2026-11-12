@@ -97,7 +97,7 @@ const OPTS = {
   B: AMT, r: AMT, s: AMT, L: AMT, F: AMT, g: AMT, o: AMT, M: AMT, f: AMT, p: AMT, v: AMT, C: [["0", "None"], ["1", "One pair"], ["2", "Two pairs"]],
   biome: [["custom", "Your mix"], ["meadow", "Meadow"], ["desert", "Desert"], ["alpine", "Alpine"], ["rain", "Rainforest"]],
   wind: [["off", "Off"], ["on", "On"]],
-  wx: [["off", "Off"], ["on", "Rain, drought & fire"]]
+  wx: [["off", "Off"], ["on", "Rain, drought, fire & flood"]]
 };
 // Biome presets set the terrain amounts (and a rule or two); changing any terrain by hand makes it "Your mix" again.
 const TERRAIN = ["B", "r", "s", "L", "F", "g", "o", "M", "f", "p", "v", "C"];
@@ -170,7 +170,7 @@ function generate(o) {
   if (o.wind === "on") map.wind = [[-1, 0], [0, -1], [0, 1]][ri(0, 2)];
   if (o.mode === "score") Object.assign(map, {mode:"perfection", turns:20, scoreStars:[Math.round(20 * W * H / 91), Math.round(30 * W * H / 91), Math.round(40 * W * H / 91)], spread:true, floodplain:true});
   else { const goal = Math.max(4, Math.ceil(W / 3) + 1 + (o.B === "3" || o.L === "3" ? 1 : 0)); Object.assign(map, {turnGoal:goal, bloomGoal:o.storage === "on" ? Math.max(3, Math.round(W * H / 18)) : 0}) }
-  if (o.wx === "on") { const kinds = ["rain", "drought", "fire", "rain"], weather = {}, ts = new Set(), last = o.mode === "score" ? 18 : 10;
+  if (o.wx === "on") { const kinds = ["rain", "drought", "fire", "flood"], weather = {}, ts = new Set(), last = o.mode === "score" ? 18 : 10;
     while (ts.size < 3) ts.add(ri(3, last)); for (const t of ts) weather[t] = kinds[ri(0, 3)]; Object.assign(map, {cycle:true, weather}) }
   return map;
 }

@@ -576,8 +576,21 @@ function fireTurn() { const notes = []; let burnt = 0, lost = 0;
   return notes.join(". ") }
 const bolts = [];
 if (WX && Object.values(WX).includes("fire")) turnHooks.push(fireTurn);
-// ---------- living spread: grass beside the river greens a bare bank tile next to it; meadows make it certain; birds carry grove seeds
+// ---------- flood (LOU-222, weather "flood"): the river overtops its banks and washes away one grass tile beside it.
+// Only grass (a meadow or trees holds), and a marsh touching the grass soaks the flood up. The tile nearest your river's end goes.
+const floodSafe = p => nbrs(p).some(n => at(n).t === "marsh" && !at(n).river);
+const floodable = p => { const c = at(p); return c.g === 1 && !c.river && !c.wild && !!bank(p) };
+function floodWash() { if (!WX || WX[S.turn] !== "flood") return "";
+  const all = S.tiles.flatMap((r, y) => r.map((_, x) => [x, y])).filter(floodable); rains.push({p:S.head, t0:now()});
+  if (!all.length) return "Flood: the river overtopped its banks, but there was no grass beside it to wash away";
+  const open = all.filter(q => !floodSafe(q)).sort((a, b) => hexDist(a, S.head) - hexDist(b, S.head) || a[1] - b[1] || a[0] - b[0]);
+  if (!open.length) return "Flood: the river overtopped its banks, and the marsh soaked it up: no grass was lost";
+  const q = open[0], c = at(q), lose = stor(c); c.g = 0; c.bloom = false; capAdd(c.pr, -lose);
+  const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; anim.set("g:" + q, now()); float(q, `−${lose} storage`, "#ffb27a"); recombo(); bump("cWater");
+  return `Flood: the river overtopped its banks and washed away a grass tile${lose ? `: storage down to ${S.cap} gal` : ""}${sp ? `, ${sp} gal spilled` : ""}. Meadows and trees hold, and a marsh next to grass soaks the flood up` }
 const bank = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0 && at(n).t !== "ocean");
+if (WX && Object.values(WX).includes("flood")) turnHooks.push(floodWash);
+// ---------- living spread: grass beside the river greens a bare bank tile next to it; meadows make it certain; birds carry grove seeds
 function greenable(p) { const c = at(p); return c.t === "bare" && !c.river && !c.g && !c.rs && !c.ro && !c.pool && !c.beaver && !!bank(p) && !salty(p) }
 // Salt: land next to the sea doesn't turn green (planting, spread, sand or lakes) while the sea's salt is in it.
 const salty = p => !!M.salt && nbrs(p).some(n => at(n).t === "ocean");
@@ -919,7 +932,7 @@ function perfStars(t) { const st = M.scoreStars || [20, 30, 40]; return st.filte
 function skyNext() {
   const ev = [];
   for (const c of S.clouds || []) ev.push({turn:c.turn, kind:"cloud", text:`☁ +${c.gal}`, long:`A cloud with ${c.gal} gal rains back on turn ${c.turn}`});
-  if (WX) for (const [k, v] of Object.entries(WX)) if (+k > S.turn) ev.push({turn:+k, kind:v, text:`${{rain:"Rain", drought:"Dry", fire:"Storm"}[v] || v}`, long:`${{rain:"Rainstorm: +2 gal", drought:"Drought: −1 flow for 2 turns", fire:"Lightning: dry trees catch fire"}[v] || v} on turn ${k}`});
+  if (WX) for (const [k, v] of Object.entries(WX)) if (+k > S.turn) ev.push({turn:+k, kind:v, text:`${{rain:"Rain", drought:"Dry", fire:"Storm", flood:"Flood"}[v] || v}`, long:`${{rain:"Rainstorm: +2 gal", drought:"Drought: −1 flow for 2 turns", fire:"Lightning: dry trees catch fire", flood:"Flood: the river washes away a grass tile beside it (meadows, trees and marsh-guarded grass hold)"}[v] || v} on turn ${k}`});
   if (S.dry > 0) ev.push({turn:S.turn, kind:"drought", text:"Drought", long:"Drought: −1 flow next turn"});
   ev.sort((a, b) => a.turn - b.turn);
   return ev[0] || {kind:"", text:"Clear", long:"Clear skies ahead"};
