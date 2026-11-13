@@ -126,16 +126,18 @@ document.body.innerHTML = `
     <button type="button" class="seaptr" id="seaptr" hidden aria-label="Show the sea"><i id="seaArrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></i><svg class="spw" viewBox="0 0 30 20" aria-hidden="true"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg><b>Sea</b><span id="seaDist"></span></button>
     <div class="gpop" id="gpop" role="status" hidden></div>
     <div class="banner" id="banner" aria-hidden="true" hidden><b id="bTurn"></b><small id="bSub"></small></div>
-    <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
-      <div class="stars" id="wStars" role="img"></div>
-      <div class="ribbon"><h2 id="winTitle">You reached the sea!</h2></div>
-      <div class="wsub">${M.label}</div>
-      <ul id="wGoals"></ul>
-      <div class="row" id="wRow">
-        <button id="again">Play again</button>
-        ${M.share ? `<button class="end" id="share">Share score</button>` : M.next ? `<a class="btn end" id="next" href="${M.next}">${M.nextLabel || "Next map"}</a>` : ""}
+    <div class="lvdone" id="win" hidden>
+      <div class="dstars" id="wStars" role="img"></div>
+      <div class="dsheet" role="dialog" aria-labelledby="winTitle">
+        <i class="mgrip" aria-hidden="true"></i>
+        <div class="dname">${M.label}</div>
+        <h2 id="winTitle">You reached the sea</h2>
+        <div class="dscore" id="wScore" hidden></div>
+        <ul id="wGoals"></ul>
+        ${M.share ? `<button type="button" class="dnext" id="share"><b>Share score</b><small id="nextS"></small></button>` : M.next ? `<a class="dnext" id="next" href="${M.next}"><b id="nextT">${M.nextLabel || "Next map"}</b><small id="nextS"></small></a>` : `<button type="button" class="dnext" id="again2"><b>Play again</b></button>`}
+        <div class="dlinks"><button type="button" id="again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 102.600-5.900"/><path d="M4 4v5h5"/></svg><span id="againT">Replay</span></button><a href="${ROOT}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>Home</a></div>
       </div>
-    </div></div>
+    </div>
   </div>
   <div class="actions" id="actions">
     <button type="button" id="menuBtn" class="bbtn" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
@@ -161,7 +163,6 @@ document.body.innerHTML = `
   <div id="guide"></div>
   <form method="dialog"><button class="end">Got it</button></form>
 </dialog>`;
-if (!M.next && !M.share) document.getElementById("wRow").classList.add("one");
 const $ = id => document.getElementById(id);
 const tx = (id, v) => { const e = $(id); if (e) e.textContent = v };
 
@@ -174,18 +175,18 @@ let S, history = [], prevW = 0;
 const cnt = f => S.tiles.flat().filter(f).length;
 const STAR_DEFS = {
   sea:{aim:() => "Reach the <b>sea</b>", chip:() => "To the sea", ok:() => S.phase === "won", win:() => `Reached the sea · turn ${S.turn}`},
-  byTurn:{aim:s => `Arrive by <b>turn ${s.n}</b>`, chip:s => S.turn > s.n ? `Missed turn ${s.n}` : S.phase === "play" && S.turn === s.n ? "Last turn" : `By turn ${s.n}`, ok:s => S.turn <= s.n, hold:true, win:s => `Turn ${S.turn} (goal: by turn ${s.n})`},
-  noSpill:{aim:() => "<b>Never spill</b> water", chip:() => S.spilled ? "Spilled" : "No spill", ok:() => !S.spilled, hold:true},
+  byTurn:{aim:s => `Arrive by <b>turn ${s.n}</b>`, chip:s => `By turn ${s.n}${S.phase === "play" && S.turn <= s.n ? ` (turn ${S.turn})` : ""}`, short:s => `By turn ${s.n}`, ok:s => S.turn <= s.n, hold:true, win:s => `Turn ${S.turn} (goal: by turn ${s.n})`},
+  noSpill:{aim:() => "<b>Never spill</b> water", chip:() => "No spills", ok:() => !S.spilled, hold:true},
   flow:{aim:s => `Finish with <b>flow ${s.n}</b> or more`, chip:s => `Flow ${S.income}/${s.n}`, ok:s => S.income >= s.n, win:s => `Flow ${S.income} (goal: ${s.n} or more)`},
   storage:{aim:s => `Finish with <b>storage ${s.n}</b> or more`, chip:s => `Storage ${S.cap}/${s.n}`, ok:s => S.cap >= s.n, win:s => `Storage ${S.cap} (goal: ${s.n} or more)`},
-  groves:{aim:s => s.n > 1 ? `Grow <b>${s.n} groves</b>` : "Grow a <b>grove</b>", chip:s => s.n > 1 ? `Groves ${Math.min(s.n, combos().length)}/${s.n}` : "Grove", ok:s => combos().length >= s.n},
+  groves:{aim:s => s.n > 1 ? `Grow <b>${s.n} groves</b>` : "Grow a <b>grove</b>", chip:s => s.n > 1 ? `Groves ${Math.min(s.n, combos().length)}/${s.n}` : combos().length ? "Grove" : `Grove ${groveBest()}/3`, short:s => s.n > 1 ? `Groves ${Math.min(s.n, combos().length)}/${s.n}` : "Grove", ok:s => combos().length >= s.n},
   groveFertile:{aim:() => "Grow a grove on <b>fertile ground</b>", chip:() => "Fertile grove", ok:() => combos().some(k => k.tiles.some(q => at(q).fert))},
   groveWild:{aim:() => "Make a grove with <b>old forest</b>", chip:() => "Forest grove", ok:() => combos().some(k => k.tiles.some(q => at(q).wild))},
   lake:{aim:s => s.n > 1 ? `Fill <b>${s.n} lakes</b>` : "Fill the <b>lake</b>", chip:s => s.n > 1 ? `Lakes ${Math.min(s.n, S.lakes.filter(L => L.filled).length)}/${s.n}` : "Lake", ok:s => S.lakes.filter(L => L.filled).length >= s.n},
   springs:{aim:s => s.n > 1 ? `Reach <b>${s.n} springs</b>` : "Reach the <b>spring</b>", chip:s => s.n > 1 ? `Springs ${Math.min(s.n, cnt(c => c.t === "spring" && c.river))}/${s.n}` : "Spring", ok:s => cnt(c => c.t === "spring" && c.river) >= s.n},
   pools:{aim:s => s.n > 1 ? `Reach <b>${s.n === 2 ? "both" : s.n} mountain pools</b>` : "Reach the mountain <b>pool</b>", chip:s => s.n > 1 ? `Pools ${Math.min(s.n, cnt(c => c.ro === 2))}/${s.n}` : "Pool", ok:s => cnt(c => c.ro === 2) >= s.n},
-  noForest:{aim:() => "Wash away <b>no forest</b>", chip:() => S.cutForest ? "Forest cut" : "Keep the forest", ok:() => !S.cutForest, hold:true},
-  noDrain:{aim:() => "Drain <b>no marsh</b>", chip:() => S.drained ? "Marsh drained" : "Keep the marsh", ok:() => !S.drained, hold:true},
+  noForest:{aim:() => "Wash away <b>no forest</b>", chip:() => "Keep the forest", short:() => "Keep forest", ok:() => !S.cutForest, hold:true},
+  noDrain:{aim:() => "Drain <b>no marsh</b>", chip:() => "Keep the marsh", short:() => "Keep marsh", ok:() => !S.drained, hold:true},
   marshFlow:{aim:() => "Get a marsh's <b>+1 flow</b>", chip:() => "Marsh flow", ok:() => ORDER.some(p => at(p).t === "marsh" && marshBy(p) && marshGreen(p))},
   cave:{aim:() => "Use a <b>cave</b>", chip:() => "Cave", ok:() => cnt(c => c.t === "cave" && c.river) > 0},
   nwc:{aim:() => "Use <b>Next water cycle</b>", chip:() => "Next water cycle", ok:() => S.turn >= 2},
@@ -194,6 +195,27 @@ const STAR_DEFS = {
   noSand:{aim:() => "Never cross <b>sand</b>", chip:() => "No sand", ok:() => bloomCount() >= BLOOM_GOAL, hold:true, win:() => "Never crossed sand"},
 };
 const STARS = PERF ? [] : (M.stars || [{type:"sea"}, M.noSand ? {type:"noSand"} : {type:"bloom", n:BLOOM_GOAL}, {type:"byTurn", n:TURN_GOAL}]).map(s => ({n:1, ...s})).filter(s => STAR_DEFS[s.type]);
+// What each star says on the level-complete sheet: [title, reason] when earned, then when missed (LOU-287).
+const cnt2 = f => S.tiles.flat().filter(f).length, lakesFull = () => S.lakes.filter(L => L.filled).length;
+const STAR_END = {
+  sea:[() => ["Reached the sea", `Turn ${S.turn}`]],
+  byTurn:[s => [`By turn ${s.n}`, `Arrived on turn ${S.turn}`], s => [`By turn ${s.n}`, `Arrived turn ${S.turn}, needed ${s.n}`]],
+  noSpill:[() => ["Never spilled", "Every gallon was used or stored"], () => ["Never spill", `${S.spill1 || S.spilled} gal spilled on turn ${S.spillT || S.turn}`]],
+  flow:[s => [`Flow ${S.income}`, `Goal: ${s.n} or more`], s => [`Finish with flow ${s.n} or more`, `Flow was ${S.income} at the end`]],
+  storage:[s => [`Storage ${S.cap}`, `Goal: ${s.n} or more`], s => [`Finish with storage ${s.n} or more`, `Storage was ${S.cap} at the end`]],
+  groves:[s => [s.n > 1 ? `Grew ${s.n} groves` : "Grew a grove", "3 trees beside your river: +1 flow"], s => [s.n > 1 ? `Grow ${s.n} groves` : "Grow a grove", s.n > 1 ? `${combos().length} of ${s.n} groves` : `${groveBest()} of 3 touching trees`]],
+  groveFertile:[() => ["Grove on fertile ground", "Trees on fertile ground count double"], () => ["Grow a grove on fertile ground", "No grove touched fertile ground"]],
+  groveWild:[() => ["Grove with old forest", "Old forest beside your river counts"], () => ["Make a grove with old forest", "No grove used old forest"]],
+  lake:[s => [s.n > 1 ? `Filled ${s.n} lakes` : "Filled the lake", "A full lake lets your river leave from any side"], s => [s.n > 1 ? `Fill ${s.n} lakes` : "Fill the lake", s.n > 1 ? `${lakesFull()} of ${s.n} lakes filled` : "The lake stayed empty"]],
+  springs:[s => [s.n > 1 ? `Reached ${s.n} springs` : "Reached the spring", s.n > 1 ? "+1 flow each" : "+1 flow"], s => [s.n > 1 ? `Reach ${s.n} springs` : "Reach the spring", s.n > 1 ? `${cnt2(c => c.t === "spring" && c.river)} of ${s.n} springs` : "Your river missed the spring"]],
+  pools:[s => [s.n > 1 ? `Reached ${s.n === 2 ? "both" : s.n} mountain pools` : "Reached the mountain pool", s.n > 1 ? "+1 flow each" : "+1 flow"], s => [s.n > 1 ? `Reach ${s.n === 2 ? "both" : s.n} mountain pools` : "Reach the mountain pool", s.n > 1 ? `${cnt2(c => c.ro === 2)} of ${s.n} pools` : "Your river missed the pool"]],
+  noForest:[() => ["Washed away no forest", "The old forest still stands"], () => ["Wash away no forest", "Your river ran through old forest"]],
+  noDrain:[() => ["Drained no marsh", "Every marsh still holds water"], () => ["Drain no marsh", "Your river ran through a marsh"]],
+  marshFlow:[() => ["A marsh's +1 flow", "Green on two opposite sides"], () => ["Get a marsh's +1 flow", "No marsh had green on two opposite sides"]],
+  cave:[() => ["Used a cave", "In one, out of the other"], () => ["Use a cave", "Your river went the long way"]],
+  nwc:[() => ["Used Next water cycle", "Your flow refilled your water"], () => ["Use Next water cycle", "You finished on turn 1"]],
+};
+const starEnd = (s, ok) => { const e = STAR_END[s.type], f = e && (ok ? e[0] : e[1] || e[0]); try { if (f) return f(s) } catch (_) {} const d = STAR_DEFS[s.type]; return [stripTags(starAim(s)), ok && d.win ? d.win(s) : ""] };
 const starOk = s => { try { return !!STAR_DEFS[s.type].ok(s) } catch (_) { return false } };
 const starAim = s => STAR_DEFS[s.type].aim(s);
 // got: done. live: true so far (a "hold" goal). miss: broken. "": still open.
@@ -325,6 +347,11 @@ const groveTile = c => !c.river && c.g >= TREES && c.t === "bare";
 const byRiver = p => nbrs(p).find(n => at(n).river && at(n).rid >= 0);
 // Groves on hexes (Dan, Nov 11): every connected patch of trees that all touch the river, joined through any of the six
 // hex sides (no straight line needed). links are the touching pairs, for drawing the grove's thread.
+function groveBest() { if (!S.rivers.length) return 0; const good = q => inside(...q) && groveTile(at(q)) && !!byRiver(q), seen = new Set(); let best = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (seen.has(x + "," + y) || !good([x, y])) continue; const run = [[x, y]]; seen.add(x + "," + y);
+    for (let i = 0; i < run.length; i++) for (const n of nbrs(run[i])) if (!seen.has(n + "") && good(n)) { seen.add(n + ""); run.push(n) }
+    best = Math.max(best, run.reduce((n, q) => n + (at(q).fert ? 2 : 1), 0)) }
+  return Math.min(GROVE, best) }
 function combos() {
   const out = []; if (!NEW || !S.rivers.length) return out;
   const good = q => inside(...q) && groveTile(at(q)) && !!byRiver(q), seen = new Set();
@@ -506,7 +533,7 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   const f = forecast(), notes = []; S.turn++; S.clouds ||= [];
   if (S.dry > 0) S.dry--; if (f.wx === "drought") S.dry = 1;
   S.water += f.gain; bump("cWater"); wave = now(); if (f.gain > 0 && !quiet) { const j = $("cWater"); j.classList.remove("fill"); void j.offsetWidth; j.classList.add("fill") } // the jar refills with a teal pour
-  const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; if (sp) S.spilled = (S.spilled || 0) + sp;
+  const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; if (sp) { if (!S.spilled) { S.spillT = S.turn - 1; S.spill1 = sp } S.spilled = (S.spilled || 0) + sp } // the first spill is what the level-complete sheet names
   const src = S.rivers[0] && S.rivers[0].src; if (src) float(src, `+${f.gain - sp} gal`, "#bfe4ff");
   if (f.wx === "rain") { notes.push("Rainstorm: +2 gal"); sky = {kind:"rain", t0:now()} }
   if (f.dry) { notes.push(`Drought: flow −1 ${S.dry ? "this turn and next" : "this turn"}`); sky = {kind:"drought", t0:now()} }
@@ -637,7 +664,34 @@ const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("No undos left. Restart from the menu.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0, hu = S.hints || 0; closeCard(); hintOff(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; S.hints = hu; anim.clear(); fx.length = 0; say("Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { closeCard(); hintOff(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
+function restart() { closeCard(); hintOff(); hsel = false; padB = 0; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
+
+// ---------- Level complete (LOU-287, design board 8). Reaching the sea locks input and the camera pulls back to the whole island
+// (about 1s). Three big stars sit over the island, the middle one bigger; the result sheet slides up from the bottom with one
+// row per star (the goal, a reason, a teal check when earned). The stars fill one at a time, 0.35s apart. Next level is the
+// one big button, with the next level's name and new rule on its second line. Reduced motion: no pull-back, stars together.
+let winUp = false; const SP = "M12 2.6l2.9 5.9 6.5.9-4.700 4.600 1.100 6.500L12 17.400l-5.800 3.100 1.100-6.500L2.600 9.400l6.500-.9z";
+const starSvg = on => `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="so" d="${SP}"/>${on ? `<path class="sg" d="${SP}"/>` : ""}</svg>`;
+if (/^c2-\d+$/.test(M.id) && !window.LEVELS) { try { const el = document.createElement("script"); el.src = ROOT + "levels.js"; document.head.appendChild(el) } catch (_) {} } // the campaign's list: the next level's name for the teaser
+function winSheet() { const el = $("win"), t0 = reduce ? 0 : 1.05, gap = reduce ? 0 : .35; closeCard(); hsel = false; hintOff(); try { localStorage.removeItem(GUIDE_KEY) } catch (_) {}
+  let rows, n, title = "You reached the sea", scoreLine = "";
+  if (PERF) { const sc = score(), st = M.scoreStars || [20, 30, 40], prev = getNum(bestKey); n = perfStars(sc.total); if (sc.total > prev) setNum(bestKey, sc.total);
+    title = sc.sea ? "You reached the sea" : "Island scored"; scoreLine = `<b>${sc.total} point${sc.total === 1 ? "" : "s"}</b>${sc.total > prev && prev ? ` · New best (was ${prev})` : sc.total > prev ? " · New best" : ` · Best ${prev}`}`;
+    rows = st.map(x => [sc.total >= x, `${x} points`, sc.total >= x ? `You scored ${sc.total}` : `${x - sc.total} more to go`]) }
+  else { rows = STARS.map(s => { const ok = starOk(s); return [ok, ...starEnd(s, ok)] }); n = rows.filter(r => r[0]).length }
+  if (n > getNum(starKey)) setNum(starKey, n);
+  tx("winTitle", title); const ws = $("wScore"); ws.hidden = !scoreLine; ws.innerHTML = scoreLine;
+  $("wStars").dataset.n = n; $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
+  $("wStars").innerHTML = rows.slice(0, 3).map((r, i) => `<span class="dst s${i}${r[0] ? " on" : ""}" style="--d:${(t0 + .4 + i * gap).toFixed(2)}s">${starSvg(r[0])}</span>`).join("");
+  $("wGoals").innerHTML = rows.map((r, i) => `<li class="${r[0] ? "got" : "missed"}" style="--d:${(t0 + .4 + i * gap).toFixed(2)}s"><i class="rst">${starSvg(r[0])}</i><div><b>${r[1]}</b><small>${r[2] || ""}</small></div>${r[0] ? CHECK : ""}</li>`).join("")
+    + (M.learned ? M.learned.map(t => `<li class="learn"><span>${t}</span></li>`).join("") : "");
+  tx("againT", n < 3 ? "Replay for 3 stars" : "Replay");
+  // the big button: the next level with its name and new rule; on the last level, the level list with the star total
+  const m = /^c2-(\d+)$/.exec(M.id), L = window.LEVELS;
+  if (m && $("next")) { const k = +m[1], nx = L && L[k]; tx("nextT", nx ? "Next level" : "Campaign complete");
+    tx("nextS", nx ? `Level ${nx[0]} · ${nx[1]}${/^New: /.test(nx[2]) ? " · " + nx[2] : ""}` : L && window.levelStars ? `${L.reduce((a, l) => a + window.levelStars(l[0]), 0)} of ${L.length * 3} stars` : "") }
+  el.style.setProperty("--t0", t0 + "s"); el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in");
+  if (!reduce && view.z !== null && lay.w) { padB = 420; tgt = {x:B.x + B.w / 2, y:B.y + B.h / 2 + 170 / lay.fit, z:1, n:0} } } // pull back to the whole island, sitting above the sheet
 
 // ---------- Hints (LOU-291): campaign levels only. Each level's 3-star solution is saved in solutions.js by the level solver
 // (tools/solve.mjs). While you're still on that solution's path, a hint shows its next step: a ghost ring on the next tile, a
@@ -734,24 +788,7 @@ function sync() {
   { const hb = $("hintBtn"), on = hintShown(); if (hb.hidden === on) hb.hidden = !on; tx("hintN", hintsLeft()); hb.classList.toggle("none", !hintsLeft()) } // the lightbulb: campaign levels, not while a guided step is locked
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length || (hard() && (S.undos || 0) >= UNDOS);
   { const ready = S.phase === "play" && nothingLeft(); $("end").classList.toggle("ready", ready); $("end").classList.toggle("muted", S.phase === "play" && !ready) }
-  const won = S.phase === "won"; $("win").hidden = !won; $("bottom").hidden = won; if (!won) $("wStars").dataset.n = "";
-  if (won && PERF) {
-    const sc = score(), n = perfStars(sc.total), prevBest = getNum(bestKey); if (sc.total > prevBest) setNum(bestKey, sc.total); if (n > getNum(starKey)) setNum(starKey, n);
-    const pts = `${sc.total} point${sc.total === 1 ? "" : "s"}`; $("winTitle").textContent = sc.sea ? `You reached the sea! ${pts}` : `Island scored: ${pts}`;
-    const BIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/><path class="glint" d="M12 2.5l2.9 6 6.6.8L12 12z"/></svg>';
-    if ($("wStars").dataset.n !== String(n)) { $("wStars").dataset.n = n; $("wStars").innerHTML = [0, 1, 2].map(i => `<span class="st ${i < n ? "on" : ""} s${i}">${BIG}</span>`).join("") }
-    $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
-    const rows = [["River tiles", sc.river], ["Green tiles", sc.green], ["Groves", sc.combos], ["Fish", sc.fish], ["Full lakes", sc.lakes], ["Reached the sea", sc.sea]].filter(r => r[1]);
-    $("wGoals").innerHTML = rows.map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>+${v}</b></li>`).join("") + `<li class="g3 extra"><i></i><span>${sc.total > prevBest && prevBest ? "New best! Before" : "Best score"}</span><b>${sc.total > prevBest && prevBest ? prevBest : Math.max(prevBest, sc.total)}</b></li>`;
-  } else if (won) {
-    const goals = STARS.map(s => [starOk(s), (STAR_DEFS[s.type].win || (x => stripTags(starAim(x))))(s)]); try { localStorage.removeItem(GUIDE_KEY) } catch (_) {}
-    const n = goals.filter(g => g[0]).length; if (n > getNum(starKey)) setNum(starKey, n);
-    const BIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/><path class="glint" d="M12 2.5l2.9 6 6.6.8L12 12z"/></svg>';
-    if (!$("wStars").dataset.n || $("wStars").dataset.n !== String(n)) { $("wStars").dataset.n = n; $("wStars").innerHTML = [0, 1, 2].map(i => `<span class="st ${i < n ? "on" : ""} s${i}">${BIG}</span>`).join("") }
-    $("wStars").setAttribute("aria-label", `${n} of 3 stars`);
-    const trees = S.tiles.flat().filter(c => c.g >= TREES && !c.wild).length;
-    $("wGoals").innerHTML = goals.map(([ok, t], i) => `<li class="${ok ? "got" : ""} g${i}"><i></i><span>${t}</span><b>${ok ? "★" : "☆"}</b></li>`).join("") + (M.learned ? M.learned.map(t => `<li class="learn"><span>${t}</span></li>`).join("") : trees ? `<li class="g3 extra"><i></i><span>Trees planted</span><b>${trees}</b></li>` : "");
-  }
+  const won = S.phase === "won"; $("bottom").hidden = won; if (won !== winUp) { winUp = won; $("app").classList.toggle("won", won); if (won) winSheet(); else { $("win").hidden = true; $("wStars").dataset.n = "" } }
   save(); resize();
   if (sel) { if (S.phase === "play" || (S.phase === "pick" && placeable(sel))) renderCard(); else closeCard() } else if (info) renderInfo();
   draw();
@@ -1164,10 +1201,17 @@ function skyNext() {
 }
 // The three star goals stay on screen while you play.
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
+let chipKey = null, chipWas = [];
+const CHECK = '<svg class="gck" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.500l4.500 4.500L19 7"/></svg>';
 function goals() {
   if (PERF) { const sc = score().total, best = getNum(bestKey), st = M.scoreStars || [20, 30, 40], nx = st.find(x => sc < x);
     $("goals").innerHTML = [`<span class="goal ${nx ? "live" : "got"}">${STAR}Score ${sc}${nx ? ` · next star at ${nx}` : ""}</span>`, best ? `<span class="goal">Best ${best}</span>` : ""].join(""); return }
-  $("goals").innerHTML = STARS.map((s, i) => s.type === "bloom" && !s.n ? "" : `<span class="goal ${starState(s)}" data-i="${i}"${["bloom", "groves"].includes(s.type) ? ' id="cBloom"' : ""}>${STAR}${STAR_DEFS[s.type].chip(s)}</span>`).join("");
+  const list = STARS.map((s, i) => s.type === "bloom" && !s.n ? null : {i, s, st:starState(s)}).filter(Boolean), text = (s, short) => { const d = STAR_DEFS[s.type]; return short && d.short ? d.short(s) : d.chip(s) };
+  const key = list.map(c => c.st + text(c.s)).join("|"); if (key === chipKey) return; chipKey = key; const el = $("goals");
+  const html = short => list.map(({i, s, st}) => `<span class="goal ${st}" data-i="${i}"${["bloom", "groves"].includes(s.type) ? ' id="cBloom"' : ""}>${st === "live" ? CHECK : STAR}<span>${text(s, short)}</span></span>`).join("");
+  el.innerHTML = html(false); if (el.scrollWidth > el.clientWidth + 1) el.innerHTML = html(true); // one line at 390px: shorten the labels before wrapping
+  for (const {i, st} of list) { const was = chipWas[i]; chipWas[i] = st; if (was === undefined || was === st || reduce) continue; const c = el.querySelector(`[data-i="${i}"]`); if (!c) continue;
+    if (st === "got") c.classList.add("earn"); else if (st === "miss") c.classList.add("lose") } // a short pulse and sparkle when earned (0.4s); a missed goal greys with a thin strike
 }
 
 // ---------- persistence: keep the current run across app close/reopen
@@ -2037,7 +2081,7 @@ $("tcard").addEventListener("click", e => {
   if (e.target.closest("#tclose")) { closeCard(); return }
   const rb = e.target.closest("button[data-r]"); if (rb && !rb.disabled && S.phase === "play") { const i = +rb.dataset.r; if (i !== S.active) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } return }
 });
-$("end").onclick = () => tutGate("end") && endTurn(); $("undo").onclick = () => tutGate("undo") && undo(); $("again").onclick = restart;
+$("end").onclick = () => tutGate("end") && endTurn(); $("undo").onclick = () => tutGate("undo") && undo(); $("again").onclick = restart; if ($("again2")) $("again2").onclick = restart;
 $("stUndo").onclick = () => undo(); $("stRestart").onclick = () => restart(); $("seaKeep").onclick = () => seaDone(false); $("seaFin").onclick = () => seaDone(true);
 // The menu (LOU-286): Restart (behind a confirm), How to play, whole island / zoom, hard mode, Home. Tap outside to close.
 function menu(open) { const m = $("menu"); if (open) { $("mHint").hidden = !hintShown(); tx("mHintN", hintsLeft() + " left"); $("hard").checked = hard(); $("mConf").hidden = true; tx("mZoom", view.z > 1.02 ? "Whole island" : "Zoom in"); tx("mZoomS", view.z > 1.02 ? "Zoom out to plan your route" : "Back to your river"); tx("mTurn", S.turn ? "Turn " + S.turn : ""); m.hidden = false; m.classList.remove("bye"); return }

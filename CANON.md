@@ -160,6 +160,19 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - **Levels page** (`/river/`, design board 3): a back button, "Levels" and a total pill ("14 / 72"); each chapter has a heading ("CHAPTER 1 · SHORES") with its stars ("14 / 18"); each row has a number circle, the name, one line and its stars. The level to play next is white with a gold outline and a mint **Play** pill. Locked rows are faded with a lock and say "Reach the sea on Level 7", their "New: …" line, or "Opens after Level 9".
   - **Old progress:** the first campaign's stars and saved runs (`level-N`) are cleared once, without an error. Daily and Perfection bests are kept.
   - **Skip guidance** sits on the left under the star chips, clear of the zoom button.
+- **Live star chips** (LOU-287, design board 8): the three goals are white glass pills on one centred line under the top bar, with live progress ("Grove 2/3", "By turn 6 (turn 2)").
+  - **Open:** an outlined star. **Holds so far** ("No spills", "Keep the forest", "By turn 6"): a teal check. **Earned:** a gold star on a pale gold pill, with a short pulse and sparkle (about 0.4s). **Missed** (it can't be earned any more): grey with a thin strike through its name.
+  - The chips stay on one line at 390px: labels shorten before they wrap ("By turn 6", "Grove", "Keep forest").
+  - Tapping a chip still shows its full goal text.
+- **Level complete** (LOU-287, design board 8; replaces the win card):
+  - Reaching the sea locks input; the top bar fades and the camera pulls back to the whole island in about 1s.
+  - **Three large stars** sit over the island at the top, the middle one bigger: gold when earned, a white outline when missed. They fill **one at a time**, 0.35s apart.
+  - A **sheet slides up** from the bottom (rounded top corners, a small grab bar): the level's name in blue, "You reached the sea" at 26px bold, then one row per star with a 30px star, the goal in bold, a reason in grey under it ("3 trees beside your river: +1 flow"; missed: "5 gal spilled on turn 3", "Arrived turn 8, needed 6") and a teal check on earned rows.
+  - **Next level** is the one big button: a 64px mint pill with the next level's name and new rule on its second line ("Level 7 · Still Water · New: lakes"). On Level 24 it reads **Campaign complete** with the star total and goes to the Levels page. Other maps keep their own label ("New island", "All islands"); a map with nothing next shows Play again; Daily shows Share score.
+  - Under it, small blue text links: **Replay for 3 stars** (just "Replay" with three stars) and **Home**. (Share joins them in LOU-293.)
+  - **Score modes** (Perfection, Daily, score goals): the same sheet with "Island scored" or "You reached the sea", the score and "New best", and one row per star threshold ("45 points" / "7 more to go").
+  - Guided levels list what you learned as three small lines under the star rows.
+  - **Reduced motion:** no pull-back, and the stars appear together.
 - **Level solver** (LOU-291): `node tools/solve.mjs` plays every campaign level with the game's own rules (it loads `play.js` itself, so the two can't drift apart; no build step). For each level it finds the fewest turns to the sea, the fewest with all three stars, and what the plain cheapest route earns. **Rerun it whenever a level or a rule changes**, and fix or list anything it flags.
   - `--write` sets each level's "By turn N" (best 3-star turn + 1; + 2 in Chapter 1; Levels 1 to 3 keep their own goals) and saves each level's 3-star solution to `solutions.js` for hints.
   - It fails loudly when a level has no 3-star solution. It flags "no choice" (the cheapest route already earns every star) and "over budget" (longer than the chapter's turn budget: 5, 7, 9, 12, finale 15).
