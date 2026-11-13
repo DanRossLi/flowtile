@@ -2,88 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Tutorial</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#cfe3ea">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Level 1</title>
+<meta http-equiv="refresh" content="0; url=../level/1/">
+<link rel="canonical" href="../level/1/">
 </head>
-<body>
-<script>
-// Directed tutorial (LOU-281, polished in LOU-282): land on a small island and learn by doing, one micro goal at a time.
-// The game checks every goal; while a goal is locked only its target answers taps. No stars, and you can't lose.
-// Water, flow and storage are each explained the first time you feel them, by a callout on the jar (LOU-282).
-// Map key: T source (3 gal/turn)  _ bare ground  . meadow  r rock  s sand  o spring  B mountain  ~ sea
-// Route: source (0,3) → (1,3) (2,3) → around the rock (3,3) via (3,2) → sand (4,2) → spring (5,2) → (6,2), beside the
-// mountain's runoff pool (6,1) → sea (7,2). Growing: meadow on (0,4), trees on (1,4) (2,4) (3,4). Spare ground: ROW.
-// Water: 3 → 2 → 1 → 0, cycle → 3, sand and spring are free, runoff tile → 2 with flow 4, so the next cycle overfills the jar (5).
-const GROVE = [[2, 4], [3, 4]], ROW = [[1, 2], [2, 2], [2, 1]];
-window.MAP = {
-  id: "tutorial",
-  label: "Tutorial",
-  tutorial: true,
-  types: [
-    "......B~",
-    ".._....~",
-    ".___so_~",
-    "T__r...~",
-    "____...~",
-    ".......~",
-    ".......~"],
-  elev: [
-    "11111110",
-    "11111110",
-    "11111110",
-    "11111110",
-    "11111110",
-    "11111110",
-    "11111110"],
-  waterSides: {"6,0": 5},
-  storage: 5,
-  bloomGoal: 0,
-  turnGoal: 99,
-  tileCost: 1,
-  startHint: "Tap your water source to start.",
-  next: "../level/1/",
-  nextLabel: "Play single player",
-  objectives: [
-    {text: "This is your water source. <b>Tap it.</b>", target: "source", lock: true, done: g => g.phase === "play"},
-    {text: "<b>Tap a ring</b> to flow there.", target: [[1, 3]], lock: true, move: true, needs: 1, done: g => g.on(1, 3),
-      after: ["water", "<b>Water</b>: what you have to spend. That tile cost 1 gal."]},
-    {text: "Flow <b>1 more tile</b>.", target: [[2, 3]], lock: true, move: true, needs: 1, done: g => g.on(2, 3)},
-    {text: "Rock costs 2 gal. <b>Go around it.</b>", target: [[3, 2], [3, 3]], allow: [[3, 2]], lock: true, move: true, needs: 1, done: g => g.on(3, 2)},
-    {text: "Out of water. <b>Tap Next water cycle.</b>", target: "end", lock: true, done: g => g.turn >= 2,
-      after: ["flow", "<b>Flow</b>: water you get every cycle.<small>Your river's width shows it.</small>"]},
-    {text: "Sand is free to cross. <b>Flow onto the sand.</b>", target: [[4, 2]], lock: true, move: true, done: g => g.on(4, 2),
-      after: ["flow", g => `Sand: flow ${g.income + 1} → ${g.income}<small>The river narrows.</small>`]},
-    {text: "Reach the <b>spring</b>.", target: [[5, 2]], lock: true, move: true, done: g => g.on(5, 2),
-      after: ["flow", g => `Spring: flow ${g.income - 1} → ${g.income}<small>The river widens.</small>`]},
-    {text: "<b>Flow beside the mountain's pool.</b>", sub: "Each mountain has one water side.", target: [[6, 2], [6, 1]], allow: [[6, 2], [5, 1]], lock: true, move: true, needs: 1, done: g => g.runoff >= 1,
-      after: ["flow", g => `Mountain runoff: flow ${g.income - 1} → ${g.income}`]},
-    {text: "<b>Tap Next water cycle.</b>", sub: "Watch your jar.", target: "end", lock: true, done: g => g.turn >= 3,
-      after: ["rim", g => `Your jar holds ${g.cap} gal. That's <b>storage</b>. Extra water <b>spills</b>.<small>Let's grow the land to hold more.</small>`]},
-    {text: "<b>Tap the glowing ground</b>, then <b>Make grass</b>. It's free.", sub: "Ground beside your river can turn green.", target: [[0, 4]], lock: true, done: g => g.g(0, 4) >= 1},
-    {text: "Tap your grass, then <b>Grow meadow</b> (1 gal).", sub: "Meadows hold water when trees are next to them.", target: [[0, 4]], lock: true, needs: 1, done: g => g.g(0, 4) >= 2},
-    {text: g => `<b>Plant trees</b> next to your meadow: tap the ground, then <b>${["Make grass", "Grow meadow", "Plant trees"][Math.min(2, g.g(1, 4))]}</b>.`, sub: "Grass, then meadow, then trees.", target: [[1, 4]], lock: true, needs: g => g.g(1, 4) >= 1 ? 1 : 0, done: g => g.g(1, 4) >= 3,
-      after: ["rim", g => `+1 storage: your jar holds ${g.cap} now.`]},
-    {text: g => `Three touching trees make a <b>grove</b>. <b>Plant 2 more</b> (${g.grown(GROVE, 3)}/2)`, sub: "Grass, meadow, trees. A meadow you turn into trees gives up its storage.", target: g => { const q = GROVE.find(([x, y]) => g.g(x, y) < 3); return q ? [q] : [] }, lock: true,
-      needs: g => { const q = GROVE.find(([x, y]) => g.g(x, y) < 3); return q && g.g(...q) >= 1 ? 1 : 0 }, done: g => g.groves >= 1, after: ["flow", "Grove: +1 flow."]},
-    {text: "<b>Tap Next water cycle</b> to fill your jar.", target: "end", lock: true, done: g => g.water >= g.cap},
-    {text: g => `Your jar is full: next cycle <b>${g.spill} gal would spill</b>. <b>Spend 3 gal</b> on the glowing ground (${Math.min(3, g.cap - g.water)}/3)`, sub: "Grow it: spend the water first, or it's lost.",
-      target: g => { const q = ROW.find(([x, y]) => g.g(x, y) < 3); return q ? [q] : [] }, allow: ROW, lock: true, noCycle: true, done: g => g.cap - g.water >= 3, after: ["rim", "Less spills now."]},
-    {text: "Now <b>flow to the sea</b>.", target: [[7, 2]], move: true, done: g => g.won}
-  ],
-  help: [
-    "This tutorial shows you one step at a time. Follow the card next to the glowing tile or button: only that one works until you've done it.",
-    "<b>Skip tutorial</b> (top left) takes you back to the home page. Your progress is kept, so you can come back to the same step."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The separate tutorial is gone (LOU-289): Levels 1 to 3 are short guided levels. -->
+<p>The tutorial is now the first three levels. <a href="../level/1/">Play Level 1</a>.</p>
+<script>location.replace("../level/1/")</script>
 </body>
 </html>

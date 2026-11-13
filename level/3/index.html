@@ -17,46 +17,50 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 3 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 3 · Grow the land (LOU-289): guided. Storage, grass, meadow, trees and a grove.
+// Route: source (1,2) → springs (2,2) (3,2) → (4,2), one step from the bay (5,2).
+// Water: 3 → 3 → 3 → 2 with flow 5, so the cycle overfills the 5 gal jar (2 spill) → 5. Then meadow −1, tree −1, two trees −2 → 1,
+// and the sea takes the last gallon. No second cycle needed.
+// Growing: your meadow on (1,3); ready-made meadows on (2,3) (3,3) (4,3) become the grove, one tap each.
+// Map key: T source  . meadow land  _ bare ground  m ready-made meadow  o spring  B mountain  ~ sea
+const PATH = [[2, 2], [3, 2], [4, 2]], GROVE = [[3, 3], [4, 3]];
 window.MAP = {
-  id: "level-3",
-  label: "Level 3 · Two Peaks",
-  lesson: "A ridge with one way through, and runoff for whoever finds it.",
+  id: "c2-3",
+  label: "Level 3 · Grow the land",
+  intro: "Storage, meadows, trees and groves",
+  guided: true,
   types: [
-    "__B____B_~~",
-    "___om_oB_~~",
-    "___B___B_~~",
-    "__B____r__~",
-    "T_r_t__B__~",
-    "____m__Br~~",
-    "_____rrBB_~"],
+    "....B...~",
+    "........~",
+    ".Too.~~~~",
+    "._mmm.~~~",
+    "......~~~",
+    ".....~~~~"],
   elev: [
-    "11111111100",
-    "11111111100",
-    "11111111100",
-    "11111111110",
-    "11111111110",
-    "11111111100",
-    "11111111110"],
-  mainSource: [0, 4],
-  waterSides: {"7,2": 3, "8,6": 0},
+    "111111110",
+    "111111110",
+    "111110000",
+    "111111000",
+    "111111000",
+    "111110000"],
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 4,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 4,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "groves", n: 1}, {type: "storage", n: 6}],
   next: "../4/",
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>."]
+  learned: ["Storage is what your jar holds; the rest spills.", "A meadow stores +1 for each tree beside it.", "Three touching trees make a grove: +1 flow."],
+  objectives: [
+    {text: g => `Flow <b>3 tiles</b> (${PATH.filter(([x, y]) => g.on(x, y)).length}/3).`, target: g => g.next(PATH), lock: true, move: true, needs: g => g.on(3, 2) ? 1 : 0, done: g => PATH.every(([x, y]) => g.on(x, y))},
+    {text: "<b>Tap Next water cycle.</b>", sub: "Watch your jar.", target: "end", lock: true, done: g => g.turn >= 2,
+      after: ["rim", g => `Your jar holds ${g.cap} gal. That's <b>storage</b>. Extra water spills.`]},
+    {text: g => g.selPlantable ? "<b>Make grass.</b> It's free." : "<b>Tap the ground</b> beside your river.", target: [[1, 3]], lock: true, done: g => g.g(1, 3) >= 1},
+    {text: "<b>Grow it into a meadow.</b>", sub: "Meadows hold water beside trees.", target: [[1, 3]], lock: true, needs: 1, done: g => g.g(1, 3) >= 2},
+    {text: "<b>Plant trees</b> on the meadow next to it.", target: [[2, 3]], lock: true, needs: 1, done: g => g.g(2, 3) >= 3,
+      after: ["rim", g => `+${g.cap - 5} storage. Your jar holds ${g.cap} now.<small>A meadow stores +1 for each tree beside it.</small>`]},
+    {text: g => `<b>Plant 2 more trees</b> to make a grove (${g.grown(GROVE, 3)}/2).`, target: g => { const q = GROVE.find(([x, y]) => g.g(x, y) < 3); return q ? [q] : [] }, lock: true, needs: 1, done: g => g.groves >= 1,
+      after: ["flow", "Grove: +1 flow."]},
+    {text: "Now <b>flow to the sea</b>.", move: true, done: g => g.won}
+  ],
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

@@ -70,24 +70,17 @@
     <div><h1>Flow Tile</h1><p class="sub">Grow a river from its source to the sea.</p></div>
   </header>
 
-  <a class="card tut" id="tut" href="tutorial/">
-    <span class="ico" style="background:#5fae9c"><svg viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4z"/><path d="M8 9v5c0 1.5 2 3 4 3s4-1.5 4-3V9"/><path d="M20 7v6"/></svg></span>
-    <span class="grow"><span class="ttl">Tutorial</span><span class="txt" id="tutTxt">Learn to play in about 3 minutes</span></span>
-    <span class="pill" id="tutPill">Start</span>
-  </a>
-  <button type="button" class="played" id="played" hidden>I've played before</button>
-
-
   <div class="card sp" style="margin-top:14px">
     <div class="top">
       <span class="ico" style="background:#4a8fb8"><svg viewBox="0 0 24 24"><path d="M3 8c3-2 6-2 9 0s6 2 9 0M3 14c3-2 6-2 9 0s6 2 9 0"/></svg></span>
-      <span class="grow"><span class="ttl">Single player</span><span class="txt">20 islands, each bigger and harder, up to a 40×40 finale.</span></span>
+      <span class="grow"><span class="ttl">Single player</span><span class="txt">The first three levels teach you to play. Then the islands get harder.</span></span>
     </div>
     <div class="stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg><b id="sNum">0</b><span id="sOf">of 60 stars</span></div>
     <div class="bar"><i id="fill"></i></div>
     <div class="meta"><span id="sMaps">0 of 20 islands</span><span id="sPct"></span></div>
-    <a class="go" id="spGo" href="level/1/">Start<small>Level 1 · Morning Stream</small></a>
+    <a class="go" id="spGo" href="level/1/">Play<small>Level 1 · First river</small></a>
     <a class="all" href="river/">All levels and stars</a>
+    <button type="button" class="played" id="played" hidden>I've played before</button>
   </div>
 
   <h2>New game</h2>
@@ -128,16 +121,12 @@ document.getElementById("sPct").textContent = Math.round(total / max * 100) + "%
 document.getElementById("fill").style.width = (total / max * 100) + "%";
 const go = document.getElementById("spGo");
 if (first < 0) { const low = got.findIndex(s => s < 3); go.href = low < 0 ? "river/" : `level/${low + 1}/`; go.innerHTML = low < 0 ? "Every star found!<small>See all levels</small>" : `Find more stars<small>Level ${low + 1} · ${LEVELS[low][1]}</small>` }
-else { go.href = `level/${first + 1}/`; go.innerHTML = `${done ? "Continue" : "Start"}<small>Level ${first + 1} · ${LEVELS[first][1]}</small>` }
-// Tutorial (LOU-281): first on the page; a first-time visitor sees it marked "New here?"
-const tut = get("flowtile.tutorial"), tutRun = get("flowtile.run.v5.tutorial"), T = document.getElementById("tut");
-if (tut === "done") { T.classList.add("done"); document.getElementById("tutTxt").textContent = "Done. Replay it any time."; document.getElementById("tutPill").textContent = "Replay" }
-else if (tutRun) { document.getElementById("tutTxt").textContent = "Pick up where you left off"; document.getElementById("tutPill").textContent = "Continue" }
-else if (!done && tut !== "skipped") { // a first-time visitor: this card is the welcome (LOU-282), with "I've played before" as a small link
-  T.classList.add("new"); T.insertAdjacentHTML("afterbegin", '<span class="tag">NEW HERE?</span>');
-  document.getElementById("tutTxt").textContent = "Every river starts as a spring. Learn by doing, about 3 minutes.";
-  const pb = document.getElementById("played"); pb.hidden = false;
-  pb.onclick = () => { try { localStorage.setItem("flowtile.tutorial", "skipped") } catch (_) {} T.classList.remove("new"); T.querySelector(".tag").remove(); document.getElementById("tutTxt").textContent = "Learn to play in about 3 minutes"; pb.hidden = true } }
+else { go.href = `level/${first + 1}/`; go.innerHTML = `${done ? "Continue" : "Play"}<small>Level ${first + 1} · ${LEVELS[first][1]}</small>` }
+// No separate tutorial (LOU-289): Levels 1 to 3 are short guided levels, so "Start" is the welcome. A first-time visitor also gets
+// "I've played before": it turns guidance off and opens Level 4 as well as Levels 1 to 3.
+if (!done && !playedBefore()) { const pb = document.getElementById("played"); pb.hidden = false;
+  pb.onclick = () => { try { localStorage.setItem("flowtile.guidance", "off") } catch (_) {} pb.hidden = true; go.href = "level/4/"; go.innerHTML = `Start<small>Level 4 · ${LEVELS[3][1]}</small>` } }
+else if (!done && playedBefore()) { go.href = "level/4/"; go.innerHTML = `Start<small>Level 4 · ${LEVELS[3][1]}</small>` }
 // New game
 const d = new Date(), day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, db = num("flowtile.best.daily-" + day);
 document.getElementById("tDaily").textContent = db ? `Today's best: ${db}` : "Not played today";

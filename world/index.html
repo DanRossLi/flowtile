@@ -60,7 +60,7 @@
 const WORLD = [
   // Single player (Dan, Nov 12): the 20-level campaign in its chapters, from levels.js
   ...CHAPTERS.map((name, c) => ({name, note: c ? "" : "The Single player campaign. <a href=\"../river/\">The list</a>", col:["#4aa3e8", "#7cc94c", "#b0aa9f", "#e8c46a", "#58b6e6"][c],
-    isles: LEVELS.filter(l => l[4] === c).map(l => ["level/" + l[0], "level-" + l[0], l[1]])})),
+    isles: LEVELS.filter(l => l[4] === c).map(l => ["level/" + l[0], levelId(l[0]), l[1]])})),
   {name:"Challenge", note:"Score as much as you can in 20 turns.", col:"#ffd166", isles:[
     ["perfection", "perfection-island", "Perfection island", "best"]]},
 ];

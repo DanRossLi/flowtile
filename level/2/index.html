@@ -17,44 +17,47 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 2 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 2 · Read the land (LOU-289): guided. Rock, sand, springs and a mountain's water side.
+// Route: source (2,2) → around the rock (3,2) by (2,3) → sand (3,3) → spring (4,3) → (5,3), beside the mountain's pool (6,2) → sea (6,3).
+// Water: 3 → 2 (the way round), sand and spring are free, → 1 beside the pool, → 0 into the sea. No water cycle needed.
+// Flow: 3 → 2 (sand) → 3 (spring) → 4 (mountain pool).
+// Map key: T source  . meadow  r rock  s sand  o spring  B mountain  ~ sea
 window.MAP = {
-  id: "level-2",
-  label: "Level 2 · Sandbar",
-  lesson: "Sand everywhere, and a few oases. Keep your flow alive.",
+  id: "c2-2",
+  label: "Level 2 · Read the land",
+  intro: "Rock, sand, springs and mountain pools",
+  guided: true,
   types: [
-    "__o______~",
-    "___o_____~",
-    "T__Bss___~",
-    "____t____~",
-    "___s_____~",
-    "_sss_m_o_~"],
+    "..B.....~",
+    ".....B..~",
+    "..Tr....~",
+    "...so.~~~",
+    "......~~~",
+    ".....~~~~"],
   elev: [
-    "1111111110",
-    "1111111110",
-    "1111111110",
-    "1111111110",
-    "1111111110",
-    "1111111110"],
-  mainSource: [0, 2],
-  waterSides: {"3,2": 1},
+    "111111110",
+    "111111110",
+    "111111110",
+    "111111000",
+    "111111000",
+    "111110000"],
+  waterSides: {"5,1": 5},
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 3,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 3,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "springs", n: 1}, {type: "flow", n: 4}],
   next: "../3/",
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "<b>Sand</b> is free to cross but cuts your <b>flow by 1</b>. <b>Springs</b> are free and add <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>."]
+  learned: ["Rock costs more; sand is free but drinks flow.", "Springs and mountain pools add flow.", "Your river's width shows its flow."],
+  objectives: [
+    {text: "Rock costs 2 gal. <b>Go around it.</b>", target: [[2, 3], [3, 2]], allow: [[2, 3]], lock: true, move: true, needs: 1, done: g => g.on(2, 3)},
+    {text: "Sand is free. <b>Flow onto it.</b>", target: [[3, 3]], lock: true, move: true, done: g => g.on(3, 3),
+      after: ["flow", g => `Sand drinks 1 flow: ${g.income + 1} → ${g.income}<small>Watch the river narrow.</small>`]},
+    {text: "Reach the <b>spring</b> for +1 flow.", target: [[4, 3]], lock: true, move: true, done: g => g.on(4, 3),
+      after: ["flow", g => `Flow ${g.income - 1} → ${g.income}<small>The river widens.</small>`]},
+    {text: "<b>Flow beside the mountain's pool.</b>", sub: "Each mountain has one water side.", target: [[5, 3], [6, 2]], allow: [[5, 3]], lock: true, move: true, needs: 1, done: g => g.runoff >= 1,
+      after: ["flow", "+1 flow from the mountain."]},
+    {text: "Now <b>flow to the sea</b>.", move: true, done: g => g.won}
+  ],
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

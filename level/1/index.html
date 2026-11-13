@@ -17,44 +17,43 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 1 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 1 · First river (LOU-289): guided. Water, flow and Next water cycle.
+// A straight run: 5 tiles from the source (1,2) to the shore, plus the step into the sea (7,2).
+// Water: 3 → 2 → 1 → 0 after three tiles, one cycle → 3, then two tiles and the sea. Finishes on turn 2.
+// Map key: T source (3 gal a cycle)  . meadow  B mountain  ~ sea
+const PATH = [[3, 2], [4, 2]];
 window.MAP = {
-  id: "level-1",
-  label: "Level 1 · Morning Stream",
-  lesson: "A small island to warm up. Spend wisely: the turn star is tight.",
+  id: "c2-1",
+  label: "Level 1 · First river",
+  intro: "Water, flow and Next water cycle",
+  guided: true,
   types: [
-    "________~",
-    "___r____~",
-    "T____._~~",
-    "_____B_B~",
-    "__rg____~",
-    "____o__~~"],
+    "..B....~",
+    ".......~",
+    ".T.....~",
+    "....B..~",
+    ".......~"],
   elev: [
-    "111111110",
-    "111111110",
-    "111111100",
-    "111111110",
-    "111111110",
-    "111111100"],
-  mainSource: [0, 2],
-  waterSides: {"7,3": 3, "5,3": 3},
+    "11111110",
+    "11111110",
+    "11111110",
+    "11111110",
+    "11111110"],
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 3,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 3,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "nwc"}, {type: "byTurn", n: 3}],
   next: "../2/",
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>."]
+  learned: ["Water is what you spend.", "Flow is what you earn each cycle.", "Reach the sea to finish."],
+  objectives: [
+    {text: "This is your source. <b>Tap it.</b>", target: "source", lock: true, done: g => g.phase === "play"},
+    {text: "<b>Tap a ring</b> to flow there.", target: [[2, 2]], lock: true, move: true, needs: 1, done: g => g.on(2, 2),
+      after: ["water", "<b>Water</b>: what you spend. That cost 1 gal."]},
+    {text: g => `Flow <b>2 more tiles</b> (${PATH.filter(([x, y]) => g.on(x, y)).length}/2).`, target: g => g.next(PATH), lock: true, move: true, needs: 1, done: g => PATH.every(([x, y]) => g.on(x, y))},
+    {text: "Out of water. <b>Tap Next water cycle.</b>", target: "end", lock: true, done: g => g.turn >= 2,
+      after: ["flow", "<b>Flow</b>: water you get every cycle."]},
+    {text: "Now <b>flow to the sea</b>.", move: true, done: g => g.won}
+  ],
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

@@ -2,9 +2,9 @@
 // One list for the home page, the Single player page and All islands. A level opens when the one before it reached the sea.
 window.LEVELS = [
   // [number, name, what's new or what makes it hard, size, chapter]
-  [1, "Morning Stream", "A small island to warm up", "9×6", 0],
-  [2, "Sandbar", "Sand and oases", "10×6", 0],
-  [3, "Two Peaks", "A ridge with one way through", "11×7", 0],
+  [1, "First river", "Guided: water, flow, Next water cycle", "8×5", 0],
+  [2, "Read the land", "Guided: rock, sand, springs, mountain pools", "9×6", 0],
+  [3, "Grow the land", "Guided: storage, grass, meadow, trees, grove", "9×6", 0],
   [4, "Still Water", "New: lakes", "12×7", 0],
   [5, "Old Wood", "New: wild forest", "12×8", 0],
   [6, "The Fork", "New: tributaries", "13×8", 1],
@@ -24,6 +24,10 @@ window.LEVELS = [
   [20, "The Great Island", "The finale: 40×40", "40×40", 4],
 ];
 window.CHAPTERS = ["Shores", "Inland", "High country", "Far islands", "The Great Island"];
-window.levelStars = n => { try { return +localStorage.getItem("flowtile.stars.level-" + n) || 0 } catch (_) { return 0 } };
-// open: level 1, and any level whose previous level reached the sea (at least one star)
-window.levelOpen = n => n === 1 || window.levelStars(n - 1) > 0;
+// Levels 1 to 3 are the guided levels (LOU-289); they replaced the tutorial page.
+window.levelId = n => n <= 3 ? "c2-" + n : "level-" + n;
+window.levelStars = n => { try { return +localStorage.getItem("flowtile.stars." + window.levelId(n)) || 0 } catch (_) { return 0 } };
+// "I've played before" (home page) turns guidance off and opens Level 4 as well as Levels 1 to 3.
+window.playedBefore = () => { try { return localStorage.getItem("flowtile.guidance") === "off" } catch (_) { return false } };
+// open: level 1, any level whose previous level reached the sea (at least one star), and Levels 1 to 4 for players who know the game
+window.levelOpen = n => n === 1 || window.levelStars(n - 1) > 0 || (window.playedBefore() && n <= 4);
