@@ -860,3 +860,17 @@ button.nwc.muted{background:rgba(255,255,255,.88);color:#24434a;box-shadow:0 8px
 .mrow.rust>span{color:#b5562f}.mrow.rust small{color:#4f6f70}.mrow.rust .mico svg{stroke:#b5562f}
 .mconf{padding:0 4px 12px 58px}
 .lvb{width:max-content;white-space:normal}.lvb b{white-space:nowrap}
+/* The sea tile (LOU-295): the opening banner on the bay, and the edge pointer */
+.lvb{display:flex;align-items:center;gap:10px;text-align:left}
+.lvb>div{min-width:0}
+.lvb:not(.sea){text-align:center}.lvb:not(.sea) .lvbi{display:none}
+.lvbi{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(180deg,#8fc7e6,#3f86b0)}
+.lvbi svg{width:20px;height:14px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round}
+.lvb.sea b{font-size:17px}.lvb.sea span{font-size:12.5px}
+button.seaptr{position:absolute;z-index:4;display:flex;align-items:center;gap:6px;padding:4px 12px 4px 4px;border:2px solid #f2c14e;border-radius:999px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(30,60,60,.16);font-family:var(--hand);color:#24434a;white-space:nowrap;cursor:pointer}
+button.seaptr[hidden]{display:none}
+button.seaptr:active:not(:disabled){transform:scale(.97);box-shadow:0 8px 24px rgba(30,60,60,.16)}
+#seaArrow{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,#8fc7e6,#3f86b0)}
+#seaArrow svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.seaptr .spw{width:18px;height:12px;fill:none;stroke:#3f86b0;stroke-width:3;stroke-linecap:round}
+.seaptr b{font-weight:800;font-size:14px}.seaptr span{font-weight:700;font-size:13px;color:#4f6f70}

@@ -121,7 +121,8 @@ document.body.innerHTML = `
     <div class="overlay bottom" id="bottom">${M.guided && M.objectives ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg class="odrop" viewBox="0 0 24 24"><path d="M12 3.5S6.5 10 6.5 13.8a5.5 5.5 0 0011 0C17.5 10 12 3.5 12 3.5z"/></svg><svg class="otick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="tutn" id="tutN"></span></div>` : ""}<div class="stuck seaq" id="seaq" role="alertdialog" aria-label="Finish here?" hidden><span><b>Finish here?</b><small id="seaO"></small></span><div><button type="button" id="seaKeep">Keep playing</button><button type="button" id="seaFin">Finish</button></div></div><div class="stuck" id="stuck" role="alert" hidden><b id="stuckT">Your river is stuck.</b><div><button type="button" id="stUndo">Undo last move</button><button type="button" id="stRestart">Restart level</button></div></div><div class="rstrip" id="rstrip" role="status" hidden><i class="rsico" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i><b id="rsName">Your river</b><span class="fpill" id="rsFlow"></span><span class="rshint" id="rsHint">Tap a ring</span></div><div class="msg" id="msg" role="status"></div></div>
     ${M.guided && M.objectives ? `<div class="hand" id="hand" aria-hidden="true" hidden><span class="htap"></span><svg class="hsvg" viewBox="0 0 34 44"><g class="hout"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/><rect x="11" y="34" width="18" height="8" rx="2.5"/></g><g class="hin"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/></g><path class="hcrease" d="M16.8 17v5M22.4 18.5v4.5M27.6 21v3.5M11.6 4.2h3.6"/><rect class="hcuff" x="11" y="34" width="18" height="8" rx="2.5"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div>` : ""}
     <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
-    <div class="lvb" id="lvb" role="status" hidden><b id="lvbT"></b><span id="lvbS"></span></div>
+    <div class="lvb" id="lvb" role="status" hidden><i class="lvbi" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i><div><b id="lvbT"></b><span id="lvbS"></span></div></div>
+    <button type="button" class="seaptr" id="seaptr" hidden aria-label="Show the sea"><i id="seaArrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></i><svg class="spw" viewBox="0 0 30 20" aria-hidden="true"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg><b>Sea</b><span id="seaDist"></span></button>
     <div class="gpop" id="gpop" role="status" hidden></div>
     <div class="banner" id="banner" aria-hidden="true" hidden><b id="bTurn"></b><small id="bSub"></small></div>
     <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
@@ -205,7 +206,7 @@ const stripTags = t => String(t || "").replace(/<[^>]+>/g, "");
 function levelLine() { if (M.intro) return M.intro; const l = stripTags(M.lesson), nw = l.match(/New: [^.]+/); if (nw) return nw[0];
   if (PERF) return `Score as much as you can in ${TURN_GOAL} turns`; const first = l.split(/(?<=[.!?])\s/)[0]; return first && first.length <= 70 ? first.replace(/\.$/, "") : "Reach the sea" }
 let lvbT = 0;
-function showLevel() { const b = $("lvb"); if (!b || quiet) return; tx("lvbT", stripTags(M.label)); tx("lvbS", levelLine()); b.hidden = false; b.classList.remove("bye"); void b.offsetWidth; b.classList.add("in");
+function showLevel(sea) { const b = $("lvb"); if (!b || quiet) return; b.classList.toggle("sea", !!sea); tx("lvbT", sea ? "Reach the sea" : stripTags(M.label)); tx("lvbS", sea ? stripTags(M.label) : levelLine()); b.hidden = false; b.classList.remove("bye"); void b.offsetWidth; b.classList.add("in");
   clearTimeout(lvbT); lvbT = setTimeout(hideLevel, 2500) }
 function hideLevel() { const b = $("lvb"); if (!b || b.hidden) return; clearTimeout(lvbT); if (reduce) { b.hidden = true; return } b.classList.add("bye"); lvbT = setTimeout(() => { b.hidden = true; b.classList.remove("bye", "in") }, 260) }
 addEventListener("pointerdown", hideLevel, true);
@@ -220,14 +221,18 @@ function goalPop(i, chip) { const g = $("gpop"), t = PERF ? aims()[i] : STARS[i]
 // the whole island with a large pulsing ring on each source.
 let opening = null;
 const sourcesOf = () => ORDER.filter(p => at(p).t === "source" && !at(p).river);
-function openRun() { if (!S || S.phase !== "pick") return; showLevel();
+function openRun() { if (!S || S.phase !== "pick") return; levelT0 = now();
   const o = tutStep(), wait = !!(o && tval(o.target, G) === "source"), auto = !PLACE && (M.mainSource || sourcesOf().length === 1), p = M.mainSource || sourcesOf()[0];
-  if (!auto || !p) { say(PLACE ? "Tap a source, or place your own." : "Choose a source."); return }
-  say("Tap your source to start."); if (reduce || quiet) { if (!wait) autoStart(p); return }
-  opening = {p, t0:now() + 450, wait} }
-function openStep() { const o = opening; if (S.phase !== "pick") { opening = null; return } if (!lay.w || view.z === null || now() < o.t0) return;
-  if (!o.go) { o.go = true; const f = iso(...o.p); tgt = {x:f.x, y:f.y, z:lay.zAuto, n:0}; return }
-  if (!tgt) { opening = null; if (!o.wait) autoStart(o.p) } }
+  if (!auto || !p) { showLevel(); say(PLACE ? "Tap a source, or place your own." : "Choose a source."); return }
+  say("Tap your source to start."); if (reduce || quiet) { showLevel(); if (!wait) autoStart(p); return }
+  opening = {p, t0:now() + 450, wait, banner:false} }
+function openStep() { const o = opening; if (S.phase !== "pick") { opening = null; return } if (!lay.w || view.z === null) return;
+  if (!o.banner) { o.banner = true; const nb = nearestBay(), f = iso(...o.p), s = lay.fit * lay.zAuto; // skip the detour when the bay and the source both fit on screen at play zoom
+    const far = nb && (Math.abs(nb.bay.x - f.x) * s > lay.w * .42 || Math.abs(nb.bay.y - f.y) * s > lay.availH * .36);
+    if (far) { o.bay = nb.bay; view.z = lay.zAuto; view.cx = nb.bay.x; view.cy = nb.bay.y - DEPTH; padB = 300; applyView(); o.t0 = now() + 1100 } showLevel(!!far) }
+  if (now() < o.t0) return;
+  if (!o.go) { o.go = true; const f = iso(...o.p); tgt = {x:f.x, y:f.y, z:lay.zAuto, n:0, unpad:true}; return }
+  if (!tgt) { opening = null; padB = 0; if (!o.wait) autoStart(o.p) } }
 function autoStart(p) { if (S.phase !== "pick") return; start(p); history = []; sync() } // nothing to undo yet: the first move is yours
 
 function fresh() {
@@ -721,7 +726,7 @@ function guideCost(c) { const base = M.tileCost ?? 1;
   if (c.g >= TREES || c.g === MEADOW) return c.wild ? "Wild: it was here before you" : `${PLANT_COST} gal to grow`; if (c.g === 1) return "Free to grow";
   return {boulder:"The river can't cross it", lake:`${LAKE_TILE_COST} gal a tile, filled all at once`, sand:"Free to cross", spring:"Free to cross", rock:`${base + 1} gal to cross`, ocean:`${base} gal to reach`, source:"Free: your river starts here", bed:"The river can't run here again", cave:`${base} gal to enter`}[c.t] || `${base} gal to cross` }
 function renderGuide() { const seen = new Map();
-  for (const p of ORDER) { const c = at(p); if (c.river && !["source", "ocean", "lake"].includes(c.t)) continue; const n = tileName(c).replace(" · fertile", ""); if (!seen.has(n)) seen.set(n, {name:n, icon:tileIcon(c), text:tileBrief(p), cost:guideCost(c)}) }
+  for (const p of ORDER) { const c = at(p); if (c.river && !["source", "ocean", "lake"].includes(c.t)) continue; const n = c.t === "ocean" ? "Sea" : tileName(c).replace(" · fertile", ""); if (!seen.has(n)) seen.set(n, c.t === "ocean" ? {name:n, icon:tileIcon(c), text:"Flow here to finish.", cost:`Costs ${M.tileCost ?? 1} gal`} : {name:n, icon:tileIcon(c), text:tileBrief(p), cost:guideCost(c)}) }
   if (STORE) for (const [n, g, text] of [["Grass", 1, "Free next to your river. The ground you grow on."], ["Meadow", MEADOW, "Beside your river: +1 storage for each tree next to it."], ["Trees", TREES, "No storage. Every 3 touching trees beside your river: +1 flow."]])
     seen.set(n, {name:n, icon:tileIcon({t:"bare", g}), text, cost:guideCost({t:"bare", g})}); // what you can grow, in the settled words
   guideList = [...seen.values()];
@@ -784,7 +789,7 @@ function tileText(p) {
     sand:NEW ? "Free to cross, but cuts flow by 1. Grows grass on the bare ground around it for free." : "Free to cross, but cuts flow by 1. Blooms the land around it.",
     rock:MOSS ? "Hard ground: costs 1 gal more to cross. Beside your river, grow moss for 1 gal to break it into soil." : NEW ? "Hard ground: costs 1 gal more to cross. Tiles touching rock don't turn green." : "Hard ground: costs 1 gal more to cross. Tiles touching rock don't bloom.",
     boulder:c.ws ? "Blocks the river. Water side: rain runs down one face to the tile in front of it (marked +1). That tile gives +1 flow when your river reaches it; the other sides are dry." : "Blocks the river.", spring:"Free to reach, and adds +1 flow.", lake:`Fills all at once for ${lake} gal (2 a tile). The river can then leave from any side${STORE ? `, and you can plant up to ${REACH} tiles from it` : ""}.`,
-    ocean:"Bring a river here to finish the map.", source:"Where a river starts."}[c.t];
+    ocean:"Flow here to finish the level.", source:"Where a river starts."}[c.t];
 }
 function actions(p) {
   const c = at(p), out = [], m = moves().get(p + "");
@@ -847,7 +852,7 @@ const AICON = { // painted icons for the round buttons
 const DROP = '<svg class="cdrop" viewBox="0 0 12 15" aria-hidden="true"><path d="M6 1C6 1 1 7 1 10a5 5 0 0010 0C11 7 6 1 6 1z"/></svg>';
 // How an action reads on its round button: a short label, an icon, one live effect line and, if it costs you something else, a warning.
 function actView(a, p) { const c = at(p), g = c.g || 0; let label = a.name, icon = a.k, fx = a.sub || "", warn = a.warn || "";
-  if (a.k === "stream") { icon = "flow"; label = c.river ? "Join river" : c.t === "ocean" ? "Reach the sea" : c.t === "lake" ? "Fill the lake" : c.t === "cave" ? "Go underground" : "Flow here";
+  if (a.k === "stream") { icon = "flow"; label = c.river ? "Join river" : c.t === "ocean" ? "Finish" : c.t === "lake" ? "Fill the lake" : c.t === "cave" ? "Go underground" : "Flow here";
     if (c.g && !c.wild && warn.startsWith("Washes away")) { fx = `Washes away the ${gName(c.g)}`; warn = warn.split(". ").slice(1).join(". ") }
     else if (!fx && !warn) fx = "Your river takes this tile" }
   else if (a.k === "plant") { icon = ["grass", "meadow", "trees"][g]; label = ["Make grass", "Grow meadow", "Plant trees"][g]; const tail = a.sub.includes("Marsh: flow +1") ? ". Marsh: +1 flow" : "";
@@ -894,11 +899,12 @@ function renderCard() {
   info = false; if (!sel) { sheetHtml = null; return }
   const c = at(sel), p0 = sel, o = TUT ? tutStep() : null, lock = !!(o && o.lock && S.phase !== "won");
   const all = S.phase === "pick" ? [{k:"src", name:"Place source here", cost:0, sub:"", warn:c.g ? `Covers the ${gName(c.g)}` : "", run:() => placeSrc(p0)}] : actions(sel);
+  if (c.t === "ocean" && !c.river && S.phase === "play" && !all.some(a => a.k === "stream")) all.push({k:"stream", far:true, name:"Finish", cost:M.tileCost ?? 1, sub:"Not next to your river yet", warn:"", run() {}});
   const rank = a => ({plant:0, alpine:1, melt:1, collect:1, src:1, trib:1, moss:2, stream:3, cut:4, rechannel:5})[a.k] ?? 3;
   cardActs = all.slice().sort((a, b) => rank(a) - rank(b));
   // the main choice: the next growth step (or the one thing this tile is for); it gets the mint-teal fill
   const main = cardActs.find(a => ["plant", "alpine", "melt", "collect", "src", "trib"].includes(a.k)) || (cardActs.length === 1 ? cardActs[0] : null);
-  const acts = cardActs.map((a, i) => { const v = actView(a, sel), can = canDo(a), off = lock && a !== main; // in a locked tutorial step only the step's own button answers
+  const acts = cardActs.map((a, i) => { const v = actView(a, sel), can = canDo(a) && !a.far, off = lock && a !== main; // in a locked tutorial step only the step's own button answers
     return `<button type="button" class="sact${a === main ? " main" : ""}${can ? "" : " cant"}${off ? " off" : ""}" data-a="${i}" aria-disabled="${can && !off ? "false" : "true"}"><i class="sbtn">${v.icon}</i><b>${v.label}</b><span class="scost">${v.cost === "free" || /[a-z]/.test(v.cost) ? "" : DROP}${v.cost}</span>${v.fx ? `<small>${v.fx}</small>` : ""}${v.warn ? `<small class="swarn">${v.warn}</small>` : ""}</button>` }).join("");
   sheetHtml = {panel:`${tileIcon(c)}<div class="stx"><div class="sttl"><b class="tnm">${tileName(c)}</b></div><small>${tileBrief(sel)}</small></div><button type="button" class="sclose" id="sclose" aria-label="Close">${CHEV}</button>`, acts, n:cardActs.length};
 }
@@ -1264,28 +1270,61 @@ function paintSea() {
 }
 // ---------- the island layer (world space, cached and painted at a fixed resolution so camera moves never repaint it)
 const LPAD = 60;
+// ---------- the sea tile (LOU-295): the goal is a clear tile of its own. Touching sea tiles join into one bay, drawn at water
+// level (one cliff-depth below the land) in bright turquoise with a white rim; the land comes down to it on a sandy slope
+// instead of a cliff. Open water stays the deeper, greyer blue. Map data is unchanged: "~" is the sea tile.
+const isSea = q => inside(...q) && at(q).t === "ocean";
+let BAYS = null;
+function bays() { if (BAYS) return BAYS; const seen = new Set(); BAYS = [];
+  for (const p of ORDER) { if (!isSea(p) || seen.has(p + "")) continue; const g = [], q = [p]; seen.add(p + "");
+    while (q.length) { const a = q.pop(); g.push(a); for (const n of nbrs(a)) if (isSea(n) && !seen.has(n + "")) { seen.add(n + ""); q.push(n) } }
+    let x = 0, y = 0, lx = 0, ly = 0, ln = 0; for (const a of g) { const o = iso(...a); x += o.x; y += o.y; for (const n of nbrs(a)) if (landTile(n)) { const l = iso(...n); lx += l.x; ly += l.y; ln++ } }
+    const c = {x:x / g.length, y:y / g.length + DEPTH}, land = ln ? {x:lx / ln, y:ly / ln + DEPTH} : {x:c.x - 60, y:c.y - 30};
+    BAYS.push({tiles:g, set:new Set(g.map(String)), ...c, land}) }
+  return BAYS }
+const seaPts = (q, r = R) => hexPts(q, r).map(([x, y]) => [x, y + DEPTH]);
+function paintBay(bay) { const P = new Path2D();
+  for (const q of bay.tiles) { const h = seaPts(q, R + .5), n = h.length, m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; P.moveTo(...m(h[n - 1], h[0])); for (let i = 0; i < n; i++) P.arcTo(...h[i], ...m(h[i], h[(i + 1) % n]), 8); P.closePath() }
+  // pale mint on the land side, deeper turquoise on the seaward side
+  const dx = bay.x - bay.land.x, dy = bay.y - bay.land.y, l = Math.hypot(dx, dy) || 1, ext = R * 1.2 + Math.max(...bay.tiles.map(q => { const o = iso(...q); return Math.abs((o.x - bay.x) * dx / l + (o.y + DEPTH - bay.y) * dy / l) }));
+  const g = ctx.createLinearGradient(bay.x - dx / l * ext, bay.y - dy / l * ext, bay.x + dx / l * ext, bay.y + dy / l * ext); g.addColorStop(0, "#b9ece2"); g.addColorStop(.5, "#86d6d2"); g.addColorStop(1, "#56b7c6");
+  ctx.fillStyle = g; ctx.fill(P);
+  // the beach lip: a soft band of sand along every edge that touches land, reaching about 40% of the way in
+  ctx.save(); ctx.clip(P);
+  for (const q of bay.tiles) { const h = seaPts(q), o = iso(...q), c = [o.x, o.y + DEPTH];
+    for (let i = 0; i < 6; i++) if (landTile(step(q, EDGE_FACE(i)))) { const a = h[i], b = h[(i + 1) % 6], L = new Path2D();
+      L.moveTo(...a); L.lineTo(...b); L.lineTo(b[0] + (c[0] - b[0]) * .4, b[1] + (c[1] - b[1]) * .4); L.lineTo(a[0] + (c[0] - a[0]) * .4, a[1] + (c[1] - a[1]) * .4); L.closePath(); feather(L, "rgba(241,230,194,.95)", 7) } }
+  ctx.restore();
+  // one white rim round the outside of the whole bay: no line between two touching sea tiles, none where the sand comes down
+  ctx.beginPath(); for (const q of bay.tiles) { const h = seaPts(q, R + .5); for (let i = 0; i < 6; i++) { const n = step(q, EDGE_FACE(i)); if (isSea(n) || landTile(n)) continue; ctx.moveTo(...h[i]); ctx.lineTo(...h[(i + 1) % 6]) } }
+  ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke() }
 function paintLand() {
   const land = ORDER.filter(landTile), edges = [];
-  for (const p of land) { const h = hexPts(p); for (let i = 0; i < 6; i++) if (!landTile(step(p, EDGE_FACE(i)))) edges.push({a:h[i], b:h[(i + 1) % 6], front:FRONT[i], p, i}) }
+  for (const p of land) { const h = hexPts(p); for (let i = 0; i < 6; i++) if (!landTile(step(p, EDGE_FACE(i)))) edges.push({a:h[i], b:h[(i + 1) % 6], front:FRONT[i], p, i, sea:isSea(step(p, EDGE_FACE(i)))}) }
   const top = hexPath(land, R + .6); topPath = top;
   // the island's soft shadow and faint reflection in the sea
   ctx.save(); ctx.translate(0, DEPTH + 10); feather(top, "rgba(70,110,120,.35)", 18); ctx.restore();
-  // the sea goal (~): pale shallows with a soft dashed edge, so you can tell where to go
-  const sea = ORDER.filter(q => at(q).t === "ocean"); if (sea.length) { const P = hexPath(sea, R - 4, 9); feather(P, "rgba(240,250,248,.85)", 10); ctx.save(); ctx.setLineDash([5, 6]); ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 1.5; ctx.stroke(P); ctx.restore() }
+  for (const bay of bays()) paintBay(bay); // the sea tiles, at water level
   // the cliff: an earth gradient with faint strata, a grass lip with drips, under one continuous top
-  for (const e of edges) if (e.front) { const y0 = Math.min(e.a[1], e.b[1]), g = ctx.createLinearGradient(0, y0, 0, y0 + DEPTH); g.addColorStop(0, "#a99171"); g.addColorStop(1, "#6f5c48");
+  // where land meets a sea tile there is no cliff: a short sandy slope runs down to the water, with two faint tide marks
+  for (const e of edges) if (e.front && e.sea) { const y0 = Math.min(e.a[1], e.b[1]), g = ctx.createLinearGradient(0, y0, 0, y0 + DEPTH); g.addColorStop(0, "#d6cf98"); g.addColorStop(1, "#f1e6c2");
+    poly([[e.a[0], e.a[1] - 1.5], [e.b[0], e.b[1] - 1.5], [e.b[0], e.b[1] + DEPTH + 1], [e.a[0], e.a[1] + DEPTH + 1]], g);
+    for (const k of [.45, .74]) line([[e.a[0], e.a[1] + DEPTH * k], [e.b[0], e.b[1] + DEPTH * k]], "rgba(200,186,138,.45)", 1) }
+  for (const e of edges) if (e.front && !e.sea) { const y0 = Math.min(e.a[1], e.b[1]), g = ctx.createLinearGradient(0, y0, 0, y0 + DEPTH); g.addColorStop(0, "#a99171"); g.addColorStop(1, "#6f5c48");
     poly([[e.a[0], e.a[1] - 1], [e.b[0], e.b[1] - 1], [e.b[0], e.b[1] + DEPTH], [e.a[0], e.a[1] + DEPTH]], g) }
-  for (const e of edges) if (e.front) { const r = rng("cl", e.p, e.i);
+  for (const e of edges) if (e.front && !e.sea) { const r = rng("cl", e.p, e.i);
     for (const y of [9, 15, 22]) { const w = (r() - .5) * 2; line([[e.a[0], e.a[1] + y + w], [(e.a[0] + e.b[0]) / 2, (e.a[1] + e.b[1]) / 2 + y - w], [e.b[0], e.b[1] + y + w]], "rgba(70,52,36,.16)", 1) }
     poly([[e.a[0], e.a[1] - 1], [e.b[0], e.b[1] - 1], [e.b[0], e.b[1] + 3.5], [e.a[0], e.a[1] + 3.5]], "#6f9e5c");
     for (let k = 0; k < 3; k++) { const f = .15 + r() * .7, x = e.a[0] + (e.b[0] - e.a[0]) * f, y = e.a[1] + (e.b[1] - e.a[1]) * f, d = 3 + r() * 5;
       ctx.beginPath(); ctx.moveTo(x - 2.2, y + 2); ctx.quadraticCurveTo(x - 1.5, y + d, x, y + d + 1); ctx.quadraticCurveTo(x + 1.5, y + d, x + 2.2, y + 2); ctx.fillStyle = "#6f9e5c"; ctx.fill() } }
-  foamPath = new Path2D(); for (const e of edges) { const y = e.front ? DEPTH + 1 : 1; foamPath.moveTo(e.a[0], e.a[1] + y); foamPath.lineTo(e.b[0], e.b[1] + y) }
+  foamPath = new Path2D(); for (const e of edges) { if (e.sea) continue; const y = e.front ? DEPTH + 1 : 1; foamPath.moveTo(e.a[0], e.a[1] + y); foamPath.lineTo(e.b[0], e.b[1] + y) }
   // the top: bare ground everywhere, then each terrain as a feathered region that blends into its neighbours
   ctx.save(); ctx.clip(top); ctx.fillStyle = COL.bare; ctx.fill(top);
   const groups = new Map(); for (const p of land) { const c = at(p); if (c.t === "lake") continue; const k = kindOf(c); if (k === "bare" || k === "rock" || k === "source" || k === "cave" || k === "boulder") continue; (groups.get(k) || groups.set(k, []).get(k)).push(p) }
   for (const k of ["sand", "shadow", "bed", "fertile", "runoff", "meadow", "bloom", "grass", "trees", "alpine", "marsh", "spring"]) if (groups.has(k)) feather(hexPath(groups.get(k), R + 3), COL[k], 14);
   for (const p of land) if (at(p).t !== "lake") paintTile(p, at(p));
+  // the land's own edge turns to sand where it meets a sea tile, so the top edge disappears into the slope
+  for (const e of edges) if (e.sea) { const o = iso(...e.p), L = new Path2D(); L.moveTo(...e.a); L.lineTo(...e.b); L.lineTo(e.b[0] + (o.x - e.b[0]) * .34, e.b[1] + (o.y - e.b[1]) * .34); L.lineTo(e.a[0] + (o.x - e.a[0]) * .34, e.a[1] + (o.y - e.a[1]) * .34); L.closePath(); feather(L, "rgba(232,222,178,.9)", 7) }
   // lakes: one pool per lake, a wet bank feathered round it
   for (const L of S.lakes) { const P = hexPath(L.tiles, R + 1.5), full = L.filled; feather(hexPath(L.tiles, R + 6), "#b9c98f", 10);
     let y0 = 1e9, y1 = -1e9; for (const q of L.tiles) { const o = iso(...q); y0 = Math.min(y0, o.y - R * .5); y1 = Math.max(y1, o.y + R * .5) }
@@ -1366,7 +1405,7 @@ function riverChains() {
   return out }
 function chainPts(ch) { const pts = [];
   for (let i = 0; i < ch.tiles.length; i++) { const q = ch.tiles[i], o = iso(...q), k = i ? prog(q + "") : 1, sea = at(q).t === "ocean";
-    let x = o.x, y = o.y; if (i && (k < 1 || sea)) { const a = pts[i - 1], f = sea ? Math.min(k, .55) : k; x = a[0] + (o.x - a[0]) * f; y = a[1] + (o.y - a[1]) * f }
+    let x = o.x, y = o.y; if (i && (k < 1 || sea)) { const a = pts[i - 1], f = sea ? Math.min(k, .86) : k, ty = sea ? o.y + DEPTH : o.y; x = a[0] + (o.x - a[0]) * f; y = a[1] + (ty - a[1]) * f } // into a sea tile: down the sandy slope to water level
     pts.push([x, y]); if (k < 1) break }
   return pts }
 // The river's centre line (Dan, Nov 12: "the river turning looks bad"): straight from one tile edge to the next, and at a
@@ -1639,8 +1678,49 @@ function deco(p, c, o, t, h) {
   if (c.t === "boulder") mountain(cx, cy, t, c.ws);
 }
 
+// Waves roll in on every sea tile (three short white lines parallel to the beach, a 3s loop staggered by 0.9s), with a little
+// foam at the sand; where the river came in, its water fans out into the shallows; two gulls circle each bay.
+function seaLife(t) { const vx0 = -off.x / scale - 80, vx1 = (cv.width - off.x) / scale + 80, vy0 = -off.y / scale - 80, vy1 = (cv.height - off.y) / scale + 80;
+  for (const bay of bays()) { for (const q of bay.tiles) { const o = iso(...q), cx = o.x, cy = o.y + DEPTH; if (cx < vx0 || cx > vx1 || cy < vy0 || cy > vy1) continue;
+      let dx = 0, dy = 0; for (const n of nbrs(q)) if (landTile(n)) { const l = iso(...n); dx += l.x - o.x; dy += l.y - o.y } if (!dx && !dy) { dx = bay.land.x - cx; dy = bay.land.y - cy }
+      const l = Math.hypot(dx, dy * 2) || 1, ux = dx / l, uy = dy / l, px = -uy * 2, py = ux * .5, h = hsh(...q); // u: toward the beach; p: along it (the view squashes y)
+      if (at(q).river) { const k = prog(q + ""), g = ctx.createRadialGradient(0, 0, 2, 0, 0, 30); g.addColorStop(0, "rgba(214,240,246,.85)"); g.addColorStop(1, "rgba(214,240,246,0)");
+        ctx.save(); ctx.translate(cx + ux * 10, cy + uy * 10); ctx.scale(1, .5); ctx.globalAlpha = k; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 30, 0, 7); ctx.fill(); ctx.restore() }
+      for (let i = 0; i < 3; i++) { const u = reduce ? .25 + i * .25 : ((t + i * .9 + h * .37) / 3) % 1, d = -17 + 27 * u, a = Math.sin(u * Math.PI) * .85, w = 9 + 3 * Math.sin(h + i);
+        const mx = cx + ux * d, my = cy + uy * d; ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(mx - px * w, my - py * w); ctx.quadraticCurveTo(mx + ux * 4, my + uy * 4, mx + px * w, my + py * w); ink("#ffffff", 1.6);
+        if (u > .78) { ctx.globalAlpha = (1 - u) / .22 * .5; ell(mx + ux * 3, my + uy * 3, 7, 2.2, "#ffffff") } }
+      ctx.globalAlpha = 1 }
+    if (reduce) continue; const hb = hsh(...bay.tiles[0]); // gulls: two small white "v" shapes on slow circles, with a little wing flap
+    for (let i = 0; i < 2; i++) { const per = 9 + i * 2, a = (t / per + i * .5 + hb * .1) * TAU, gx = bay.x + Math.cos(a) * (30 + i * 8), gy = bay.y - 44 - i * 9 + Math.sin(a) * 9, f = 2 + 1.5 * Math.sin(t * 5 + i * 2);
+      ctx.beginPath(); ctx.moveTo(gx - 6, gy - f); ctx.quadraticCurveTo(gx - 2.5, gy - 2.5, gx, gy); ctx.quadraticCurveTo(gx + 2.5, gy - 2.5, gx + 6, gy - f); ink("rgba(255,255,255,.95)", 1.6) } } }
+// The bay's badge: a white pill with a thin gold rim and a blue double wave, floating above the middle of the bay. The word
+// "Sea" shows for the first 5 seconds of a level and whenever the whole island is in view. It hides while that bay shows rings.
+let levelT0 = 0;
+function seaBadges(T, rings) { const u = lay.dpr / scale, word = view.z <= 1.02 || T - levelT0 < 5000 || !!opening;
+  for (const bay of bays()) { if (rings.some(f => bay.set.has(f.k)) || (S.phase === "won")) continue;
+    ctx.save(); ctx.translate(bay.x, bay.y - 30 - 12 * u); ctx.scale(u, u); ctx.font = `800 13px ${HAND}`; const w = word ? 34 + ctx.measureText("Sea").width + 8 : 34, hh = 26;
+    ctx.shadowColor = "rgba(30,60,60,.22)"; ctx.shadowBlur = 8 * lay.dpr; ctx.shadowOffsetY = 3 * lay.dpr; rrect(-w / 2, -hh / 2, w, hh, hh / 2); ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.fill(); ctx.shadowColor = "transparent";
+    rrect(-w / 2, -hh / 2, w, hh, hh / 2); ink("#f2c14e", 2); const ix = -w / 2 + 17;
+    ctx.beginPath(); for (const yy of [-3, 3]) { ctx.moveTo(ix - 8, yy + 1); ctx.bezierCurveTo(ix - 5, yy - 3, ix - 3, yy + 4, ix, yy); ctx.bezierCurveTo(ix + 3, yy - 4, ix + 5, yy + 3, ix + 8, yy - 1) } ink("#3f86b0", 2.2);
+    if (word) { ctx.fillStyle = "#24434a"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("Sea", ix + 13, .5) }
+    ctx.restore() } }
+// Edge pointer: at play zoom with no sea tile on screen, a small pill sits at the screen edge toward the nearest bay, with an
+// arrow, the wave icon and the distance ("Sea · 6 tiles"). Tapping it pans to the bay and back.
+let seaPtrKey = "", peekT = 0;
+function nearestBay() { const from = S.head || M.mainSource || sourcesOf()[0]; let best = null, bd = 1e9; if (!from) return null;
+  for (const bay of bays()) for (const q of bay.tiles) { const d = hexDist(from, q); if (d < bd) { bd = d; best = bay } } return best ? {bay:best, d:bd} : null }
+function seaPointer() { const el = $("seaptr"); if (!el) return; const nb = S.phase === "play" && view.z > 1.02 && !opening && !peekT && lay.w ? nearestBay() : null; let key = "";
+  if (nb) { const sc = (x, y) => [(x * scale + off.x) / lay.dpr, (y * scale + off.y) / lay.dpr], x0 = 14, x1 = lay.w - 14, y0 = lay.topH + 10, y1 = lay.h - 74;
+    const seen = bays().some(b => b.tiles.some(q => { const o = iso(...q), [x, y] = sc(o.x, o.y + DEPTH); return x > x0 && x < x1 && y > y0 && y < y1 }));
+    if (!seen) { const [tx0, ty0] = sc(nb.bay.x, nb.bay.y), w = el.offsetWidth || 150, h = el.offsetHeight || 40, cx = Math.max(x0 + w / 2, Math.min(x1 - w / 2, tx0)), cy = Math.max(y0 + h / 2 + 30, Math.min(y1 - h / 2, ty0));
+      key = [Math.round(cx), Math.round(cy), Math.round(Math.atan2(ty0 - cy, tx0 - cx) * 20), nb.d].join() ; if (key !== seaPtrKey) { el.style.left = (cx - w / 2) + "px"; el.style.top = (cy - h / 2) + "px";
+        $("seaArrow").style.transform = `rotate(${Math.atan2(ty0 - cy, tx0 - cx)}rad)`; tx("seaDist", `${nb.d} tile${nb.d === 1 ? "" : "s"}`) } } }
+  if ((key === "") !== el.hidden) el.hidden = key === ""; seaPtrKey = key }
+function seaPeek() { const nb = nearestBay(); if (!nb || peekT || view.z === null) return; const back = {x:view.cx, y:view.cy}; closeCard(); padB = 200;
+  tgt = {x:nb.bay.x, y:nb.bay.y - DEPTH, n:0}; if (reduce) { view.cx = tgt.x; view.cy = tgt.y; tgt = null; applyView() }
+  peekT = setTimeout(() => { peekT = 0; tgt = {x:back.x, y:back.y, n:0, unpad:true}; if (reduce) { view.cx = back.x; view.cy = back.y; tgt = null; padB = 0; applyView() } }, reduce ? 1200 : 1500) }
 function draw() {
-  if (!S) return; objCheck(); sheetSync();
+  if (!S) return; objCheck(); sheetSync(); seaPointer();
   const T = now(), t = (T - t0) / 1000, mv = moves(), aim = objAim(), tq = TUT && S.phase === "play" && (aim || tutUi()); // tq: a tutorial step has a target, so other hints stay quiet
   // the cached layers: the sky and sea (screen space, cheap) and the island (world space, painted at a fixed resolution)
   const lw = B.w + 2 * LPAD, lh = B.h + 2 * LPAD; ps = Math.min(Math.pow(2, Math.ceil(Math.log2(scale) * 2) / 2), 4096 / Math.max(lw, lh));
@@ -1658,6 +1738,7 @@ function draw() {
   if (foamPath) { ctx.save(); ctx.lineCap = "round"; ctx.globalAlpha = reduce ? .6 : .55 + .2 * osc(t, 4.5); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6; ctx.stroke(foamPath);
     ctx.globalAlpha *= .45; ctx.lineWidth = 12; ctx.stroke(foamPath); ctx.restore() }
   ctx.drawImage(landC, B.x - LPAD, B.y - LPAD, landC.width / ps, landC.height / ps);
+  seaLife(t);
   // grass "wind": a very faint brightening that passes over the island; it never moves anything
   if (!reduce && topPath) { const k = (t / 9) % 1, x = B.x - 200 + k * (B.w + 400), g = ctx.createLinearGradient(x - 90, 0, x + 90, 0); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(.5, "rgba(255,255,255,.1)"); g.addColorStop(1, "rgba(255,255,255,0)");
     ctx.save(); ctx.clip(topPath); ctx.fillStyle = g; ctx.fillRect(x - 90, B.y, 180, B.h); ctx.restore() }
@@ -1683,7 +1764,7 @@ function draw() {
     const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4); if (!onScreen(o)) continue;
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
     const m = selOn && (!TUT || !aim || aim.has(p + "")) ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
-    if (m) flowTo.push({k:p + "", o, cost:m.cost, ok:S.water >= m.cost, sand:c.t === "sand", sea:c.t === "ocean"}); // a ring, drawn over everything standing on the board (LOU-283)
+    if (m) flowTo.push({k:p + "", o:c.t === "ocean" ? {x:o.x, y:o.y + DEPTH} : o, cost:m.cost, ok:S.water >= m.cost, sand:c.t === "sand", sea:c.t === "ocean"}); // a ring, drawn over everything standing on the board (LOU-283)
     else if (pk) { // a source you can start from: an amber wash with a glowing outline and its flow in a bubble
       const ok = true, pu = reduce ? 1 : .5 + .5 * osc(t, 1.6, h * .03); rpath(d(), 9); ctx.fillStyle = ok ? `rgba(255,224,150,${.3 + .12 * pu})` : "rgba(150,150,150,.22)"; ctx.fill();
       if (ok) { rpath(hexPts(p, R - 9), 8); ctx.fillStyle = "rgba(255,255,240,.22)"; ctx.fill() } // a soft lit centre
@@ -1722,11 +1803,12 @@ function draw() {
   if (selOn) { ringMem = flowTo; ringOn = T } const ra = selOn ? (reduce ? 1 : clamp01((T - ringOff) / 160)) : (reduce ? 0 : 1 - clamp01((T - ringOn) / 200)); if (!selOn) ringOff = T; // rings fade out over 0.2s when you let go
   if (ra > 0) ringMem.forEach((f, i) => flowRing(f, i, t, ra * (TUT && selOn ? Math.max(.25, tutK()) : 1)));
   if (aim) { const k = (reduce ? 1 : .6 + .4 * osc(t, 1.4)) * (TUT ? tutK() : 1); for (const key of aim) { if (flowTo.some(f => f.k === key)) continue; const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
-  if (sel) { const o = iso(...sel), pu = reduce ? 1 : .78 + .22 * osc(t, 1.4); // the selected tile (LOU-284): a soft white glow, a crisp white line that pulses gently, a chevron above
+  if (sel) { const o = iso(...sel), pu = reduce ? 1 : .78 + .22 * osc(t, 1.4), low = isSea(sel); ctx.save(); if (low) { ctx.translate(0, DEPTH) } // a sea tile is outlined at water level // the selected tile (LOU-284): a soft white glow, a crisp white line that pulses gently, a chevron above
     rpath(hexPts(sel, R - 3), 9); ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.fill(); ctx.save(); ctx.shadowColor = "rgba(255,255,255,.95)"; ctx.shadowBlur = 5 * scale; ink("rgba(255,255,255,.55)", 5); ctx.restore();
-    ctx.globalAlpha = pu; rpath(hexPts(sel, R - 3), 9); ink("#ffffff", 2.6); ctx.globalAlpha = 1; chevron(o.x, o.y - 40, t) }
+    ctx.globalAlpha = pu; rpath(hexPts(sel, R - 3), 9); ink("#ffffff", 2.6); ctx.globalAlpha = 1; chevron(o.x, o.y - 40, t); ctx.restore() }
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
     ctx.globalAlpha = 1 - k; rpath(hexPts(r.p, R * (1 + k * .25)), 9); ink("#ffffff", 2.2); ctx.globalAlpha = 1 }
+  seaBadges(T, selOn ? flowTo : []);
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (const b of badges) { const dim = va > 0 && !(b.key && aim && aim.has(b.key)) && !b.pk && !b.text; if (dim) ctx.globalAlpha = 1 - .65 * va; badge(b, t, dim ? 1 - .65 * va : 1); ctx.globalAlpha = 1 } // labels outside the step dim with the map
   // paper clouds drift across, each with a shadow on the ground; inked birds cross now and then
@@ -1774,7 +1856,7 @@ function flowRing(f, i, t, a) { const {o, ok} = f, br = reduce ? .5 : .5 + .5 * 
   ctx.beginPath(); ctx.ellipse(0, 0, rx, rx / 2, 0, 0, 7); ink(ok ? "rgba(232,255,248,.95)" : "rgba(226,230,231,.9)", 4.5);
   ctx.beginPath(); ctx.ellipse(0, 0, rx, rx / 2, 0, 0, 7); ink(ok ? "rgba(63,191,164,.9)" : "rgba(150,157,161,.85)", 1.6);
   ell(0, 0, 13, 6.5, ok ? "rgba(98,224,200,.55)" : "rgba(170,176,180,.5)"); ctx.beginPath(); ctx.ellipse(0, 0, 13, 6.5, 0, 0, 7); ink(ok ? "#2fa88f" : "#8f979b", 2.2);
-  if (f.sea) { line([[-2, 3], [-2, -11]], ok ? "#24434a" : "#7d8589", 1.8); ctx.beginPath(); ctx.moveTo(-2, -11); ctx.lineTo(8, -8); ctx.lineTo(-2, -4.500); ctx.closePath(); ctx.fillStyle = ok ? "#ffffff" : "#e6e9ea"; ctx.fill(); ink(ok ? "#24434a" : "#7d8589", 1.2) } // a small flag: the finish
+  if (f.sea) { ctx.beginPath(); for (const yy of [-2.2, 2.2]) { ctx.moveTo(-7, yy + .8); ctx.bezierCurveTo(-4.5, yy - 2.6, -2.5, yy + 3.4, 0, yy); ctx.bezierCurveTo(2.5, yy - 3.4, 4.5, yy + 2.6, 7, yy - .8) } ink("#ffffff", 1.8) } // the wave icon: this ring is the finish
   else ell(-3, -2, 6, 2.4, "rgba(255,255,255,.55)");
   // the cost tag: a white pill with the blue water drop and the cost ("1", "2" for rock, "free" for sand)
   const txt = f.cost ? String(f.cost) : "free"; ctx.font = `800 11.5px ${HAND}`; const tw = ctx.measureText(txt).width, w = Math.max(30, tw + 22), y = -19;
@@ -1812,6 +1894,7 @@ function sheetPan(p, over = 0) { if (view.z === null || !lay.w) return;
 $("sheet").addEventListener("click", e => { if (e.target.closest("#sclose")) { if (TUT && !tutTap(null, true)) return; hsel = false; closeCard(); draw(); return }
   const b = e.target.closest("button[data-a]"); if (!b) return; const a = cardActs[+b.dataset.a]; if (!a) return;
   if (b.classList.contains("off")) { tutNo(); return } // a locked tutorial step: only its own button answers
+  if (a.far) { b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); return } // the sea, but not next to the river's end yet
   if (canDo(a) && a.k === "stream" && sel && seaAsk(sel, a)) return;
   if (!canDo(a)) { let n = b.querySelector(".sneed"); if (!n) { n = document.createElement("small"); n.className = "sneed swarn"; b.appendChild(n) } n.textContent = `Need ${a.cost - S.water} more gal`; // the message line is hidden while the panel is open
     b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); return }
@@ -1840,7 +1923,8 @@ function badge(b, t, al = 1) {
 }
 
 // ---------- input
-function tileAt(cx, cy) {
+function tileAt(cx, cy) { const q0 = tileAt0(cx, cy); if (q0 && !isSea(q0)) return q0; const lo = tileAt0(cx, cy - DEPTH * scale / (cv.width / cv.getBoundingClientRect().width)); return lo && isSea(lo) ? lo : q0 }
+function tileAt0(cx, cy) {
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
   const x = ((cx - r.left) * dpr - off.x) / scale, y = ((cy - r.top) * dpr - off.y) / scale;
   // back to world space, then the nearest hex centre (a hex is everything nearer its centre than any other)
@@ -1914,7 +1998,8 @@ $("guide").addEventListener("click", async e => { if (!e.target.closest("#codeBt
 if ($("share")) $("share").onclick = async () => { const sc = score(), n = perfStars(sc.total), txt = `Flow Tile · ${M.label}: ${sc.total} points ${"★".repeat(n)}${"☆".repeat(3 - n)}${sc.sea ? " · reached the sea" : ""}\n${location.href}`;
   try { if (navigator.share) await navigator.share({text:txt}); else { await navigator.clipboard.writeText(txt); $("share").textContent = "Copied!" } } catch (_) {} };
 $("help").addEventListener("click", e => { if (e.target === $("help")) $("help").close() }); // tap backdrop to close
-$("goals").addEventListener("click", e => { const c = e.target.closest(".goal"); if (c) goalPop(c.dataset.i != null ? +c.dataset.i : [...$("goals").children].indexOf(c), c) });
+$("seaptr").onclick = () => seaPeek();
+$("goals").addEventListener("click", e => { const c = e.target.closest(".goal"); if (c && !PERF && STARS[+c.dataset.i] && STARS[+c.dataset.i].type === "sea" && S.phase === "play") seaPeek(); if (c) goalPop(c.dataset.i != null ? +c.dataset.i : [...$("goals").children].indexOf(c), c) });
 addEventListener("pointerdown", e => { if (!e.target.closest(".goal")) $("gpop").hidden = true }, true);
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
