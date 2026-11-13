@@ -563,7 +563,7 @@ function placeSrc(p) { const c = at(p); snapshot();
   anim.set("g:" + p, now()); start(p, true) }
 function pick(p) {
   const c = at(p);
-  if (PLACE && c.t !== "source") { const why = placeWhy(p); if (why) { ring(p); say(why, true); return } ring(p); sel = p; renderCard(); say("Place your source here? Tap again or tap the button to confirm."); return }
+  if (PLACE && c.t !== "source") { const why = placeWhy(p); if (why) { ring(p); say(why, true); return } ring(p); sel = p; renderCard(); say("Place your source here?"); return }
   if (c.t !== "source" || (M.mainSource && p + "" !== M.mainSource + "")) { say(M.pickHint ?? M.startHint, true); return }
   start(p) }
 function start(p, placed) { const c = at(p); closeCard();
@@ -730,10 +730,10 @@ function actions(p) {
     out.push({k:"stream", name, cost:m.cost, sub, warn, run:() => build(m)}) }
   if (plantable(p)) { const d = NEW && c.g ? comboPreview(p, k => { k.g++; k.pr = S.active }) : 0, dc = capPreview(p, k => { k.g++; k.pr = S.active });
     const base = c.g === 0 ? "Free next to your river. The ground you grow on" : c.g === 1 ? (c.nos ? "Cleared forest: no storage from it" : riverBy(p) ? "Beside your river: +1 storage for each tree next to it" : "Stores water only once it touches your river") : "No storage. Every 3 touching trees beside your river: +1 flow";
-    out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:growCost(c), sub:`${dc > 0 ? `Store ${S.cap} → ${S.cap + dc} gal` : base}${d > 0 ? `. Grove: flow +${d}` : ""}${c.g === 0 && marshPreview(p, k => { k.g = 1 }).flow > 0 ? ". Marsh: flow +1" : ""}`,
+    out.push({k:"plant", name:["Plant grass", "Grow a meadow", "Grow trees"][c.g], cost:growCost(c), d, dc, sub:`${dc > 0 ? `Store ${S.cap} → ${S.cap + dc} gal` : base}${d > 0 ? `. Grove: flow +${d}` : ""}${c.g === 0 && marshPreview(p, k => { k.g = 1 }).flow > 0 ? ". Marsh: flow +1" : ""}`,
       warn:[dc < 0 ? `Loses this meadow's storage: ${S.cap} → ${S.cap + dc} gal` : "", m ? "A stream running here later washes it away" : ""].filter(Boolean).join(". "), run:() => plant(p)}) }
   if (cuttable(p)) { const d = NEW ? comboPreview(p, k => { k.g--; if (k.wild) k.nos = 1; k.wild = false; if (k.pr < 0) k.pr = 0 }) : 0, dc = STORE ? capPreview(p, k => { k.g--; if (k.wild) k.nos = 1; k.wild = false }) : 0;
-    out.push({k:"cut", name:c.wild ? "Cut the forest back" : `Cut back to ${c.g > 1 ? gName(c.g - 1) : "bare ground"}`, cost:cutCost(c),
+    out.push({k:"cut", d, dc, name:c.wild ? "Cut the forest back" : `Cut back to ${c.g > 1 ? gName(c.g - 1) : "bare ground"}`, cost:cutCost(c),
       sub:[dc > 0 ? `Store ${S.cap} → ${S.cap + dc} gal` : "", d > 0 ? `Grove: flow +${d}` : ""].filter(Boolean).join(". ") || "Changes this tile one step",
       warn:[d < 0 ? `Breaks a grove: flow −${-d}` : "", dc < 0 ? `Storage −${-dc}` : ""].filter(Boolean).join(". "), run:() => cutBack(p)}) }
   if (c.pool && !c.river && nbrs(p).some(n => at(n).river && at(n).rid === S.active)) out.unshift({k:"collect", name:"Collect the rain pool", cost:0, sub:`+2 gal at once${STORE && S.water + 2 > S.cap ? ` (only ${Math.max(0, S.cap - S.water)} fit)` : ""}`, warn:"", run:() => collect(p)});
@@ -746,41 +746,82 @@ function actions(p) {
 }
 const canDo = a => S.water >= a.cost;
 function shortBy(a) { return STORE && a.cost > S.cap ? `You can only store ${S.cap} gal. Plant to store more` : `You have ${S.water} gal. Next Water Cycle brings +${S.income}` }
-// Round icons for the tile card's actions (LOU-260)
-const ICON = {
-  cut:'<svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M7.8 16.2L18 4M16.2 16.2L6 4"/></svg>',
-  plant:'<svg viewBox="0 0 24 24"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M12 15c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/></svg>',
-  meadow:'<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="2.2"/><path d="M12 4.5v2.3M12 11.2v2.3M7.5 9h2.3M14.2 9h2.3M12 13.5V21M12 18c-2-2.5-4.5-3-6-2.5M12 17c2-2 4-2.5 5.5-2"/></svg>',
-  trees:'<svg viewBox="0 0 24 24"><path d="M12 3l6 9h-3.5l4 6H5.5l4-6H6z"/><path d="M12 18v3"/></svg>',
-  collect:'<svg viewBox="0 0 24 24"><path d="M12 3c3.5 4.5 6 7.6 6 10.7a6 6 0 01-12 0C6 10.6 8.5 7.5 12 3z"/></svg>',
-  alpine:'<svg viewBox="0 0 24 24"><path d="M12 2l-5 8h3l-4 7h12l-4-7h3z"/><path d="M12 17v5"/></svg>',
-  rechannel:'<svg viewBox="0 0 24 24"><path d="M4 20V10a6 6 0 016-6h8"/><path d="M14 1l4 3-4 3"/><path d="M4 14h5" stroke-dasharray="2 2"/></svg>',
-  melt:'<svg viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></svg>',
-  moss:'<svg viewBox="0 0 24 24"><path d="M4 18c2-6 7-10 16-12-1 8-6 13-13 13"/><path d="M4 21l7-8"/></svg>',
-  trib:'<svg viewBox="0 0 24 24"><path d="M6 3v6c0 4 6 5 6 9v3"/><path d="M18 3v6c0 4-6 5-6 9"/></svg>',
-  src:'<svg viewBox="0 0 24 24"><path d="M5 19h14"/><path d="M8 19c0-3 1.5-4 4-4s4 1 4 4"/><path d="M12 15V6"/><path d="M12 6c-2-2-5-1.5-6 1M12 6c2-2 5-1.5 6 1"/></svg>',
-  sand:'<svg viewBox="0 0 24 24"><path d="M3 17c3-3 6-3 9 0s6 3 9 0"/><circle cx="7" cy="10" r=".9"/><circle cx="12" cy="8" r=".9"/><circle cx="17" cy="11" r=".9"/></svg>',
-  rock:'<svg viewBox="0 0 24 24"><path d="M4 18l3-8 5-3 5 4 3 7z"/><path d="M12 7l-1 6 6-2"/></svg>',
-  boulder:'<svg viewBox="0 0 24 24"><path d="M2 20l7-13 4 6 3-4 6 11z"/><path d="M7.5 10l1.5 1.5 1.5-1.5"/></svg>',
-  bare:'<svg viewBox="0 0 24 24"><path d="M3 16l9-5 9 5-9 5z"/><path d="M9 15.5h1M14 16.5h1"/></svg>',
+// ---------- tile panel (LOU-284): tap a tile for what it is and what it does right now, with every option as its own round
+// button along the bottom. It replaces the tile card and the one-tap rule (LOU-234): the panel always shows first.
+const AICON = { // painted icons for the round buttons
+  flow:'<svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0" stroke="#3f86b0" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
+  grass:'<svg viewBox="0 0 30 30"><path d="M5 25h20" stroke="#a99171" stroke-width="2.4" stroke-linecap="round"/><path d="M9 24c0-6 1-10 3-13M15 24c0-8 0-13 0-17M21 24c0-6-1-10-3-13" stroke="#4c9a74" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M12 24c0-4-2-7-5-9M18 24c0-4 2-7 5-9" stroke="#86c46f" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>',
+  meadow:'<svg viewBox="0 0 30 30"><path d="M15 28V15" stroke="#4c9a74" stroke-width="2.6" stroke-linecap="round"/><path d="M15 23c-3-1-5-3-6-6M15 21c3-1 5-3 6-5" stroke="#4c9a74" stroke-width="2.2" fill="none" stroke-linecap="round"/><g fill="#ffffff" stroke="#d8c7e8" stroke-width=".8"><circle cx="15" cy="5.5" r="3.4"/><circle cx="20" cy="9" r="3.4"/><circle cx="18" cy="14.5" r="3.4"/><circle cx="12" cy="14.5" r="3.4"/><circle cx="10" cy="9" r="3.4"/></g><circle cx="15" cy="10.5" r="3.2" fill="#f6d743"/></svg>',
+  trees:'<svg viewBox="0 0 30 34"><rect x="13" y="22" width="4" height="10" rx="1.5" fill="#6b4f33"/><circle cx="15" cy="13" r="10" fill="#2c6a5a"/><circle cx="12" cy="10" r="6" fill="#4c9a74"/><circle cx="10" cy="8" r="2.6" fill="#e2f0b0"/></svg>',
+  cut:'<svg viewBox="0 0 30 30"><circle cx="9" cy="22" r="4.5" fill="none" stroke="#7a5c3c" stroke-width="2.6"/><circle cx="21" cy="22" r="4.5" fill="none" stroke="#7a5c3c" stroke-width="2.6"/><path d="M12 19 L22 4 M18 19 L8 4" stroke="#7a5c3c" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  collect:'<svg viewBox="0 0 30 30"><path d="M15 3C15 3 6 14 6 19.5a9 9 0 0018 0C24 14 15 3 15 3z" fill="#5aa9d0"/><path d="M10.5 20a4.5 4.5 0 004.5 4.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/></svg>',
+  melt:'<svg viewBox="0 0 30 30"><path d="M15 3v24M4.6 9l20.8 12M4.6 21l20.8-12M11 5l4 3 4-3M11 25l4-3 4 3" stroke="#6aa9d0" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  alpine:'<svg viewBox="0 0 30 34"><rect x="13.5" y="25" width="3" height="7" rx="1" fill="#6b4f33"/><path d="M15 2l-7 11h4l-6 9h18l-6-9h4z" fill="#2c6a5a"/><path d="M15 2l-3.5 5.5 3.5 2 3.5-2z" fill="#f4fbfb"/></svg>',
+  rechannel:'<svg viewBox="0 0 30 30"><path d="M6 26V14a8 8 0 018-8h9" stroke="#3f86b0" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M19 1.5l5 4.5-5 4.5" stroke="#3f86b0" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 19h7" stroke="#a99171" stroke-width="2.6" stroke-dasharray="2.5 3" stroke-linecap="round"/></svg>',
+  moss:'<svg viewBox="0 0 30 30"><path d="M5 24c2-9 9-15 21-18-1 12-8 19-18 19" fill="#7a9a4a"/><path d="M5 27l11-12" stroke="#44582a" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  trib:'<svg viewBox="0 0 30 30"><path d="M8 3v7c0 6 7 6 7 12v5M22 3v7c0 6-7 6-7 12" stroke="#3f86b0" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
+  src:'<svg viewBox="0 0 30 30"><ellipse cx="15" cy="21" rx="11" ry="5" fill="none" stroke="#7fbfd6" stroke-width="2.4"/><path d="M15 3C15 3 10 9.5 10 13a5 5 0 0010 0C20 9.5 15 3 15 3z" fill="#5aa9d0"/></svg>',
 };
+const DROP = '<svg class="cdrop" viewBox="0 0 12 15" aria-hidden="true"><path d="M6 1C6 1 1 7 1 10a5 5 0 0010 0C11 7 6 1 6 1z"/></svg>';
+// How an action reads on its round button: a short label, an icon, one live effect line and, if it costs you something else, a warning.
+function actView(a, p) { const c = at(p), g = c.g || 0; let label = a.name, icon = a.k, fx = a.sub || "", warn = a.warn || "";
+  if (a.k === "stream") { icon = "flow"; label = c.river ? "Join river" : c.t === "ocean" ? "Reach the sea" : c.t === "lake" ? "Fill the lake" : c.t === "cave" ? "Go underground" : "Flow here";
+    if (c.g && !c.wild && warn.startsWith("Washes away")) { fx = `Your river takes this tile; the ${gName(c.g)} washes away`; warn = warn.split(". ").slice(1).join(". ") }
+    else if (!fx && !warn) fx = "Your river takes this tile" }
+  else if (a.k === "plant") { icon = ["grass", "meadow", "trees"][g]; label = ["Make grass", "Grow meadow", "Plant trees"][g]; const tail = a.sub.includes("Marsh: flow +1") ? ". Marsh: +1 flow" : "";
+    if (g === 0) fx = "The ground you grow on" + tail;
+    else if (g === 1) fx = a.dc > 0 ? `Storage +${a.dc}: ${S.cap} → ${S.cap + a.dc} gal` : c.nos ? "Cleared forest: it stores nothing" : riverBy(p) ? "Stores +1 for each tree next to it" : "Stores water once it touches your river";
+    else fx = (a.d > 0 ? `Makes a grove: +${a.d} flow` : "Grows toward a grove (+1 flow per 3 trees)") + (a.dc > 0 ? `. Storage +${a.dc}` : "");
+    warn = a.dc < 0 ? `This meadow stops storing: storage −${-a.dc}` : "" }
+  else if (a.k === "cut") { label = "Cut back"; fx = [`Back to ${c.wild || g > 1 ? gName(g - 1) : "bare ground"}`, a.dc > 0 ? `Storage +${a.dc}` : "", a.d > 0 ? `Grove: +${a.d} flow` : ""].filter(Boolean).join(". ") }
+  else if (a.k === "collect") label = "Collect pool";
+  else if (a.k === "rechannel") label = "Rechannel";
+  else if (a.k === "alpine") { label = "Alpine trees"; fx = `Banks ${snowRate(c)} snow each cycle, up to 3. Melt it any time`; warn = "Instead of a meadow" }
+  else if (a.k === "melt") label = "Melt snow";
+  else if (a.k === "moss") label = "Grow moss";
+  else if (a.k === "trib") { label = "Start tributary"; fx = `+${c.yield} flow once it joins your river` }
+  else if (a.k === "src") { label = "Place source"; fx = `Your river starts here: +${PLACE_FLOW} flow` }
+  return {label, icon:AICON[icon] || AICON.flow, fx, warn, cost:a.costText ? a.costText.toLowerCase() : a.cost ? String(a.cost) : "free"} }
+// A small painted block of the tile for the panel: an isometric top in the tile's own colour, with a detail or two.
+function tileIcon(c) { const k = kindOf(c), top = c.river && c.t !== "lake" && c.t !== "ocean" ? COL.river : COL[k] || COL.bare, det = {
+    meadow:'<circle cx="26" cy="15" r="1.6" fill="#fff"/><circle cx="36" cy="13" r="1.6" fill="#f6d743"/><circle cx="31" cy="20" r="1.6" fill="#f29fbf"/><circle cx="40" cy="18" r="1.4" fill="#fff"/><circle cx="20" cy="18" r="1.4" fill="#c7b2ef"/>',
+    grass:'<path d="M24 19v-5M27 20v-6M30 19v-4M37 17v-5M40 18v-6M43 17v-4" stroke="#4c9a74" stroke-width="1.6" stroke-linecap="round"/>',
+    trees:'<rect x="24" y="12" width="2" height="6" fill="#6b4f33"/><circle cx="25" cy="9" r="6" fill="#2c6a5a"/><circle cx="23.500" cy="7.500" r="3" fill="#4c9a74"/><rect x="38" y="13" width="2" height="6" fill="#6b4f33"/><circle cx="39" cy="10" r="5.5" fill="#2c6a5a"/><circle cx="37.500" cy="8.500" r="2.800" fill="#4c9a74"/>',
+    alpine:'<path d="M26 4l-6 12h12z" fill="#2c6a5a"/><path d="M26 4l-2.500 5h5z" fill="#f4fbfb"/><path d="M39 6l-5 11h10z" fill="#2c6a5a"/><path d="M39 6l-2.200 4.800h4.400z" fill="#f4fbfb"/>',
+    sand:'<circle cx="24" cy="16" r="1" fill="#c9b98a"/><circle cx="32" cy="13" r="1" fill="#c9b98a"/><circle cx="38" cy="19" r="1" fill="#c9b98a"/><circle cx="30" cy="21" r="1" fill="#c9b98a"/><path d="M22 20q4-2 8 0t8 0" stroke="#d9cba0" stroke-width="1.2" fill="none"/>',
+    rock:'<path d="M24 20l3-7 6-2 6 3 2 6z" fill="#aeb2ad"/><path d="M27 13l6-2 2 5-5 2z" fill="#c9ccc6"/>',
+    boulder:'<path d="M20 20l11-18 6 8 3-4 6 14z" fill="#9aa7b4"/><path d="M31 2l-4 7 4 2 3-4z" fill="#f4fbfb"/>',
+    spring:'<ellipse cx="32" cy="17" rx="9" ry="4.500" fill="#8cc2d2" stroke="#fff" stroke-width="1.4"/>',
+    marsh:'<path d="M24 19v-6M28 20v-7M38 18v-6M42 19v-5" stroke="#5f8f76" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="33" cy="19" rx="5" ry="2" fill="#8cc2d2"/>',
+    fertile:'<path d="M20 15l12 6M26 12l12 6M32 9l12 6" stroke="#6f5238" stroke-width="1.4" stroke-linecap="round"/>',
+    cave:'<path d="M25 20a7 8 0 0114 0z" fill="#3a332c"/>',
+    runoff:'<ellipse cx="32" cy="17" rx="8" ry="4" fill="#8cc2d2" opacity=".8"/>',
+  }[k] || "", wet = (c.river && c.t !== "ocean") || k === "water" || k === "ocean" ? '<path d="M20 15q4-3 8 0t8 0t8 0M22 20q4-3 8 0t8 0" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>' : "";
+  return `<svg class="tblock" viewBox="0 0 64 54" aria-hidden="true"><path d="M32 6 L58 18 L58 30 L32 44 L6 30 L6 18 Z" fill="#8a7458"/><path d="M32 4 L58 16 L32 30 L6 16 Z" fill="${top}"/><path d="M6 16 L32 30 L32 42 L6 28 Z" fill="#a99171"/><path d="M58 16 L32 30 L32 42 L58 28 Z" fill="#7f6a52"/>${wet || det}</svg>` }
+// One or two lines on what the tile does right now, with live numbers. The common tiles get short lines of their own; the rest
+// use the first two sentences of the full rule text, so they stay correct.
+function tileBrief(p) { const c = at(p), W = t => `<b class="wtr">${t}</b>`, F = t => `<b class="flw">${t}</b>`;
+  if (!c.river && !c.wild && !c.alp && c.t === "bare") { const cs = combos().find(k => k.tiles.some(q => q + "" === p + ""));
+    if (c.g === MEADOW) return c.nos ? "Cleared forest: it stores nothing." : riverBy(p) ? `Beside your river. Stores ${W("+1")} for each tree next to it${c.fert ? ", and +1 for fertile ground" : ""} <span class="nw">(now ${storAt(p)})</span>.` : `Away from your river it stores nothing. Beside the river it stores ${W("+1")} for each tree next to it.`;
+    if (c.g === 1) return `Free ground to grow on. It stores nothing yet: grow it into a meadow for 1 gal.${c.fert ? " Fertile: a meadow here stores 1 more." : ""}`;
+    if (c.g >= TREES) return cs ? `In a grove of ${cs.tiles.length} trees: ${F(`+${cs.bonus} flow`)} (+1 for every 3).${cs.len % 3 ? ` ${3 - cs.len % 3} more for the next +1.` : ""}` : `No storage. Every 3 touching trees beside your river: ${F("+1 flow")}. Each meadow next to it stores 1 more.`;
+    if (!c.g && !c.fert && !c.ro && !c.rs && !c.pool && !c.beaver && !c.moss && !c.ash && !salty(p) && STORE) return plantable(p) ? "Beside your river: grass is free here. Crossing it costs 1 gal." : "Bare ground. Grass is free here once your river is next to it. Crossing it costs 1 gal." }
+  const t = tileText(p) || "", parts = t.split(/(?<=[.!?])\s+/); return parts.slice(0, 2).join(" ") }
+let sheetHtml = null; // what the tile panel shows now (null: no tile selected)
 function renderCard() {
-  info = false;
-  const c = at(sel), el = $("tcard"); const p0 = sel;
-  cardActs = S.phase === "pick" ? [{k:"src", name:"Place source here", cost:0, sub:`Your main river starts here: +${PLACE_FLOW} gal per water cycle`, warn:c.g ? `Covers the ${gName(c.g)}` : "", run:() => placeSrc(p0)}]
-    : actions(sel).filter(a => a.k !== "stream"); // the stream moves only from its selected end
-  el.innerHTML = `<div class="thead"><i class="swatch" style="background:${topColor(c)}"></i><div class="tname"><b>${tileName(c)}</b>${cardActs.length ? "" : `<small>${tileText(sel)}</small>`}</div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>` +
-    cardActs.map((a, i) => `<button class="act ${a.k}" data-a="${i}" ${canDo(a) ? "" : "disabled"}><i class="aico">${ICON[a.k === "plant" ? ["plant", "meadow", "trees"][at(sel).g] : a.k] || ""}</i><span class="atext"><b>${a.name}</b>${canDo(a) ? (a.sub ? `<small>${a.sub}</small>` : "") : `<small>${shortBy(a)}</small>`}${a.warn && canDo(a) ? `<small class="awarn">${a.warn}</small>` : ""}</span><span class="acost">${a.costText || (a.cost ? a.cost + " gal" : "Free")}</span></button>`).join("");
-  el.hidden = false; placeCard();
+  info = false; if (!sel) { sheetHtml = null; return }
+  const c = at(sel), p0 = sel, o = TUT ? tutStep() : null, lock = !!(o && o.lock && S.phase !== "won");
+  const all = S.phase === "pick" ? [{k:"src", name:"Place source here", cost:0, sub:"", warn:c.g ? `Covers the ${gName(c.g)}` : "", run:() => placeSrc(p0)}] : actions(sel);
+  const rank = a => ({plant:0, alpine:1, melt:1, collect:1, src:1, trib:1, moss:2, stream:3, cut:4, rechannel:5})[a.k] ?? 3;
+  cardActs = all.slice().sort((a, b) => rank(a) - rank(b));
+  // the main choice: the next growth step (or the one thing this tile is for); it gets the mint-teal fill
+  const main = cardActs.find(a => ["plant", "alpine", "melt", "collect", "src", "trib"].includes(a.k)) || (cardActs.length === 1 ? cardActs[0] : null);
+  const acts = cardActs.map((a, i) => { const v = actView(a, sel), can = canDo(a), off = lock && a !== main; // in a locked tutorial step only the step's own button answers
+    return `<button type="button" class="sact${a === main ? " main" : ""}${can ? "" : " cant"}${off ? " off" : ""}" data-a="${i}" aria-disabled="${can && !off ? "false" : "true"}"><i class="sbtn">${v.icon}</i><b>${v.label}</b><span class="scost">${v.cost === "free" || /[a-z]/.test(v.cost) ? "" : DROP}${v.cost}</span>${v.fx ? `<small>${v.fx}</small>` : ""}${v.warn ? `<small class="swarn">${v.warn}</small>` : ""}</button>` }).join("");
+  sheetHtml = {panel:`${tileIcon(c)}<div class="stx"><div class="sttl"><b class="tnm">${tileName(c)}</b></div><small>${tileBrief(sel)}</small></div><button type="button" class="sclose" id="sclose" aria-label="Close">${CHEV}</button>`, acts, n:cardActs.length};
 }
-function placeCard() {
-  if (!sel) return;
-  const el = $("tcard"), o = iso(...sel), sx = (o.x * scale + off.x) / lay.dpr, sy = (o.y * scale + off.y) / lay.dpr;
-  const side = lay.h < 540 && lay.w > lay.h * 1.3, up = sy > lay.topH + (lay.h - lay.topH) / 2;
-  el.className = "tcard " + (side ? (sx > lay.w / 2 ? "left" : "right") : up ? "up" : "");
-  el.style.top = !side && up ? lay.topH + 6 + "px" : "";
-}
-function closeCard() { if (!sel && !info) return; sel = null; info = false; cardActs = []; $("tcard").hidden = true; draw() }
+function placeCard() {} // the panel sits at the bottom now; the camera makes room for the selected tile instead (see sheetSync)
+function closeCard() { if (!sel && !info) return; sel = null; sheetHtml = null; info = false; cardActs = []; $("tcard").hidden = true; draw() }
 // The Water card (LOU-267): tap Water in the top bar for storage, flow and, on tributary maps, each river.
 let info = false;
 function renderInfo() {
@@ -792,7 +833,7 @@ function renderInfo() {
   el.className = "tcard"; el.style.top = ""; el.hidden = false;
 }
 $("cWater").onclick = () => { if (!tutGate("water")) return; if (info) { closeCard(); return } closeCard(); hsel = false; info = true; renderInfo(); sync() };
-function runAct(a) { closeCard(); a.run() }
+function runAct(a) { closeCard(); a.run() } // the panel closes with a quick fade and the tile plays its own effect
 // Moving the stream (LOU-258, replaces LOU-255's quick tap): tap the stream's end to select it, then tap a glowing tile.
 // The end stays selected so you can keep extending. Tap the end again, or empty space, to let go. With nothing selected,
 // tapping land opens its card, and tapping next to the river never moves the stream.
@@ -810,11 +851,8 @@ function tapTile(p, hold = false) {
       if (st && canDo(st)) { runAct(st); if (!TUT && hsel && S.phase === "play" && !affordable()) { hsel = false; draw() } return } // out of water: let go, so Next Water Cycle is back
       if (st) { ringShake = {k:p + "", t0:now()}; return } } // a grey ring: a gentle shake, nothing else
     hsel = false }
-  if (sel && same(sel, p)) { const a = cardActs.find(canDo); if (a) runAct(a); else closeCard(); return }
-  ring(p);
-  const acts = actions(p).filter(a => a.k !== "stream"); // one clear choice with nothing to warn about: just do it
-  if (acts.length === 1 && canDo(acts[0]) && !acts[0].warn) { closeCard(); acts[0].run(); return }
-  sel = p; renderCard(); draw();
+  if (sel && same(sel, p)) { closeCard(); return } // the same tile again closes the panel
+  ring(p); sel = p; renderCard(); draw(); // always the panel first, so you see what you're paying for (LOU-284 replaces LOU-234's one-tap rule)
 }
 
 // ---------- tutorial objectives (LOU-264): one at a time, checked by the game after every action, target highlighted
@@ -881,8 +919,8 @@ function tutAim() { const o = tutStep(); if (!o || !tutShown() || tutShort(o)) r
   const l = tutTiles(t); return l && l.length ? new Set(l.map(String)) : null }
 function tutUi() { const o = tutStep(); if (!o || !tutShown()) return ""; if (tutShort(o)) return "end"; const t = tval(o.target, G); return t === "end" || t === "water" ? t : "" }
 // May this tile be tapped now?
-function tutTap(p) { if (tutArrive) { tutArrive.t0 = -1e9; return false } if (now() < tutMute) return false; const o = tutStep(); if (!o || !o.lock || S.phase === "won") return true;
-  if (!tutShown()) return false; if (tutShort(o)) { tutNo(); return false }
+function tutTap(p, close) { if (tutArrive) { tutArrive.t0 = -1e9; return false } if (now() < tutMute) return false; const o = tutStep(); if (!o || !o.lock || S.phase === "won") return true;
+  if (!tutShown()) return false; if (close) return true; if (tutShort(o)) { tutNo(); return false }
   const allow = tutTiles(tval(o.allow || o.target, G)) || (tval(o.target, G) === "source" ? ORDER.filter(q => at(q).t === "source") : []);
   if (p && allow.some(q => same(q, p))) return true;
   if (p && o.move && headTiles(S.active).some(q => same(q, p))) { hsel = true; return false } // the end stays selected
@@ -920,8 +958,8 @@ function calloutOff() { const el = $("callout"); tutCallT = 0; tutDim = null; $(
 // Point the hand at the target: a tile on the board or a button. The fingertip touches the lower right edge of the ring or
 // button, so it never hides the target's own label (LOU-282).
 function tutHand() { const h = $("hand"); if (!h) return; const ui = tutUi(), a = tutAim(); let x = null, y = null, tx0, ty0;
-  const cb = !$("tcard").hidden && a && sel && a.has(sel + "") && $("tcard").querySelector("button[data-a]:not([disabled])");
-  if (cb) { const q = cb.getBoundingClientRect(); x = tx0 = q.right - 40; y = ty0 = q.top + q.height * .5 }
+  const cb = !$("sheet").hidden && a && sel && a.has(sel + "") && $("sacts").querySelector("button.main:not(.off)"); // the tile's panel is open: point at its button
+  if (cb) { const q = cb.querySelector(".sbtn").getBoundingClientRect(), r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(...sel); tx0 = q.right - 7; ty0 = q.top + q.height * .3; x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d }
   else if (ui) { const b = $(ui === "end" ? "end" : "cWater").querySelector(ui === "end" ? "i" : ".jsvg") || $(ui === "end" ? "end" : "cWater"), q = b.getBoundingClientRect(); x = q.left + q.width / 2; y = q.top + q.height * .5; tx0 = q.left + q.width * .82; ty0 = q.top + q.height * .78 }
   else if (a && S.phase !== "won") { const r = cv.getBoundingClientRect(), d = cv.width / r.width, k = [...a][0].split(",").map(Number), o = iso(...k); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d; tx0 = x + 21 * scale / d; ty0 = y + 9 * scale / d }
   if (x == null || tutArrive) { h.hidden = true; if (!tutArrive && tutShown()) tutPlace(null); return } h.hidden = false; h.style.left = (tx0 - 15.5) + "px"; h.style.top = (ty0 - 1) + "px"; tutPlace(x, y) }
@@ -931,7 +969,8 @@ function tutPlace(x, y) { const c = $("tutc"); if (!c) return;
   if (x == null) { if (c.classList.contains("near")) { c.classList.remove("near", "up"); c.style.left = c.style.top = c.style.width = "" } tutSide = ""; return }
   const w = Math.min(330, innerWidth - 24), l = Math.max(12, Math.min(innerWidth - w - 12, x - w / 2));
   c.classList.add("near"); c.style.width = w + "px"; const hgt = c.offsetHeight, bt = $("board").getBoundingClientRect();
-  const fitsDown = y + 62 + hgt < Math.min(innerHeight, bt.bottom) - 6, fitsUp = y - 66 - hgt > bt.top + lay.topH;
+  const floor = $("sheet").hidden ? Math.min(innerHeight, bt.bottom) : $("sheet").getBoundingClientRect().top; // never under the panel
+  const fitsDown = y + 62 + hgt < floor - 6, fitsUp = y - 66 - hgt > bt.top + lay.topH;
   const up = tutSide === "up" ? fitsUp || !fitsDown : tutSide === "down" ? !fitsDown && fitsUp : !fitsDown; tutSide = up ? "up" : "down";
   c.classList.toggle("up", up); c.style.left = l + "px"; c.style.setProperty("--ax", (x - l) + "px");
   c.style.top = (up ? y - 66 - hgt : y + 62) + "px" }
@@ -1086,7 +1125,8 @@ function resize() {
 function clampView() {
   const s = lay.fit * view.z, vw = lay.w / s, vh = lay.availH / s;
   view.cx = vw >= B.w ? B.x + B.w / 2 : Math.min(B.x + B.w - vw / 2, Math.max(B.x + vw / 2, view.cx));
-  view.cy = vh >= B.h ? B.y + B.h / 2 : Math.min(B.y + B.h - vh / 2, Math.max(B.y + vh / 2, view.cy));
+  const c0 = B.y + B.h / 2, lo = vh >= B.h ? c0 : B.y + vh / 2, hi = (vh >= B.h ? c0 : B.y + B.h - vh / 2) + padB / s; // padB: room for a tile above the sheet (LOU-284)
+  view.cy = Math.min(hi, Math.max(lo, view.cy));
 }
 function applyView() {
   view.z = Math.min(Math.max(5, lay.zAuto * 1.6), Math.max(1, view.z)); clampView();
@@ -1118,7 +1158,7 @@ function zoomTo(z) {
 function glide() { if (!tgt) return; const k = .14;
   view.cx += (tgt.x - view.cx) * k; view.cy += (tgt.y - view.cy) * k; if (tgt.z != null) view.z += (tgt.z - view.z) * k;
   if (++tgt.n > 80 || (Math.hypot(tgt.x - view.cx, tgt.y - view.cy) < 1 && (tgt.z == null || Math.abs(tgt.z - view.z) < .005))) {
-    if (tgt.z != null) view.z = tgt.z; tgt = null }
+    if (tgt.z != null) view.z = tgt.z; if (tgt.unpad && !sel) padB = 0; tgt = null }
   applyView() }
 
 // ---------- paint helpers
@@ -1630,7 +1670,9 @@ function draw() {
   if (selOn) { ringMem = flowTo; ringOn = T } const ra = selOn ? (reduce ? 1 : clamp01((T - ringOff) / 160)) : (reduce ? 0 : 1 - clamp01((T - ringOn) / 200)); if (!selOn) ringOff = T; // rings fade out over 0.2s when you let go
   if (ra > 0) ringMem.forEach((f, i) => flowRing(f, i, t, ra * (TUT && selOn ? Math.max(.25, tutK()) : 1)));
   if (aim) { const k = (reduce ? 1 : .6 + .4 * osc(t, 1.4)) * (TUT ? tutK() : 1); for (const key of aim) { if (flowTo.some(f => f.k === key)) continue; const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
-  if (sel) { rpath(hexPts(sel, R - 3), 9); ctx.fillStyle = "rgba(255,217,138,.25)"; ctx.fill(); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3); ctx.restore() }
+  if (sel) { const o = iso(...sel), pu = reduce ? 1 : .78 + .22 * osc(t, 1.4); // the selected tile (LOU-284): a soft white glow, a crisp white line that pulses gently, a chevron above
+    rpath(hexPts(sel, R - 3), 9); ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.fill(); ctx.save(); ctx.shadowColor = "rgba(255,255,255,.95)"; ctx.shadowBlur = 5 * scale; ink("rgba(255,255,255,.55)", 5); ctx.restore();
+    ctx.globalAlpha = pu; rpath(hexPts(sel, R - 3), 9); ink("#ffffff", 2.6); ctx.globalAlpha = 1; chevron(o.x, o.y - 40, t) }
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
     ctx.globalAlpha = 1 - k; rpath(hexPts(r.p, R * (1 + k * .25)), 9); ink("#ffffff", 2.2); ctx.globalAlpha = 1 }
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -1691,17 +1733,34 @@ function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo
 // ---------- the sheet (LOU-283, LOU-284): while your river or a tile is selected, a white glass panel takes the bottom bar's place
 let sheetKey = "";
 const CHEV = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg>';
-function sheetSync() { const el = $("sheet"); if (!el || quiet) return; const mode = riverSel() && !sel ? "river" : "";
-  const key = !mode ? "" : [mode, S.active, S.income, S.water, flowOf(S.active), moves().size, affordable()].join("|");
-  if (key === sheetKey) return; const was = sheetKey; sheetKey = key;
-  if (!mode) { el.hidden = true; $("app").classList.remove("sheeted"); $("bottom").style.bottom = ""; return }
-  const mvs = moves().size, can = affordable(), name = TRIB && S.rivers.length > 1 ? riverName(S.active) : "Your river";
-  $("spanel").innerHTML = `<i class="sico riv" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i>
+function sheetSync() { const el = $("sheet"); if (!el || quiet) return; const mode = sel && sheetHtml ? "tile" : riverSel() ? "river" : "";
+  let panel = "", acts = "";
+  if (mode === "tile") ({panel, acts} = sheetHtml);
+  else if (mode === "river") { const mvs = moves().size, can = affordable(), name = TRIB && S.rivers.length > 1 ? riverName(S.active) : "Your river";
+    panel = `<i class="sico riv" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i>
     <div class="stx"><div class="sttl"><b>${name}</b><span class="fpill">flow ${flowOf(S.active)}</span></div><small>${!mvs ? "Nowhere to flow from here." : can ? "Select a ring to flow there." : `Not enough water. Close this, then tap Next Water Cycle (+${S.income}).`}</small></div>
-    <button type="button" class="sclose" id="sclose" aria-label="Close">${CHEV}</button>`;
-  $("sacts").innerHTML = ""; el.hidden = false; $("app").classList.add("sheeted"); if (!was && !reduce) { el.classList.remove("in"); void el.offsetWidth; el.classList.add("in") }
-  const br = $("board").getBoundingClientRect(), sr = el.getBoundingClientRect(); $("bottom").style.bottom = Math.max(0, br.bottom - sr.top) + "px" } // the toast sits above the panel
-$("sheet").addEventListener("click", e => { if (e.target.closest("#sclose")) { hsel = false; closeCard(); draw() } });
+    <button type="button" class="sclose" id="sclose" aria-label="Close">${CHEV}</button>` }
+  const key = mode ? mode + "|" + (mode === "tile" ? sel : "") + "|" + panel + acts : "";
+  if (key === sheetKey) return; const was = sheetKey.split("|")[0], wasTile = sheetKey.split("|")[1]; sheetKey = key;
+  if (!mode) { $("app").classList.remove("sheeted"); $("bottom").style.bottom = ""; sheetPan(null);
+    if (reduce) { el.hidden = true; return } el.classList.remove("in"); el.classList.add("out"); setTimeout(() => { if (!sheetKey) { el.hidden = true; el.classList.remove("out") } }, 160); return }
+  $("spanel").innerHTML = panel; $("sacts").innerHTML = acts; $("sacts").dataset.n = mode === "tile" ? sheetHtml.n : 0; el.dataset.mode = mode;
+  el.classList.remove("out"); el.hidden = false; $("app").classList.add("sheeted");
+  if ((was !== mode || (mode === "tile" && wasTile !== sel + "")) && !reduce) { el.classList.remove("in"); void el.offsetWidth; el.classList.add("in") }
+  const br = $("board").getBoundingClientRect(), sr = el.getBoundingClientRect(), over = Math.max(0, br.bottom - sr.top); $("bottom").style.bottom = over + "px"; // the toast sits above the panel
+  sheetPan(mode === "tile" ? sel : null, over) }
+// Make room: if the selected tile would sit under the panel, the camera pans up just enough to show it, and goes back on close.
+let padB = 0, panBack = null;
+function sheetPan(p, over = 0) { if (view.z === null || !lay.w) return;
+  if (!p) { if (panBack) { tgt = {x:panBack.x, y:panBack.y, n:0, unpad:true}; panBack = null; if (reduce) { padB = 0; view.cx = tgt.x; view.cy = tgt.y; tgt = null; applyView() } } else if (!tgt) padB = 0; return }
+  const o = iso(...p), sy = (o.y * scale + off.y) / lay.dpr, limit = lay.h - over - 64; if (sy <= limit) return;
+  if (!panBack) panBack = {x:view.cx, y:view.cy}; padB = over + 80; const s = lay.fit * view.z;
+  tgt = {x:view.cx, y:view.cy + (sy - (limit - 30)) / s, n:0}; if (reduce) { view.cy = tgt.y; tgt = null; applyView() } }
+$("sheet").addEventListener("click", e => { if (e.target.closest("#sclose")) { if (TUT && !tutTap(null, true)) return; hsel = false; closeCard(); draw(); return }
+  const b = e.target.closest("button[data-a]"); if (!b) return; const a = cardActs[+b.dataset.a]; if (!a) return;
+  if (b.classList.contains("off")) { tutNo(); return } // a locked tutorial step: only its own button answers
+  if (!canDo(a)) { say(a.costText ? shortBy(a) : `Need ${a.cost - S.water} more gal`, true); b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); return }
+  runAct(a) });
 // The tutorial's veil: a pale wash over the board that clears, with a soft edge, around the tiles in `holes` (null: no hole).
 function veil(holes, a) { if (a <= 0) return; ctx.save();
   if (!holes || !holes.length) { ctx.fillStyle = `rgba(236,244,245,${a})`; ctx.fillRect(-1e5, -1e5, 2e5, 2e5); ctx.restore(); return }
@@ -1766,17 +1825,16 @@ cv.addEventListener("pointerup", e => {
   const p = tileAt(e.clientX, e.clientY);
   if (TUT && !tutTap(p)) return;
   if (!p) { closeCard(); if (hsel) { hsel = false; draw() } return }
-  if (S.phase === "pick") { if (sel && same(sel, p) && placeable(p)) { closeCard(); return placeSrc(p) } return pick(p) }
+  if (S.phase === "pick") { if (sel && same(sel, p)) { closeCard(); return } return pick(p) }
   if (S.phase !== "play") return;
   tapTile(p);
 });
 $("tcard").addEventListener("click", e => {
   if (e.target.closest("#tclose")) { closeCard(); return }
   const rb = e.target.closest("button[data-r]"); if (rb && !rb.disabled && S.phase === "play") { const i = +rb.dataset.r; if (i !== S.active) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } return }
-  const b = e.target.closest("button[data-a]"); if (b && !b.disabled) runAct(cardActs[+b.dataset.a]);
 });
 $("end").onclick = () => tutGate("end") && endTurn(); $("undo").onclick = () => tutGate("undo") && undo(); $("restart").onclick = () => tutGate("restart") && restart(); $("again").onclick = restart;
-addEventListener("keydown", e => { if (e.key === "Escape") closeCard(); });
+addEventListener("keydown", e => { if (e.key === "Escape") { hsel = false; closeCard(); draw() } });
 addEventListener("keydown", e => { if (e.key === " " && !$("help").open && !$("goal").open) { e.preventDefault(); if (tutGate("end")) endTurn() } });
 $("helpBtn").onclick = () => { $("hard").checked = hard(); $("help").showModal() };
 $("hard").onchange = e => { try { localStorage.setItem(HARD_KEY, e.target.checked ? "1" : "0") } catch (_) {} sync() };

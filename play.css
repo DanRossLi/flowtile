@@ -685,3 +685,33 @@ button.act:disabled{background:#e3e8e8;color:#7d8b8b;box-shadow:none}
 .sclose:active{transform:translateY(2px)}
 .sclose svg{width:18px;height:18px;fill:none;stroke:#24434a;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
 @media (prefers-reduced-motion:reduce){.sheet.in{animation:none}.sheet.out{transition:none}}
+/* Tile panel (LOU-284): what the tile is and does, then every option as its own round button along the bottom */
+.tblock{flex:none;width:64px;height:54px}
+.sheet[data-mode="tile"] .spanel{padding:12px 14px 12px 10px;gap:10px}
+.sttl b.tnm{font-size:20px}
+.sheet[data-mode="tile"] .stx small{font-size:14px;margin-top:2px}
+.stx small b{font-weight:800}.stx small b.wtr{color:#3f86b0}.stx small b.flw{color:#13917a}.stx .nw{white-space:nowrap}
+.sheet[data-mode="tile"] .sclose{width:40px;height:40px}.sheet[data-mode="tile"] .sclose svg{width:16px;height:16px}
+.sacts{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:12px 14px;padding:0 0 0;pointer-events:none}
+.sacts:empty{display:none}
+.sacts[data-n="4"]{gap:12px 4px}
+button.sact{pointer-events:auto;flex:0 1 96px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0;border:0;border-radius:18px;background:none;box-shadow:none;color:#24434a;font-family:var(--hand);cursor:pointer}
+.sacts[data-n="4"] button.sact{flex-basis:86px}
+button.sact:active:not(:disabled){transform:none;box-shadow:none}
+.sbtn{display:grid;place-items:center;width:66px;height:66px;border-radius:50%;background:#fff;box-shadow:0 5px 0 rgba(0,0,0,.08),0 8px 18px rgba(30,60,60,.18);transition:transform .08s}
+.sbtn svg{width:32px;height:32px}
+button.sact:active .sbtn{transform:translateY(3px)}
+button.sact.main .sbtn{background:linear-gradient(180deg,#9fd7c9,#5fae9c);box-shadow:0 5px 0 #3f8a7a,0 8px 18px rgba(30,60,60,.18)}
+button.sact>b{font-weight:800;font-size:14px;line-height:1.1;text-align:center;text-shadow:0 0 6px rgba(255,255,255,.9),0 0 2px #fff}
+.scost{display:flex;align-items:center;gap:3px;font-weight:800;font-size:13px;line-height:1.3;color:#24434a;background:rgba(255,255,255,.85);border-radius:999px;padding:2px 8px}
+.cdrop{width:11px;height:14px;fill:#3f86b0}
+button.sact small{font-weight:500;font-size:11px;line-height:1.2;text-align:center;color:#3f5c5d;background:rgba(255,255,255,.72);border-radius:8px;padding:2px 5px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+button.sact small.swarn{color:#a14a22}
+button.sact.cant .sbtn{background:#e3e8e8;box-shadow:0 5px 0 rgba(0,0,0,.06);filter:grayscale(1);opacity:.6}
+button.sact.cant>b,button.sact.cant small{opacity:.6}
+button.sact.cant .scost{color:#7d8589;background:rgba(240,242,242,.85)}button.sact.cant .cdrop{fill:#9aa3a8}
+button.sact.off{opacity:.4;filter:grayscale(1)}
+button.sact.nope .sbtn{animation:tshake .4s}
+@media (max-height:560px){.sbtn{width:52px;height:52px}.sbtn svg{width:26px;height:26px}button.sact small{display:none}.sheet{gap:8px;bottom:8px}}
+@media (prefers-reduced-motion:reduce){button.sact.nope .sbtn{animation:none}}
+.sheet.out *{pointer-events:none!important}
