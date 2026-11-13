@@ -818,3 +818,45 @@ dialog.guide form .end{width:100%;margin-top:10px}
 #wGoals li.learn{display:block;padding:3px 0 3px 22px;position:relative;font:500 13.5px/1.3 var(--hand);color:#3f5c5d;border:0}
 #wGoals li.learn::before{content:"";position:absolute;left:6px;top:9px;width:6px;height:6px;border-radius:50%;background:#5fae9c}
 #wGoals li.learn:first-of-type{margin-top:6px}
+/* Launch designs (LOU-294): the river strip above an always-visible bar, one hint at a time, tile panel sizes, banner, pill, menu */
+.rstrip{pointer-events:none;display:flex;align-items:center;gap:9px;min-height:44px;box-sizing:border-box;margin:0 58px 8px 4px;padding:7px 14px 7px 8px;border-radius:999px;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(30,60,60,.16);font-family:var(--hand);color:#24434a;animation:sheetin .2s cubic-bezier(.3,1.3,.5,1)}
+.rstrip[hidden]{display:none}
+.rsico{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:linear-gradient(180deg,#bfe9f3,#7fbfd6)}
+.rsico svg{width:18px;height:12px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round}
+.rstrip b{font-weight:800;font-size:14px;white-space:nowrap}
+.rstrip .fpill{font-size:12px}
+.rshint{font-weight:700;font-size:13px;color:#4f6f70;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* one hint at a time: the strip or the tile panel stands in for the message line */
+.striped #msg,.sheeted #msg{display:none}
+.sheeted .rstrip{display:none}
+/* tile panel: 66px buttons, 14px bold labels, plain grey effect lines of at most two lines, 14px apart, 10px under the info card */
+.sheet{gap:10px}
+.sacts,.sacts[data-n="4"]{gap:10px 14px}
+.sacts[data-n="4"]{gap:10px 2px}
+.sbtn{width:66px;height:66px}.sbtn svg{width:32px;height:32px}
+button.sact small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:96px;padding:0;border-radius:0;background:none;font-size:11.5px;line-height:1.25;color:#4f6f70;text-shadow:0 0 5px rgba(255,255,255,.95),0 0 2px #fff}
+button.sact small.swarn{color:#a14a22}
+button.sact small.sneed{font-weight:800}
+/* level banner: the name stays on one line */
+.lvb{border-radius:16px;white-space:nowrap}
+.lvb b{font-size:14px}.lvb span{font-size:12.5px;white-space:normal}
+/* Next water cycle: label and amount on two lines inside the pill, so nothing overflows at 390px */
+button.nwc{min-height:60px;gap:10px;padding:6px 12px}
+.nwt{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.15}
+button.nwc .nwl{font-size:17px;white-space:nowrap}
+button.nwc .gain{padding:0;background:none;border-radius:0;font-size:13px;color:#13917a;white-space:nowrap}
+button.nwc.muted{background:rgba(255,255,255,.88);color:#24434a;box-shadow:0 8px 24px rgba(30,60,60,.16)}
+.app .actions{padding:8px 6px 6px}
+.app{min-width:0}.board,.actions{min-width:0}
+/* menu: grip, title row, round icons, a note under each title, Restart in rust */
+.msheet{border-radius:30px 30px 0 0;padding:10px 20px calc(18px + env(safe-area-inset-bottom,0px));gap:0;box-shadow:0 -10px 30px rgba(30,60,60,.25)}
+.mgrip{display:block;width:44px;height:5px;border-radius:3px;background:#d5dfe0;margin:0 auto 10px}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:0 4px 8px;color:#24434a}
+.mhead b{font-weight:800;font-size:18px}.mhead span{font-weight:700;font-size:13px;color:#4f6f70;white-space:nowrap}
+.mrow,button.mrow{gap:14px;min-height:0;padding:11px 4px;border-radius:0;border-top:1px solid rgba(36,67,74,.08);font-size:16px}
+.mico{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#eef5f6}
+.mrow .mico svg{width:20px;height:20px;stroke:#24434a}
+.mrow small{font-size:12.5px;margin-top:1px}
+.mrow.rust>span{color:#b5562f}.mrow.rust small{color:#4f6f70}.mrow.rust .mico svg{stroke:#b5562f}
+.mconf{padding:0 4px 12px 58px}
+.lvb{width:max-content;white-space:normal}.lvb b{white-space:nowrap}
