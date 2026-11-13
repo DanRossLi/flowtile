@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · The Fork</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Extra island (LOU-290): level 6 of the first campaign, moved here because its mechanic is held back. Built by the seeded campaign builder and checked by the bot.
+// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
+// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+window.MAP = {
+  id: "extra-fork",
+  label: "The Fork",
+  lesson: "Two sources. Join them and your flow doubles. <b>New: tributaries.</b> Tap the second source to start a tributary, built with your main river's water. Its flow joins yours once it reaches your river.",
+  types: [
+    "__BB_rL___r~~",
+    "___mBBL____~~",
+    "____SBL_B___~",
+    "____gB______~",
+    "T____Bg__._r~",
+    "_____B_____~~",
+    "___r_Br____t~",
+    "_____B__t___~"],
+  elev: [
+    "1111110111100",
+    "1111110111100",
+    "1111110111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111100",
+    "1111111111110",
+    "1111111111110"],
+  mainSource: [0, 4],
+  waterSides: {"5,3": 0, "5,5": 5, "3,0": 0},
+  storage: 5,
+  tileCost: 1,
+  showBloom: true,
+  bloomGoal: 6,
+  bloomLabel: "Meadows",
+  bloomKind: "meadows",
+  turnGoal: 9,
+  startHint: "Tap the big source on the left to start your main river.",
+  next: "../../world/",
+  nextLabel: "All islands",
+  tributaries: true,
+  help: [
+    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
+    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
+    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
+    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
+    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
+    "A <b>lake</b> fills all at once for <b>2 gal a tile</b>.",
+    "Tap a second source to start a <b>tributary</b>; it joins your flow once it reaches your river."],
+  pickHint: "Start with the big source on the left. The smaller sources are for tributaries."
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Level 21</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Level 21 · Storm Season (LOU-290): New: weather. Hand-built; the solver (tools/solve.mjs) sets "By turn N" and proves the three stars.
+// Map key: T source  _ bare ground  . meadow land  g m t ready-made grass / meadow / trees  F old forest  f fertile ground
+// s sand  r rock  B mountain  o spring  L lake  M marsh  C cave  ~ sea
+window.MAP = {
+  id: "c2-21",
+  label: "Level 21 · Storm Season",
+  intro: "New: weather",
+  types: [
+    "T____B__________",
+    "_____B__________",
+    "_____B____B_____",
+    "_____r_o__B_____",
+    "_____B____B__o__",
+    "_____B____B_____",
+    "_____B____r_____",
+    "__o__B____B____~",
+    "__________B____~",
+    "__________B____~"],
+  elev: [
+    "1111111111111111",
+    "1111111111111111",
+    "1111111111111111",
+    "1111111111111111",
+    "1111111111111111",
+    "1111111111111111",
+    "1111111111111111",
+    "1111111111111110",
+    "1111111111111110",
+    "1111111111111110"],
+  weather: {"3": "rain", "5": "rain", "7": "drought"},
+  guided: true,
+  objectives: [
+    {text: g => `Flow <b>2 tiles</b> (${[[1, 0], [2, 0]].filter(([x, y]) => g.on(x, y)).length}/2).`, target: g => g.next([[1, 0], [2, 0]]), lock: true, move: true, needs: 1, done: g => g.on(2, 0)},
+    {text: "<b>Tap Next water cycle.</b>", sub: "The Sky chip shows the forecast.", target: "end", lock: true, done: g => g.turn >= 2,
+      after: ["jar", "Rain on turn 3: +2 gal. More rain on turn 5.<small>Leave room in your jar, or it spills.</small>"]}],
+  storage: 5,
+  tileCost: 1,
+  stars: [{type: "sea"}, {type: "noSpill"}, {type: "byTurn", n: 7}],
+  next: "../22/",
+  nextLabel: "Next level",
+  help: []
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

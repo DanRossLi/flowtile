@@ -17,50 +17,42 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 7 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 7 · Still Water (LOU-290): New: lakes. Hand-built; the solver (tools/solve.mjs) sets "By turn N" and proves the three stars.
+// Map key: T source  _ bare ground  . meadow land  g m t ready-made grass / meadow / trees  F old forest  f fertile ground
+// s sand  r rock  B mountain  o spring  L lake  M marsh  C cave  ~ sea
 window.MAP = {
-  id: "level-7",
-  label: "Level 7 · Rich Soil",
-  lesson: "Plant on the dark soil to store more. <b>New: fertile ground.</b> Dark soil: a meadow on it stores 1 more, and its trees count double toward a grove.",
+  id: "c2-7",
+  label: "Level 7 · Still Water",
+  intro: "New: lakes",
+  chapter: "Chapter 2 · Inland: lakes and old forest",
   types: [
-    "___L.__B__.__~",
-    "___L__.B____~~",
-    "T__L___B__._~~",
-    "___r___Lr____~",
-    "______Brff__~~",
-    "___B___B_f_B_~",
-    "____.__B_ft_~~",
-    "____ffBB_r__B~"],
+    "__________~",
+    "___B______~",
+    "___L______~",
+    "T__L______~",
+    "___B______~",
+    "___B______~",
+    "__________~"],
   elev: [
-    "11101111111110",
-    "11101111111100",
-    "11101111111100",
-    "11111110111110",
-    "11111111111100",
-    "11111111111110",
-    "11111111111100",
-    "11111111111110"],
-  mainSource: [0, 2],
-  waterSides: {"7,2": 0, "3,5": 4, "7,1": 1},
+    "11111111110",
+    "11111111110",
+    "11101111110",
+    "11101111110",
+    "11111111110",
+    "11111111110",
+    "11111111110"],
+  guided: true,
+  objectives: [
+    {text: g => `A lake is ahead. <b>Flow to its edge</b> (${[[1, 3], [2, 3]].filter(([x, y]) => g.on(x, y)).length}/2).`, target: g => g.next([[1, 3], [2, 3]]), lock: true, move: true, needs: 1, done: g => g.on(2, 3)},
+    {text: "A lake costs 2 gal a tile. <b>Tap Next water cycle</b> to save up.", target: "end", lock: true, done: g => g.turn >= 2},
+    {text: "<b>Fill the lake</b>: tap its ring.", sub: "It fills all at once.", target: [[3, 3]], lock: true, move: true, needs: 4, done: g => g.lakes >= 1,
+      after: ["river", "A full lake lets your river leave from any side."]}],
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 7,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 5,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "lake", n: 1}, {type: "byTurn", n: 6}],
   next: "../8/",
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
-    "A <b>lake</b> fills all at once for <b>2 gal a tile</b>.",
-    "<b>Fertile ground</b>: a meadow on it stores 1 more, and its trees count double in a grove."]
+  nextLabel: "Next level",
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

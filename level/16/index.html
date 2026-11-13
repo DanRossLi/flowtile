@@ -17,59 +17,39 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 16 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 16 · Reed Beds (LOU-290): A wall of marsh: hug it or cut through. Hand-built; the solver (tools/solve.mjs) sets "By turn N" and proves the three stars.
+// Map key: T source  _ bare ground  . meadow land  g m t ready-made grass / meadow / trees  F old forest  f fertile ground
+// s sand  r rock  B mountain  o spring  L lake  M marsh  C cave  ~ sea
 window.MAP = {
-  id: "level-16",
-  label: "Level 16 · Dunes",
-  lesson: "A long desert crossing. Every oasis counts. <b>New: salt flats.</b> Land by the sea is salty: nothing blooms or grows on it.",
+  id: "c2-16",
+  label: "Level 16 · Reed Beds",
+  intro: "A wall of marsh: hug it or cut through",
   types: [
-    "___B_ssss_rsB__B_B~~",
-    "___B__p__sssBpsr__~~",
-    "___Br____ss_BpsB___~",
-    "___B_____r_BB__Bps_~",
-    "__rB__r___s_BssB_s~~",
-    "___BB__r_rs_BB_Brs~~",
-    "___B_oo__ro_B__B_s~~",
-    "T__BssB__oo_B__r___~",
-    "__pBo___B______B__~~",
-    "___Bor___r__B__Bo__~",
-    "___B__Bss_BrB_rB___~",
-    "__rr___ss___B_rB__~~"],
+    "______M______~",
+    "______M__o___~",
+    "______M______~",
+    "T_____r______~",
+    "______M______~",
+    "__ff__M______~",
+    "__ff__M______~",
+    "______B______~",
+    "_____________~"],
   elev: [
-    "11111111111111111100",
-    "11111111111111111100",
-    "11111111111111111110",
-    "11111111111111111110",
-    "11111111111111111100",
-    "11111111111111111100",
-    "11111111111111111100",
-    "11111111111111111110",
-    "11111111111111111100",
-    "11111111111111111110",
-    "11111111111111111110",
-    "11111111111111111100"],
-  mainSource: [0, 7],
-  waterSides: {"15,6": 2, "12,4": 4, "12,10": 2, "12,2": 0, "6,10": 0},
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110"],
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 13,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 5,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "storage", n: 12}, {type: "byTurn", n: 6}],
   next: "../17/",
-  salt: true,
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "<b>Sand</b> is free to cross but cuts your <b>flow by 1</b>. <b>Springs</b> are free and add <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
-    "<b>Rain pools</b>: run the river over one for +2 gal."]
+  nextLabel: "Next level",
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

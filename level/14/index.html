@@ -17,58 +17,37 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 14 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 14 · Black Earth (LOU-290): Fertile ground off the direct route. Hand-built; the solver (tools/solve.mjs) sets "By turn N" and proves the three stars.
+// Map key: T source  _ bare ground  . meadow land  g m t ready-made grass / meadow / trees  F old forest  f fertile ground
+// s sand  r rock  B mountain  o spring  L lake  M marsh  C cave  ~ sea
 window.MAP = {
-  id: "level-14",
-  label: "Level 14 · Dry Lightning",
-  lesson: "Keep your trees by the water before the storm. <b>New: wildfire.</b> Lightning sets dry trees on fire. Trees touching water don't burn.",
+  id: "c2-14",
+  label: "Level 14 · Black Earth",
+  intro: "Fertile ground off the direct route",
   types: [
-    "____B_rB__g_BtB_~",
-    "__B_B___m_m_Bm._~",
-    "___.B___rr__B_g_~",
-    "TFFrBFF_____r___~",
-    "____rF._B_ssB___~",
-    "__F_B__t_o_rBm_~~",
-    "__F_Bor_____LBsg~",
-    "__F_B_______Bgs_~",
-    "___gB______rB__~~",
-    "__ssL___r___B___~",
-    "___rB__.orBBBB_r~"],
+    "__ff_________~",
+    "__ff____B____~",
+    "________B__o_~",
+    "T_______r____~",
+    "________B____~",
+    "____o___B_ff_~",
+    "__________ff_~",
+    "_____________~"],
   elev: [
-    "11111111111111110",
-    "11111111111111110",
-    "11111111111111110",
-    "11111111111111110",
-    "11111111111111110",
-    "11111111111111100",
-    "11111111111101110",
-    "11111111111111110",
-    "11111111111111100",
-    "11110111111111110",
-    "11111111111111110"],
-  mainSource: [0, 3],
-  waterSides: {"4,8": 2, "4,1": 5, "2,1": 2, "12,4": 3},
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110",
+    "11111111111110"],
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 12,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 7,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "flow", n: 6}, {type: "byTurn", n: 6}],
   next: "../15/",
-  weather: {"3": "fire", "7": "fire"},
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "<b>Sand</b> is free to cross but cuts your <b>flow by 1</b>. <b>Springs</b> are free and add <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
-    "A <b>lake</b> fills all at once for <b>2 gal a tile</b>.",
-    "Watch the <b>forecast</b>: weather arrives on set turns."]
+  nextLabel: "Next level",
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

@@ -1,9 +1,9 @@
 // Flow Tile service worker: lets the game load offline after the first visit.
 // Bump VERSION whenever cached files change so old caches are dropped.
-const VERSION = "v82";
+const VERSION = "v83";
 const CACHE = `flowtile-${VERSION}`;
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700&display=swap";
-const LOCAL = ["./", "./level/1/", "./level/2/", "./level/3/", "./level/4/", "./level/5/", "./level/6/", "./level/7/", "./level/8/", "./level/9/", "./level/10/", "./level/11/", "./level/12/", "./level/13/", "./level/14/", "./level/15/", "./level/16/", "./level/17/", "./level/18/", "./level/19/", "./level/20/", "./levels.js", "./river/", "./spring-hill/", "./perfection/", "./daily/", "./world/", "./custom/", "./generator/", "./tutorial/", "./big/", "./play.js", "./play.css", "./paper.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+const LOCAL = ["./", "./level/1/", "./level/2/", "./level/3/", "./level/4/", "./level/5/", "./level/6/", "./level/7/", "./level/8/", "./level/9/", "./level/10/", "./level/11/", "./level/12/", "./level/13/", "./level/14/", "./level/15/", "./level/16/", "./level/17/", "./level/18/", "./level/19/", "./level/20/", "./level/21/", "./level/22/", "./level/23/", "./level/24/", "./extra/fork/", "./extra/dam-builders/", "./extra/snowline/", "./extra/rain-pools/", "./extra/second-thoughts/", "./extra/dry-lightning/", "./extra/high-water/", "./extra/dunes/", "./big/40/", "./levels.js", "./river/", "./spring-hill/", "./perfection/", "./daily/", "./world/", "./custom/", "./generator/", "./tutorial/", "./big/", "./play.js", "./play.css", "./paper.css","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil((async () => {

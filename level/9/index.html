@@ -17,52 +17,43 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 9 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 9 · Old Wood (LOU-290): New: wild forest. Hand-built; the solver (tools/solve.mjs) sets "By turn N" and proves the three stars.
+// Map key: T source  _ bare ground  . meadow land  g m t ready-made grass / meadow / trees  F old forest  f fertile ground
+// s sand  r rock  B mountain  o spring  L lake  M marsh  C cave  ~ sea
 window.MAP = {
-  id: "level-9",
-  label: "Level 9 · Dam Builders",
-  lesson: "Find the beavers and route your river right through them. <b>New: beavers.</b> Run your river <b>through</b> a beaver colony with trees beside it for a pond and +1 flow. Passing beside it isn't enough.",
+  id: "c2-9",
+  label: "Level 9 · Old Wood",
+  intro: "New: wild forest",
   types: [
-    "___B__BL_rB__~~",
-    "___B__.B_LB___~",
-    "___B___L_Lg___~",
-    "___B___B__mFF_~",
-    "__BBFF_B____v_~",
-    "T_rB___Bm___m~~",
-    "___B___BB___t~~",
-    "__t____Brg__r~~",
-    "_____r_B__v___~"],
+    "___________~",
+    "___________~",
+    "____FFF____~",
+    "T___FFF____~",
+    "____FFF____~",
+    "___________~",
+    "___________~",
+    "___________~"],
   elev: [
-    "111111101111100",
-    "111111111011110",
-    "111111101011110",
-    "111111111111110",
-    "111111111111110",
-    "111111111111100",
-    "111111111111100",
-    "111111111111100",
-    "111111111111110"],
-  mainSource: [0, 5],
-  waterSides: {"8,6": 5, "3,1": 0, "3,0": 3},
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110",
+    "111111111110"],
+  guided: true,
+  objectives: [
+    {text: g => `Old forest is ahead. <b>Flow toward it</b> (${[[1, 3], [2, 3], [3, 2]].filter(([x, y]) => g.on(x, y)).length}/3).`, target: g => g.next([[1, 3], [2, 3], [3, 2]]), lock: true, move: true, needs: 1, done: g => g.on(3, 2)},
+    {text: "<b>Tap Next water cycle.</b>", target: "end", lock: true, done: g => g.turn >= 2},
+    {text: "Old forest counts toward a grove. <b>Flow along its edge.</b>", sub: "Flowing through forest washes it away.", target: g => g.next([[3, 1], [4, 1], [5, 1]]), lock: true, move: true, needs: 1, done: g => g.groves >= 1,
+      after: ["flow", "Grove: +1 flow from old forest."]}],
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 8,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 7,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "groveWild"}, {type: "noForest"}],
   next: "../10/",
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
-    "A <b>lake</b> fills all at once for <b>2 gal a tile</b>.",
-    "<b>Beavers</b>: run your river through the colony, with trees beside it, for +1 flow."]
+  nextLabel: "Next level",
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

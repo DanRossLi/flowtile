@@ -30,20 +30,40 @@ Since Nov 12 the game uses the painterly look (LOU-280): an isometric island of 
 
 ## Single player
 
-A 20-level campaign. Levels 1 to 3 are short guided levels that teach the game (there is no separate tutorial). Each island is bigger and harder than the last, up to a 40×40 finale. Terrain the tutorial doesn't teach gets a "New:" tip the first time it appears. A level opens once you reach the sea on the one before it. The list with your stars is at https://danrossli.github.io/flowtile/river/, each level is at `/level/N/`, and its win card goes on with **Next map**. The levels list lives in `levels.js`. The original River maps (`/1/` … `/23/`) are retired and point to the list.
+A 24-level campaign in four chapters of six (LOU-290). Levels 1 to 3 are short guided levels that teach the game (there is no separate tutorial). A new mechanic appears only on Levels 7, 9, 13, 15, 19 and 21, each opening with two or three guided steps. Reaching the sea opens the next level; the other two stars are for replaying. Every level is hand-built and checked with the level solver, which also sets each "By turn N".
 
-| Level | Size | What's new |
-|---|---|---|
-| 1 · Morning Stream | 9×6 | A small island to warm up |
-| 2 · Sandbar | 10×6 | Sand and oases |
-| 3 · Two Peaks | 11×7 | A ridge with one way through |
-| 4 · Still Water | 12×7 | New: lakes |
-| 5 · Old Wood | 12×8 | New: wild forest |
-| 6 · The Fork | 13×8 | New: tributaries |
-| 7 · Rich Soil | 14×8 | New: fertile ground |
-| 8 · Wetland | 14×9 | New: marsh |
-| 9 · Dam Builders | 15×9 | New: beavers |
-| 10 · Under the Hill | 15×9 | New: caves |
+| Level | Size | About | Stars 2 and 3 |
+|---|---|---|---|
+| **Chapter 1 · Shores** | | | |
+| 1 · First river | 8×5 | Water, flow and Next water cycle | Use Next water cycle · Arrive by turn 3 |
+| 2 · Read the land | 9×6 | Rock, sand, springs and mountain pools | Reach the spring · Finish with flow 4 or more |
+| 3 · Grow the land | 9×6 | Storage, meadows, trees and groves | Grow a grove · Finish with storage 6 or more |
+| 4 · Sandbar | 10×6 | A shortcut that drinks your flow | Finish with flow 3 or more · Arrive by turn 5 |
+| 5 · Two Peaks | 11×7 | One pass, two mountain pools | Reach both mountain pools · Arrive by turn 6 |
+| 6 · Green Shore | 11×7 | Route and grow together | Grow a grove · Never spill water |
+| **Chapter 2 · Inland** | | | |
+| 7 · Still Water | 11×7 | New: lakes | Fill the lake · Arrive by turn 6 |
+| 8 · Lake Country | 12×7 | Wait for a lake without spilling | Never spill water · Arrive by turn 6 |
+| 9 · Old Wood | 12×8 | New: wild forest | Make a grove with old forest · Wash away no forest |
+| 10 · The Clearing | 12×8 | Forest in the way of the short route | Finish with flow 5 or more · Arrive by turn 5 |
+| 11 · Lakeside Wood | 13×8 | Lakes and forest together | Fill the lake · Grow 2 groves |
+| 12 · The Heartland | 13×8 | Everything from the inland, at once | Finish with flow 6 or more · Arrive by turn 5 |
+| **Chapter 3 · High country** | | | |
+| 13 · Rich Soil | 13×8 | New: fertile ground | Grow a grove on fertile ground · Finish with storage 8 or more |
+| 14 · Black Earth | 14×8 | Fertile ground off the direct route | Finish with flow 6 or more · Arrive by turn 6 |
+| 15 · Wetland | 14×9 | New: marsh | Get a marsh's +1 flow · Drain no marsh |
+| 16 · Reed Beds | 14×9 | A wall of marsh: hug it or cut through | Finish with storage 12 or more · Arrive by turn 6 |
+| 17 · Highland Lakes | 15×9 | Fertile ground, marsh and lakes | Grow 2 groves · Never spill water |
+| 18 · High Meadow | 15×9 | The high country, all together | Finish with flow 7 or more · Arrive by turn 7 |
+| **Chapter 4 · Far islands** | | | |
+| 19 · Under the Hill | 15×9 | New: caves | Use a cave · Arrive by turn 7 |
+| 20 · Hollow Ridge | 15×10 | Two cave pairs and three springs | Reach 2 springs · Arrive by turn 7 |
+| 21 · Storm Season | 16×10 | New: weather | Never spill water · Arrive by turn 7 |
+| 22 · Dry Spell | 16×10 | A drought in the middle of the level | Finish with flow 6 or more · Arrive by turn 7 |
+| 23 · Wild Country | 16×10 | Everything so far | Grow 3 groves · Never spill water |
+| 24 · The Great Island | 20×12 | The finale | Finish with flow 8 or more · Arrive by turn 9 |
+
+The first campaign's levels with rules the campaign now holds back (tributaries, beavers, alpine trees, rain pools, rechannel, wildfire, floods, salt) are **Extra islands** under All islands: `/extra/fork/`, `/extra/dam-builders/`, `/extra/snowline/`, `/extra/rain-pools/`, `/extra/second-thoughts/`, `/extra/dry-lightning/`, `/extra/high-water/`, `/extra/dunes/`. Its 40×40 finale is a big map at `/big/40/`.
 
 ## More maps
 
@@ -53,6 +73,7 @@ A 20-level campaign. Levels 1 to 3 are short guided levels that teach the game (
 | Perfection island | https://danrossli.github.io/flowtile/perfection/ | Every rule on: the best score in 20 turns |
 | Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
+| Big map · 40×40 | https://danrossli.github.io/flowtile/big/40/ | The first campaign's finale, kept as a very long game |
 
 Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the menu pages share `paper.css`. Each map's `index.html` (the site root is the home page) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy a map folder (such as `spring-hill/`), edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
 

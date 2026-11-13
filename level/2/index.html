@@ -46,6 +46,7 @@ window.MAP = {
   tileCost: 1,
   stars: [{type: "sea"}, {type: "springs", n: 1}, {type: "flow", n: 4}],
   next: "../3/",
+  nextLabel: "Next level",
   learned: ["Rock costs more; sand is free but drinks flow.", "Springs and mountain pools add flow.", "Your river's width shows its flow."],
   objectives: [
     {text: "Rock costs 2 gal. <b>Go around it.</b>", target: [[2, 3], [3, 2]], allow: [[2, 3]], lock: true, move: true, needs: 1, done: g => g.on(2, 3)},

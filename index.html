@@ -75,9 +75,9 @@
       <span class="ico" style="background:#4a8fb8"><svg viewBox="0 0 24 24"><path d="M3 8c3-2 6-2 9 0s6 2 9 0M3 14c3-2 6-2 9 0s6 2 9 0"/></svg></span>
       <span class="grow"><span class="ttl">Single player</span><span class="txt">The first three levels teach you to play. Then the islands get harder.</span></span>
     </div>
-    <div class="stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg><b id="sNum">0</b><span id="sOf">of 60 stars</span></div>
+    <div class="stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg><b id="sNum">0</b><span id="sOf">of 72 stars</span></div>
     <div class="bar"><i id="fill"></i></div>
-    <div class="meta"><span id="sMaps">0 of 20 islands</span><span id="sPct"></span></div>
+    <div class="meta"><span id="sMaps">0 of 24 levels</span><span id="sPct"></span></div>
     <a class="go" id="spGo" href="level/1/">Play<small>Level 1 · First river</small></a>
     <a class="all" href="river/">All levels and stars</a>
     <button type="button" class="played" id="played" hidden>I've played before</button>
@@ -112,11 +112,11 @@
 <script>
 const get = k => { try { return localStorage.getItem(k) } catch (_) { return null } };
 const num = k => +get(k) || 0;
-// Single player (Dan, Nov 12): the 20-level campaign from levels.js, with its stars.
+// Single player (LOU-290): the 24-level campaign from levels.js, with its stars.
 const got = LEVELS.map(l => levelStars(l[0])), done = got.filter(s => s > 0).length, total = got.reduce((a, b) => a + b, 0), first = got.findIndex(s => !s), max = LEVELS.length * 3;
 document.getElementById("sNum").textContent = total;
 document.getElementById("sOf").textContent = `of ${max} stars`;
-document.getElementById("sMaps").textContent = `${done} of ${LEVELS.length} islands reached the sea`;
+document.getElementById("sMaps").textContent = `${done} of ${LEVELS.length} levels reached the sea`;
 document.getElementById("sPct").textContent = Math.round(total / max * 100) + "%";
 document.getElementById("fill").style.width = (total / max * 100) + "%";
 const go = document.getElementById("spGo");

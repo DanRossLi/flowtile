@@ -206,8 +206,12 @@ const stripTags = t => String(t || "").replace(/<[^>]+>/g, "");
 function levelLine() { if (M.intro) return M.intro; const l = stripTags(M.lesson), nw = l.match(/New: [^.]+/); if (nw) return nw[0];
   if (PERF) return `Score as much as you can in ${TURN_GOAL} turns`; const first = l.split(/(?<=[.!?])\s/)[0]; return first && first.length <= 70 ? first.replace(/\.$/, "") : "Reach the sea" }
 let lvbT = 0;
-function showLevel(sea) { const b = $("lvb"); if (!b || quiet) return; b.classList.toggle("sea", !!sea); tx("lvbT", sea ? "Reach the sea" : stripTags(M.label)); tx("lvbS", sea ? stripTags(M.label) : levelLine()); b.hidden = false; b.classList.remove("bye"); void b.offsetWidth; b.classList.add("in");
-  clearTimeout(lvbT); lvbT = setTimeout(hideLevel, 2500) }
+// A chapter's first level (MAP.chapter: "Chapter 2 · Inland: lakes and old forest") shows the chapter in the same banner first,
+// once ever, then the level's own banner (LOU-290). A banner, never a modal: a tap anywhere sends it away.
+function chapterNew() { if (!M.chapter) return null; const k = "flowtile.chapter." + M.id; try { if (localStorage.getItem(k)) return null; localStorage.setItem(k, "1") } catch (_) { return null } const i = M.chapter.indexOf(": "); return i < 0 ? [M.chapter, ""] : [M.chapter.slice(0, i), M.chapter.slice(i + 2)] }
+function showLevel(sea) { const b = $("lvb"); if (!b || quiet) return; const ch = chapterNew(); if (ch) sea = false; b.classList.toggle("sea", !!sea); b.classList.toggle("chapter", !!ch);
+  tx("lvbT", ch ? ch[0] : sea ? "Reach the sea" : stripTags(M.label)); tx("lvbS", ch ? ch[1] : sea ? stripTags(M.label) : levelLine()); b.hidden = false; b.classList.remove("bye", "in"); void b.offsetWidth; b.classList.add("in");
+  clearTimeout(lvbT); lvbT = setTimeout(ch ? () => showLevel() : hideLevel, ch ? 2600 : 2500) }
 function hideLevel() { const b = $("lvb"); if (!b || b.hidden) return; clearTimeout(lvbT); if (reduce) { b.hidden = true; return } b.classList.add("bye"); lvbT = setTimeout(() => { b.hidden = true; b.classList.remove("bye", "in") }, 260) }
 addEventListener("pointerdown", hideLevel, true);
 // Tap a star chip for its full goal text (what the goal card used to hold).
@@ -442,7 +446,8 @@ function storageHint() { if (!STORE || S.phase !== "play") return "";
   const c = Math.min(...[...moves().values()].map(m => m.cost)); if (!(c > S.cap)) return "";
   return `Next tile costs ${c}. Grow storage first` }
 
-function snapshot() { history.push(JSON.stringify(S)); if (S.phase === "play") S.moved = 1 } // moved: you've acted this run, so spill warnings may show (LOU-292)
+let noUndo = false; // the level solver (tools/) plays thousands of moves and needs no undo history
+function snapshot() { if (!noUndo) history.push(JSON.stringify(S)); if (S.phase === "play") S.moved = 1 } // moved: you've acted this run, so spill warnings may show (LOU-292)
 function build(mv) {
   if (S.water < mv.cost) { say(`Need ${mv.cost - S.water} more gal.`, true); return }
   snapshot();
@@ -2014,7 +2019,7 @@ sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resiz
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get lay() { return lay }, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
+window.FT = {get lay() { return lay }, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const o = iso(...p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = o.x, cy = o.y;

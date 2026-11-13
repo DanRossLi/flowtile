@@ -17,56 +17,44 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 13 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 13 · Rich Soil (LOU-290): New: fertile ground. Hand-built; the solver (tools/solve.mjs) sets "By turn N" and proves the three stars.
+// Map key: T source  _ bare ground  . meadow land  g m t ready-made grass / meadow / trees  F old forest  f fertile ground
+// s sand  r rock  B mountain  o spring  L lake  M marsh  C cave  ~ sea
 window.MAP = {
-  id: "level-13",
-  label: "Level 13 · Second Thoughts",
-  lesson: "Dead ends hide in this maze. Rechannel if you take a wrong turn. <b>New: rechannel.</b> Tap a tile on your river and choose Rechannel from here: everything downstream dries up and you build on from that tile. It costs all your water.",
+  id: "c2-13",
+  label: "Level 13 · Rich Soil",
+  intro: "New: fertile ground",
+  chapter: "Chapter 3 · High country: fertile ground and marsh",
   types: [
-    "_LLBgrB_r__rr__~~",
-    "__L__B__B___Bs_.~",
-    "___r_B_BBB__Bs_~~",
-    "_LLLrrssB_rBB_B_~",
-    "___r_B__BB__L_r_~",
-    "__rr_BBtB___B_B~~",
-    "T___mB__B__gBmm_~",
-    "____tB______B__~~",
-    "____mB_BBB__BB_~~",
-    "_____Br_B_g.B__~~"],
+    "____________~",
+    "____________~",
+    "___ff_______~",
+    "T___________~",
+    "___ff___ff__~",
+    "________ff__~",
+    "____________~",
+    "____________~"],
   elev: [
-    "10011111111111100",
-    "11011111111111110",
-    "11111111111111100",
-    "10001111111111110",
-    "11111111111101110",
-    "11111111111111100",
-    "11111111111111110",
-    "11111111111111100",
-    "11111111111111100",
-    "11111111111111100"],
-  mainSource: [0, 6],
-  waterSides: {"9,2": 5, "12,3": 0, "8,8": 1, "5,1": 2},
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110",
+    "1111111111110"],
+  guided: true,
+  objectives: [
+    {text: g => `Flow <b>2 tiles</b> (${[[1, 3], [2, 3]].filter(([x, y]) => g.on(x, y)).length}/2).`, target: g => g.next([[1, 3], [2, 3]]), lock: true, move: true, needs: 1, done: g => g.on(2, 3)},
+    {text: g => g.selPlantable ? "<b>Make grass.</b> It's free." : "The dark soil is <b>fertile ground</b>. Tap it.", target: [[3, 2]], lock: true, done: g => g.g(3, 2) >= 1},
+    {text: "<b>Grow a meadow</b> on it.", target: [[3, 2]], lock: true, needs: 1, done: g => g.g(3, 2) >= 2,
+      after: ["rim", g => `A meadow on fertile ground stores 1 more. Your jar holds ${g.cap}.<small>Trees on it count double in a grove.</small>`]}],
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 11,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 10,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "groveFertile"}, {type: "storage", n: 8}],
   next: "../14/",
-  rechannel: true,
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "<b>Sand</b> is free to cross but cuts your <b>flow by 1</b>. <b>Springs</b> are free and add <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
-    "A <b>lake</b> fills all at once for <b>2 gal a tile</b>.",
-    "<b>Rechannel</b>: tap a tile on your river to cut back to it. It costs all your water."]
+  nextLabel: "Next level",
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

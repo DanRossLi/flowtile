@@ -885,3 +885,9 @@ button.seaptr:active:not(:disabled){transform:scale(.97);box-shadow:0 8px 24px r
 .tutskip{left:auto;right:6px;top:calc(100% + 4px);padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.7);box-shadow:none;text-decoration:none;font:700 12px var(--hand);color:#4f6f70;text-shadow:none}
 .callout{max-width:230px;padding:8px 12px;border-radius:14px;font-size:13.5px;line-height:1.3;box-shadow:0 6px 18px rgba(30,60,60,.22)}
 .callout b.wtr{color:#3f86b0}.callout b.flw{color:#13917a}
+/* Chapter banner (LOU-290): the first level of a chapter shows its chapter once, in the level banner, with a gold rim */
+.lvb.chapter{outline:2.5px solid #ffd98a}
+.lvb.chapter b{font-size:17px}.lvb.chapter span{font-size:13px;text-transform:none}
+.lvb.chapter span::first-letter{text-transform:uppercase}
+/* Skip guidance sits on the left under the chips, clear of the zoom button on the right (LOU-290) */
+.tutskip{left:6px;right:auto}

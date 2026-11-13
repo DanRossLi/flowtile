@@ -52,16 +52,19 @@
   <h1>Flow <span>Tile</span> islands</h1>
   <p class="sub">Play each island to open the next. <span class="total" id="total">★ 0</span></p>
   <div id="list"></div>
-  <footer>Hard mode, map codes and help are under <b>Help</b> on every island. Test maps: <a href="../spring-hill/">Spring Hill</a> · <a href="../big/">Big 18×18</a></footer>
+  <footer>Hard mode, map codes and help are under <b>Help</b> on every island. Test maps: <a href="../spring-hill/">Spring Hill</a> · <a href="../big/">Big 18×18</a> · <a href="../big/40/">Big 40×40</a></footer>
 </main>
 <script src="../levels.js"></script>
 <script>
 // The campaign: a world of islands, one biome each. An island opens when the one before it has a star.
 const WORLD = [
-  // Single player (Dan, Nov 12): the 20-level campaign in its chapters, from levels.js
-  ...CHAPTERS.map((name, c) => ({name, note: c ? "" : "The Single player campaign. <a href=\"../river/\">The list</a>", col:["#4aa3e8", "#7cc94c", "#b0aa9f", "#e8c46a", "#58b6e6"][c],
+  // Single player (LOU-290): the 24-level campaign in its four chapters, from levels.js
+  ...CHAPTERS.map((name, c) => ({name:`Chapter ${c + 1} · ${name}`, note: c ? "" : "The Single player campaign. <a href=\"../river/\">The list</a>", col:["#4aa3e8", "#7cc94c", "#b0aa9f", "#e8c46a"][c],
     isles: LEVELS.filter(l => l[4] === c).map(l => ["level/" + l[0], levelId(l[0]), l[1]])})),
-  {name:"Challenge", note:"Score as much as you can in 20 turns.", col:"#ffd166", isles:[
+  // Extra islands (LOU-290): rules the campaign holds back. Always open, and their stars aren't counted in the campaign.
+  {name:"Extra islands", anchor:"extra", free:true, note:"Rules the campaign leaves out: tributaries, beavers, alpine trees, rain pools, rechannel, wildfire, floods and salt.", col:"#b9a3e0",
+    isles: EXTRAS.map(e => ["extra/" + e[0], "extra-" + e[0], e[1], "", e[2]])},
+  {name:"Challenge", free:true, note:"Score as much as you can in 20 turns.", col:"#ffd166", isles:[
     ["perfection", "perfection-island", "Perfection island", "best"]]},
 ];
 const get = k => { try { return +localStorage.getItem(k) || 0 } catch (_) { return 0 } };
@@ -69,17 +72,17 @@ const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6
 const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 let prevStars = 1, total = 0, nextMarked = false, html = "";
 WORLD.forEach((b, bi) => {
-  if (b.name === "Challenge") prevStars = 1; // Perfection is open from the home page too, so it isn't locked behind the 40×40 finale
-  html += `<h2>${b.name} <i>${b.isles.length} island${b.isles.length > 1 ? "s" : ""}</i></h2><p class="biome">${b.note}</p><div class="grid">`;
-  for (const [dir, id, name, best] of b.isles) {
-    const st = get("flowtile.stars." + id), open = prevStars > 0; total += st;
+  if (b.free) prevStars = 1; // extras and Perfection are never locked
+  html += `<h2${b.anchor ? ` id="${b.anchor}"` : ""}>${b.name} <i>${b.isles.length} island${b.isles.length > 1 ? "s" : ""}</i></h2><p class="biome">${b.note}</p><div class="grid">`;
+  for (const [dir, id, name, best, what] of b.isles) {
+    const st = get("flowtile.stars." + id), open = prevStars > 0 || b.free; if (!b.free) total += st;
     const isNext = open && !st && !nextMarked; if (isNext) nextMarked = true;
     html += `<a class="isle${open ? "" : " locked"}${isNext ? " next" : ""}" href="../${dir}/" data-locked="${open ? "" : "1"}">
       ${open ? (best && get("flowtile.best." + id) ? `<span class="best">Best ${get("flowtile.best." + id)}</span>` : "") : `<span class="lock">Locked</span>`}
       <div class="blob" style="background:linear-gradient(135deg,${b.col},${b.col}cc)"></div>
-      <b>${name}</b><small>${dir === "perfection" ? "Perfection · 20 turns" : "Level " + dir.replace("level/", "")}</small>
+      <b>${name}</b><small>${dir === "perfection" ? "Perfection · 20 turns" : what || "Level " + dir.replace("level/", "")}</small>
       <div class="stars" aria-label="${st} of 3 stars">${[0, 1, 2].map(i => `<span class="${i < st ? "on" : ""}">${STAR}</span>`).join("")}</div></a>`;
-    prevStars = st;
+    prevStars = b.free ? 1 : st;
   }
   html += `</div>`;
 });

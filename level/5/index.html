@@ -17,48 +17,36 @@
 </head>
 <body>
 <script>
-// Single player campaign (Dan, Nov 12): level 5 of 20, built by the seeded campaign builder and checked by the bot.
-// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
+// Level 5 · Two Peaks (LOU-290): One pass, two mountain pools. Hand-built; the solver (tools/solve.mjs) sets "By turn N" and proves the three stars.
+// Map key: T source  _ bare ground  . meadow land  g m t ready-made grass / meadow / trees  F old forest  f fertile ground
+// s sand  r rock  B mountain  o spring  L lake  M marsh  C cave  ~ sea
 window.MAP = {
-  id: "level-5",
-  label: "Level 5 · Old Wood",
-  lesson: "Old forest makes groves easy, if you leave it standing. <b>New: wild forest.</b> Old forest counts toward a grove. Your river can cut through it, but that washes it away.",
+  id: "c2-5",
+  label: "Level 5 · Two Peaks",
+  intro: "One pass, two mountain pools",
   types: [
-    "___Bo______~",
-    "__BB__.___B~",
-    "___BFF_____~",
-    "___BF___r_~~",
-    "___BrrtFB_~~",
-    "T_____FFgg_~",
-    "___B___F__~~",
-    "___r__mF___~"],
+    "....B.....~",
+    "....B...B.~",
+    "....B.....~",
+    "T.........~",
+    "....B.....~",
+    ".B..B.....~",
+    "....B.....~"],
   elev: [
-    "111111111110",
-    "111111111110",
-    "111111111110",
-    "111111111100",
-    "111111111100",
-    "111111111110",
-    "111111111100",
-    "111111111110"],
-  mainSource: [0, 5],
-  waterSides: {"3,0": 3, "3,6": 5, "8,4": 5},
+    "11111111110",
+    "11111111110",
+    "11111111110",
+    "11111111110",
+    "11111111110",
+    "11111111110",
+    "11111111110"],
+  waterSides: {"8,1": 1, "1,5": 0},
   storage: 5,
   tileCost: 1,
-  showBloom: true,
-  bloomGoal: 6,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 4,
-  startHint: "Tap the source on the left to start.",
+  stars: [{type: "sea"}, {type: "pools", n: 2}, {type: "byTurn", n: 6}],
   next: "../6/",
-  help: [
-    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
-    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
-    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>."]
+  nextLabel: "Next level",
+  help: []
 };
 </script>
 <script src="../../play.js"></script>

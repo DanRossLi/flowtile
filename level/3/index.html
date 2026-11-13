@@ -47,6 +47,7 @@ window.MAP = {
   tileCost: 1,
   stars: [{type: "sea"}, {type: "groves", n: 1}, {type: "storage", n: 6}],
   next: "../4/",
+  nextLabel: "Next level",
   learned: ["Storage is what your jar holds; the rest spills.", "A meadow stores +1 for each tree beside it.", "Three touching trees make a grove: +1 flow."],
   objectives: [
     {text: g => `Flow <b>3 tiles</b> (${PATH.filter(([x, y]) => g.on(x, y)).length}/3).`, target: g => g.next(PATH), lock: true, move: true, needs: g => g.on(3, 2) ? 1 : 0, done: g => PATH.every(([x, y]) => g.on(x, y))},
