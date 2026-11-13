@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Flow Tile</title>
+<meta name="description" content="A calm river puzzle. Grow a river from its source to the sea, one tile at a time.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Flow Tile">
+<meta property="og:title" content="Flow Tile">
+<meta property="og:description" content="A calm river puzzle. Grow a river from its source to the sea, one tile at a time.">
+<meta property="og:url" content="https://danrossli.github.io/flowtile/">
+<meta property="og:image" content="https://danrossli.github.io/flowtile/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Flow Tile">
+<meta name="twitter:description" content="A calm river puzzle. Grow a river from its source to the sea, one tile at a time.">
+<meta name="twitter:image" content="https://danrossli.github.io/flowtile/share.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Flow Tile">
@@ -11,7 +24,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=Nunito:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
   /* Home (LOU-288, design boards 1 and 2): one main action (Play, Continue or Resume), then "More ways to play". */
   *{box-sizing:border-box}
@@ -38,12 +51,12 @@
   .play{height:68px;margin-top:18px;box-shadow:0 6px 0 #3f8a7a,0 12px 24px rgba(0,0,0,.16);font-size:24px}
   .play:active{box-shadow:0 3px 0 #3f8a7a,0 6px 12px rgba(0,0,0,.16)}
   .learn{margin:14px 0 0;text-align:center;font-size:14px;color:#4f6f70}
-  .played{display:block;margin:6px auto 22px;padding:4px 8px;border:0;background:none;font:800 13.5px 'M PLUS Rounded 1c',Nunito,system-ui,sans-serif;color:#3f86b0;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .played{display:block;margin:6px auto 22px;padding:4px 8px;border:0;background:none;font:800 13.5px 'M PLUS Rounded 1c',Nunito,system-ui,sans-serif;color:#27658d;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
   /* returning: one glass card */
   .card{border-radius:28px;padding:8px 8px 16px}
   .card .pic{height:190px;border-radius:22px}
   .cbody{padding:12px 10px 0}
-  .caps{font-size:12px;font-weight:800;color:#3f86b0;text-transform:uppercase}
+  .caps{font-size:12px;font-weight:800;color:#27658d;text-transform:uppercase}
   .cname{font-size:22px;font-weight:800;line-height:1.15}
   .cnote{font-size:13.5px;color:#4f6f70}
   .go{height:60px;margin-top:12px;box-shadow:0 5px 0 #3f8a7a,0 10px 20px rgba(0,0,0,.14);font-size:20px}
@@ -54,9 +67,9 @@
   .prog i{flex:1;height:7px;border-radius:4px;background:#dfe9ea;overflow:hidden}
   .prog i u{display:block;height:100%;border-radius:4px;background:#f2b632}
   .prog em{font-style:normal;font-size:12px;font-weight:700;color:#4f6f70;white-space:nowrap}
-  .links{display:flex;justify-content:center;gap:26px;margin:14px 0 20px;font-size:14px;font-weight:800;color:#3f86b0}
+  .links{display:flex;justify-content:center;gap:26px;margin:14px 0 20px;font-size:14px;font-weight:800;color:#27658d}
   .links a{display:flex;align-items:center;gap:5px;padding:4px 2px}
-  .links svg{width:16px;height:16px;fill:none;stroke:#3f86b0;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .links svg{width:16px;height:16px;fill:none;stroke:#27658d;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
   /* more ways to play */
   h2{margin:0 2px 8px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4f6f70}
   .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
@@ -67,8 +80,11 @@
   .tile span{min-width:0}
   .tile b{display:block;font-size:14px;font-weight:800;white-space:nowrap}
   .tile small{display:block;font-size:11.5px;font-weight:500;color:#4f6f70;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .all{display:block;margin:10px auto 0;padding:6px;text-align:center;font-size:13px;font-weight:800;color:#3f86b0}
+  .all{display:block;margin:10px auto 0;padding:6px;text-align:center;font-size:13px;font-weight:800;color:#27658d}
   a:focus-visible,button:focus-visible{outline:3px solid #2f7fb8;outline-offset:3px}
+  .uptoast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-radius:999px;background:#24434a;color:#fff;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(30,60,60,.3);white-space:nowrap}
+  .uptoast[hidden]{display:none}
+  .uptoast button{border:0;border-radius:999px;padding:7px 14px;background:#9fd7c9;color:#0f3a33;font:800 14px 'M PLUS Rounded 1c',Nunito,system-ui,sans-serif;cursor:pointer}
   @media (max-height:780px){.pic{height:240px}.card .pic{height:150px}.played{margin-bottom:14px}.links{margin-bottom:14px}}
   @media (max-height:680px){.pic{height:180px}.card .pic{height:120px}.play{height:60px}}
 </style>
@@ -92,6 +108,7 @@
     <a class="all" href="world/">All islands</a>
   </div>
 </main>
+<div class="uptoast" id="upToast" role="status" hidden><span>New version</span><button type="button" id="upGo">Reload</button></div>
 <script src="levels.js"></script>
 <script>
 // Home (LOU-288). One main action at the top:
@@ -130,7 +147,10 @@ const pb = num("flowtile.best.perfection-island");
 document.getElementById("tDaily").textContent = daily ? `Played today · ${daily}` : LEVELS.some(l => levelStars(l[0])) ? "Not played today" : "New every day";
 document.getElementById("tPerf").textContent = pb ? `Best ${pb}` : "Score in 20 turns";
 addEventListener("pageshow", e => { if (e.persisted) render() }); // coming back from a level: show where you are now
-if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+// A new version took over while this page was open: offer one tap to reload (LOU-293)
+if ("serviceWorker" in navigator) { const had = !!navigator.serviceWorker.controller; addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (had) document.getElementById("upToast").hidden = false }) }
+document.getElementById("upGo").onclick = () => location.reload();
 </script>
 </body>
 </html>

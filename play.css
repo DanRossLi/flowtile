@@ -980,3 +980,35 @@ button.nwc.hinted{box-shadow:0 0 0 3px #ffd98a,0 0 18px 4px rgba(255,217,138,.9)
 .dtoast.in{animation:fadein .2s both}
 .poster .app{display:block;max-width:none;padding:0}
 .poster .board{position:absolute;inset:0;border-radius:0;box-shadow:none}
+/* ---------- Launch basics (LOU-293) */
+/* Colour-blind check. Nothing is told by colour alone: water carries the drop, flow a "+" and the cycle arrow, a spill its own
+   icon. Text colours keep their hue but are a little darker, so each has at least 4.5:1 on white glass and water, flow and
+   spill differ in lightness as well as hue. */
+:root{--flow:#0f7a66}
+.sum b.flw,.tut .card li.sum b.flw,.gjars b.flw{color:#0f7a66}
+.fpill,.stx small b.flw,button.nwc .gain,.callout b.flw{color:#0f7a66}
+.stx small b.wtr,.callout b.wtr{color:#2c6e99}
+.dname,.dlinks a,.dlinks button{color:#2c6e99}.dlinks svg{stroke:#2c6e99}
+#wGoals li.missed b{color:#5f7579}
+.jdrop{flex:none;width:9px;height:12px;margin-right:3px;fill:#2f7fb8;vertical-align:1px}
+.jcyc{width:11px;height:11px;margin-right:2px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vertical-align:-1px}
+.spi{width:13px;height:11px;margin-right:2px;fill:#b5562f;stroke:none;vertical-align:-1px}
+.spi .spl{fill:none;stroke:#b5562f;stroke-width:1.600;stroke-linecap:round}
+/* No double-tap zoom, text selection or pull-to-refresh while playing */
+html,body{overscroll-behavior:none;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* Reduced motion forced on in Settings: the same as the device asking for it */
+html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
+/* The Settings sheet in a level (the list itself is drawn by settings.js) */
+#setw .msheet{max-height:86dvh;overflow:auto}
+.setx,button.setx{border:0;border-radius:999px;padding:6px 14px;background:#eef5f6;box-shadow:none;font:800 13px var(--hand);color:#24434a;cursor:pointer}
+/* "New version · Reload" */
+.uptoast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;padding:7px 7px 7px 16px;border-radius:999px;background:#24434a;color:#fff;font:700 14px var(--hand);box-shadow:0 8px 24px rgba(30,60,60,.3);white-space:nowrap;pointer-events:auto}
+.uptoast[hidden]{display:none}
+.uptoast button{border:0;border-radius:999px;padding:7px 14px;background:#9fd7c9;box-shadow:none;color:#0f3a33;font:800 14px var(--hand);cursor:pointer}
+/* A phone on its side: a gentle card, since the game is laid out for portrait */
+.turncard{display:none;position:fixed;inset:0;z-index:70;place-items:center;padding:20px;background:linear-gradient(180deg,#cfe3ea,#eef4f2);font-family:var(--hand);color:#24434a;text-align:center}
+.turncard svg{display:block;width:46px;height:46px;margin:0 auto 8px;fill:none;stroke:#3f86b0;stroke-width:1.800;stroke-linecap:round;animation:turnit 2.4s ease-in-out infinite}
+.turncard b{display:block;font-weight:800;font-size:18px}.turncard span{display:block;font-size:14px;color:#4f6f70}
+@keyframes turnit{0%,20%{transform:rotate(90deg)}60%,100%{transform:none}}
+@media (orientation:landscape) and (max-height:480px) and (pointer:coarse){.turncard{display:grid}}
+.poster .turncard,.poster .uptoast{display:none!important}

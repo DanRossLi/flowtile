@@ -1,7 +1,7 @@
 /* Painterly look for the menu pages (home, River mode, Landscape mode, World, generator), LOU-280, Nov 12.
    Loaded after each page's own <style>, so these rules win. Pale sky, white glass cards, M PLUS Rounded 1c.
    (The file keeps its old name so every page's link still works.) */
-@import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap");
+@import url("fonts/fonts.css"); /* hosted with the game (LOU-293) */
 :root{--paper:#ffffff;--paper-2:#eef4f2;--ink:#1f3a3a;--ink-b:#7a9a96;--label:#5b7473;--muted:#5b7473;--gold:#ffd98a;--gold-d:#c9962b;
   --green:#5fae6c;--blue:#4a8fb8;--blue-d:#2f6f94;--sea:#8cc2d2;--deep:#2f7fb8;--mint:#9fd7c9;--mint-d:#5fae9c;--lip:#3f8a7a;
   --glass:rgba(255,255,255,.82);--soft:0 6px 18px rgba(40,70,80,.14),0 1px 3px rgba(40,70,80,.1);

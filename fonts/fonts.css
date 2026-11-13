@@ -1,0 +1,5 @@
+/* Flow Tile's one typeface, hosted with the game so it works offline and the first load doesn't wait on another site (LOU-293).
+   M PLUS Rounded 1c (latin), by Coji Morishita and the M+ Fonts Project, under the SIL Open Font License 1.1. */
+@font-face{font-family:"M PLUS Rounded 1c";font-style:normal;font-weight:500;font-display:swap;src:url("mplus-rounded-500.woff2") format("woff2")}
+@font-face{font-family:"M PLUS Rounded 1c";font-style:normal;font-weight:700;font-display:swap;src:url("mplus-rounded-700.woff2") format("woff2")}
+@font-face{font-family:"M PLUS Rounded 1c";font-style:normal;font-weight:800;font-display:swap;src:url("mplus-rounded-800.woff2") format("woff2")}

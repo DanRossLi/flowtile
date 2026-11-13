@@ -25,6 +25,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Site:** GitHub Pages at https://danrossli.github.io/flowtile/. Each map lives in its own folder, for example `/1/`.
 - **No SST:** Dan asked for SST once. We chose GitHub Pages instead, because that's what the issue says.
 - **Cache:** bump `VERSION` in `sw.js` whenever cached files change, and add new pages to its `LOCAL` list.
+- **Nothing from other sites** (LOU-293): fonts, scripts and images are all hosted with the game.
 
 ## Words
 
@@ -86,7 +87,7 @@ These are the instructions Dan has given for this project, kept in one place. Th
 - **Next Water Cycle muted or active** (Dan, Nov 11, LOU-270): the button is muted (grey-blue) while you can still afford something, and bright blue and pulsing once you can't.
 - **Next Water Cycle** (LOU-258): the End turn button is now **Next Water Cycle**. No "End turn" text anywhere. The counter stays "Turn". *(Written "Next water cycle" since LOU-292.)*
 - **Bottom bar** (LOU-286, from the Nov 12 UX review), left to right: **Menu** (☰, round 52px), **Next water cycle** (a wide pill at least 56px tall with the cycle arrow, its name on one line and a teal "+N": the water it will add, capped by storage; when some will spill it reads "+3 · 2 spill" with the spill in rust, like the jar), **Undo** (round 52px, greyed with nothing to undo; in hard mode a small badge shows the undos left). The pill is still muted while you can afford something and bright and pulsing when you can't. **Restart is only in the menu**, behind a confirm. The river panel and the tile panel still replace the bar while open.
-  - **Menu sheet** (slides up; tap outside to close): Restart level (asks to confirm), How to play, Whole island / Zoom in, Hard mode, Home.
+  - **Menu sheet** (slides up; tap outside to close): ~~Restart level (asks to confirm), How to play, Whole island / Zoom in, Hard mode, Home.~~ *Since LOU-291 and LOU-293 (design board 9):* Hint, How to play, Whole island / Zoom in, Settings ("Sound, haptics, motion, guidance"), Restart level (asks to confirm), Home. Hard mode moved into Settings.
   - **Stuck helper:** when no move or build is affordable and Next water cycle wouldn't change that, or the river's end has nowhere to go, a small card sits above the bar: "Your river is stuck." with **Undo last move** and **Restart level**. No dead-end screen or toast. It leaves as soon as a move is possible. Not on rechannel maps (the game points at Rechannel there) and not in the tutorial.
   - **How to play is a tile guide:** three lines with small jars (Water is what you spend, Flow is what you earn each cycle, Storage is how much you can hold), then a grid of the tile types **on this map only** (plus Grass, Meadow and Trees on maps with storage); tapping one shows its name, rule and cost, using the tile panel's text. At the bottom: this level's star goals, Replay tutorial, and Copy map code.
 - **Can't afford = grey** (LOU-258): unaffordable buttons and tiles are grey, not orange or brown.
@@ -193,7 +194,32 @@ These are the instructions Dan has given for this project, kept in one place. Th
   - **Campaign complete** (every level has reached the sea): the card offers **Play today's Daily island**.
   - **The picture is the game itself:** the level's page with `?poster`, which draws only the whole island (no bars, no input) and never reads or writes a saved run.
   - **More ways to play:** a 2×2 grid of small white glass tiles, each with a coloured rounded-square icon, the mode's name and one status line: Daily island ("New every day" / "Not played today" / "Played today · 47"), Custom island ("Make your own"), Perfection ("Score in 20 turns" / "Best 47"), Big map ("A long game"). **All islands** is a blue text link under the grid.
-- **Settings page** (`/settings/`, LOU-288): a short list of switches saved on the device. So far: **Guidance** (the guided steps; off is the same as "I've played before") and **Hard mode** (3 undos per level). The menu's Hard mode switch stays.
+- ~~**Settings page** (`/settings/`, LOU-288): a short list of switches saved on the device. So far: **Guidance** (the guided steps; off is the same as "I've played before") and **Hard mode** (3 undos per level). The menu's Hard mode switch stays.~~ *Superseded Nov 13 by "Settings" (LOU-293) below.*
+- **Settings** (LOU-293): one list (`settings.js`), shown as a sheet from a level's menu and as the page `/settings/` behind the home page's gear. Every choice is saved on the device and applies at once.
+  - **Sound** (on by default), **Haptics** (on by default), **Reduced motion** (follows the device; it can be forced on, and when the device already asks for it the switch is on and locked), **Guidance** (off is the same as "I've played before") and **Hard mode** (3 undos per level).
+  - **Reset progress** asks twice, then clears stars, bests, the Daily streak and saved runs. The settings themselves stay.
+  - Under the list: the version number (read from `sw.js`) and a line of credits.
+- **Sound and haptics** (LOU-293): every sound is made in code with Web Audio (no audio files). They are quiet and short, and nothing plays before the player's first tap.
+  - A soft water plink for each river move, stepping up in pitch with each move in a row; a short pour on Next water cycle and a small splash when water spills; a gentle pop for growing; a soft chime for each star and a short rising phrase on reaching the sea; a low, quiet tap for "can't afford".
+  - Haptics where the phone supports it: a short tick on a move or a growth, a slightly longer one on Next water cycle, a double tick on a star.
+- **Never colour alone** (LOU-293, the colour-blind check): water is blue, flow is teal and grass is green, which are close for some players, so each also has a shape.
+  - **Water** carries the drop (a drop sits before the water number on the jar; cost tags and cost pills have it too).
+  - **Flow** carries a "+" and the cycle arrow (before "+5 next cycle" on the jar and on the Next water cycle pill) or the wave (the river strip).
+  - **A spill** carries its own small icon (a drop landing with a splash) as well as its rust colour, on the jar and on the pill.
+  - Text colours keep their hue but are dark enough for 4.5:1 on white glass: flow text `#0f7a66` (was `#1d8f78` and `#13917a`), links `#2c6e99` (was `#3f86b0`; `#27658d` on the home page), a missed goal's title `#5f7579`. The teal band, the river and the rings keep `#62e0c8`.
+- **How a shared link looks** (LOU-293): every page has a description and Open Graph and Twitter tags, with `share.png` (1200×630: a painted island with a river, groves and a cave, and "Flow Tile" on a white glass card), rendered from the game's own art. The manifest uses the light colour `#cfe3ea`.
+- **Share on level complete** (LOU-293): a **Share** link sits with Replay and Home. It opens the device's share sheet with one line ("Flow Tile · Level 6 · Green Shore · ★★☆ · turn 6") and the level's link, or copies them when there is no share sheet. The Daily keeps its Share score button.
+- **Offline and updates** (LOU-293):
+  - The one typeface, M PLUS Rounded 1c (latin; 500, 700, 800), is **hosted with the game** in `/fonts/`. Nothing loads from Google or any other site.
+  - The service worker caches every page and file needed to play all 24 levels offline. Add new files to its `LOCAL` list.
+  - When a new version takes over while a page is open, a small dark pill says **New version · Reload**.
+  - Saves carry a version in their key (`flowtile.run.v5.<map>`); an old, stale or broken save starts the level fresh.
+  - If the game hits an error it shows a card, "Something went wrong", with **Reload** and **Reset this level**. Never a blank screen.
+- **Device rules** (LOU-293):
+  - No double-tap zoom, text selection or pull-to-refresh while playing.
+  - **Back button:** from a campaign level the browser's Back goes to the Levels page, and from there home. Next level replaces the page, so levels don't pile up in the history. The run is saved on every move.
+  - **A phone on its side** shows a gentle card, "Turn your phone upright". The game is laid out for portrait.
+- **Tracking** (LOU-293): `track(event, details)` exists and is called at level start, each guided step, level complete (stars, turns), hint used, restart, and leaving a level unfinished. **It sends nothing.** Which service to use is Dan's decision; don't wire one up without asking.
 - **Daily island flow** (LOU-288):
   - It starts like any level: no modal, and the banner shows "Daily island · 11-13" and "Score as much as you can in 20 turns".
   - The result sheet shows the score, "New best", "Best today N" and "N days in a row" (the streak counts days with a scored run; a missed day ends it).

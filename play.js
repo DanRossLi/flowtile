@@ -35,6 +35,17 @@
 // grass on the bare ground around it, and touching trees along the river make a grove: +1 flow for every 3 trees (LOU-279).
 // Map code F = wild forest.
 (() => {
+// If the game hits an error, show a simple card with Reload and Reset this level, never a blank screen (LOU-293).
+let crashed = false;
+function crash(err) { if (crashed) return; crashed = true; try { console.error(err) } catch (_) {}
+  try { const d = document.createElement("div"); d.setAttribute("role", "alert");
+    d.style.cssText = "position:fixed;inset:0;z-index:99;display:grid;place-items:center;padding:24px;background:rgba(207,227,234,.92);font-family:'M PLUS Rounded 1c',system-ui,sans-serif;color:#24434a";
+    const btn = "display:block;width:100%;margin-top:10px;padding:14px;border:0;border-radius:999px;font:800 16px inherit;cursor:pointer";
+    d.innerHTML = `<div style="max-width:320px;padding:22px;border-radius:24px;background:#fff;box-shadow:0 10px 30px rgba(30,60,60,.25);text-align:center"><b style="display:block;font-size:20px">Something went wrong</b><span style="display:block;margin:6px 0 8px;font-size:14px;color:#4f6f70">Your stars are safe. Reload to carry on, or reset this level if it keeps happening.</span><button id="crReload" style="${btn};background:linear-gradient(180deg,#9fd7c9,#5fae9c);color:#0f3a33">Reload</button><button id="crReset" style="${btn};background:#eef5f6;color:#b5562f">Reset this level</button></div>`;
+    document.body.appendChild(d);
+    d.querySelector("#crReload").onclick = () => location.reload();
+    d.querySelector("#crReset").onclick = () => { try { const id = window.MAP && window.MAP.id; for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (id && /^flowtile\.run\./.test(k) && k.endsWith("." + id)) localStorage.removeItem(k) } } catch (_) {} location.reload() } } catch (_) {} }
+if (typeof addEventListener === "function") { addEventListener("error", e => { if (!e.filename || /play\.js/.test(e.filename)) crash(e.error || e.message) }); addEventListener("unhandledrejection", e => crash(e.reason)) }
 const M = window.MAP;
 const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits next to play.js
 // Poster mode (LOU-288): "?poster" draws only the island, whole, with no bars and no input. The home page shows it in a frame
@@ -85,12 +96,15 @@ const faceOf = (a, b) => [0, 1, 2, 3, 4, 5].find(d => { const q = step(a, d); re
 // Old square-grid sides ([dx, dy] in wind / waterSides) map to a hex face; a number 0–5 is a face already.
 const FACE = s => typeof s === "number" ? s : ({"1,0":0, "0,-1":2, "-1,0":3, "0,1":5})[s + ""] ?? 0;
 const BANKS = true; // river drawn as a channel with banks; lakes get a shore
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Settings (LOU-293), each saved on the device: sound, haptics, reduced motion (follows the device, and can be forced on).
+const pref = (k, def) => { try { const v = localStorage.getItem(k); return v === null ? def : v } catch (_) { return def } };
+const soundOn = () => pref("flowtile.sound", "1") !== "0", hapticsOn = () => pref("flowtile.haptics", "1") !== "0";
+const motionNow = () => matchMedia("(prefers-reduced-motion: reduce)").matches || pref("flowtile.motion", "") === "reduce";
+let reduce = motionNow(); if (reduce && document.documentElement) document.documentElement.classList.add("reduce");
 
 // ---------- DOM
-// A4 fonts: Fraunces for numbers and the button, Patrick Hand for hints and tags, Nunito for labels
-if (!document.querySelector("link[data-a4]")) { const l = document.createElement("link"); l.rel = "stylesheet"; l.dataset.a4 = "1";
-  l.href = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap"; document.head.appendChild(l) }
+// The one typeface (M PLUS Rounded 1c) is hosted with the game: fonts/fonts.css, linked by every page (LOU-293).
+if (!document.querySelector('link[href$="fonts/fonts.css"]')) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = ROOT + "fonts/fonts.css"; document.head.appendChild(l) }
 document.body.innerHTML = `
 <div class="app" id="app">
   <div class="board" id="board">
@@ -109,7 +123,7 @@ document.body.innerHTML = `
             <g id="jNotch"></g>
             <path class="jink" d="M8 7v31a12 12 0 0024 0V7"/><path class="jrim" d="M6 6.5h28"/>
             <path class="jfill" d="M20 1v30"/><g class="jpour" id="jPour"><path class="jstream" d="M32 7q5 1 5 9v10"/><circle class="jdrop d1" cx="37" cy="30" r="1.6"/><circle class="jdrop d2" cx="37" cy="30" r="1.3"/></g>
-          </svg><span class="jnums"><b><i id="hWater">0</i>${STORE ? `<small class="cap"> / <i id="hCap">0</i></small>` : ""}</b><em id="cFlow"><i class="jin">+<i id="hFlow">0</i><span id="jNext"> next cycle</span></i><i class="jsp" id="jSpill"></i></em></span></button>
+          </svg><span class="jnums"><b><svg class="jdrop" viewBox="0 0 12 15" aria-hidden="true"><path d="M6 1C6 1 1 7 1 10a5 5 0 0010 0C11 7 6 1 6 1z"/></svg><i id="hWater">0</i>${STORE ? `<small class="cap"> / <i id="hCap">0</i></small>` : ""}</b><em id="cFlow"><i class="jin"><svg class="jcyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 11-2.600-5.900"/><path d="M20 4v5h-5"/></svg>+<i id="hFlow">0</i><span id="jNext"> next cycle</span></i><i class="jsp" id="jSpill"></i></em></span></button>
       </div>
       <div class="subrow">
         <div class="goals" id="goals"></div>
@@ -139,7 +153,7 @@ document.body.innerHTML = `
         <ul id="wGoals"></ul>
         ${M.share ? `<button type="button" class="dnext" id="share"><b>Share score</b><small id="nextS"></small></button>` : M.next ? `<a class="dnext" id="next" href="${M.next}"><b id="nextT">${M.nextLabel || "Next map"}</b><small id="nextS"></small></a>` : `<button type="button" class="dnext" id="again2"><b>Play again</b></button>`}
         <div class="dtoast" id="dToast" role="status" hidden></div>
-        <div class="dlinks"><button type="button" id="again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 102.600-5.900"/><path d="M4 4v5h5"/></svg><span id="againT">Replay</span></button><a href="${ROOT}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>Home</a></div>
+        <div class="dlinks">${M.share ? "" : `<button type="button" id="shareLv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg>Share</button>`}<button type="button" id="again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 102.600-5.900"/><path d="M4 4v5h5"/></svg><span id="againT">Replay</span></button><a href="${ROOT}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>Home</a></div>
       </div>
     </div>
   </div>
@@ -155,11 +169,15 @@ document.body.innerHTML = `
     <button type="button" class="mrow" data-m="help"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.200 9a3 3 0 015.600 1.200c0 2-2.800 2.600-2.800 4.300"/><circle cx="12" cy="18.200" r=".6" fill="currentColor"/></svg></i><span>How to play<small>Tap any tile to see what it does</small></span></button>
     <button type="button" class="mrow" data-m="zoom"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></i><span><span id="mZoom">Whole island</span><small id="mZoomS">Zoom out to plan your route</small></span></button>
     <button type="button" class="mrow" data-m="guide" id="mGuide" hidden><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></i><span>Play with guidance<small>Restarts this level with the steps</small></span></button>
-    <label class="mrow"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.600 5.600 6 .700-4.500 4.100 1.300 6L12 16.400 6.600 19.400l1.300-6L3.400 9.300l6-.700z"/></svg></i><span>Hard mode<small>3 undos per level</small></span><input type="checkbox" id="hard"><i class="msw" aria-hidden="true"></i></label>
+    <button type="button" class="mrow" data-m="settings"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></i><span>Settings<small>Sound, haptics, motion, guidance</small></span></button>
+    <label class="mrow" hidden><input type="checkbox" id="hard"></label>
     <button type="button" class="mrow rust" data-m="restart"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.500 9.500 0 00-6.700 2.800L3 8"/><path d="M3 3v5h5"/></svg></i><span>Restart level<small>Asks you to confirm</small></span></button>
     <div class="mconf" id="mConf" hidden><span>Restart this level? This run is lost.</span><button type="button" class="mgo" data-m="restartYes">Restart</button><button type="button" data-m="restartNo">Cancel</button></div>
     <a class="mrow" href="${ROOT}"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg></i><span>Home<small>Your progress is saved</small></span></a>
   </div></div>
+  <div class="mwrap" id="setw" hidden><div class="msheet" role="dialog" aria-label="Settings"><i class="mgrip" aria-hidden="true"></i><div class="mhead"><b>Settings</b><button type="button" class="setx" id="setX">Done</button></div><div id="setBody"></div></div></div>
+  <div class="turncard" aria-hidden="true"><div><svg viewBox="0 0 24 24"><rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M11 18.500h2"/></svg><b>Turn your phone upright</b><span>Flow Tile plays in portrait.</span></div></div>
+  <div class="uptoast" id="upToast" role="status" hidden><span>New version</span><button type="button" id="upGo">Reload</button></div>
   <div class="sheet" id="sheet" hidden><div class="spanel" id="spanel" role="group" aria-label="Selection"></div><div class="sacts" id="sacts"></div></div>
 </div>
 <dialog id="help" class="guide" aria-labelledby="helpTitle">
@@ -443,8 +461,8 @@ function startTributary(p) {
 }
 function plant(p) {
   const c = at(p), what = ["Grass", "Meadow", "Trees"][c.g], k = growCost(c);
-  if (S.water < k) { say(`Need ${k - S.water} more gal.`, true); return }
-  snapshot(); S.water -= k; c.g++; c.bloom = true; c.pr = S.active; if (c.g >= MEADOW) c.mine = true; bump("cWater"); bump("cBloom");
+  if (S.water < k) { say(`Need ${k - S.water} more gal.`, true); sfx("no"); return }
+  snapshot(); sfx("grow"); buzz(8); S.water -= k; c.g++; c.bloom = true; c.pr = S.active; if (c.g >= MEADOW) c.mine = true; bump("cWater"); bump("cBloom");
   const cap0 = S.cap, cb = recombo(), d = S.cap - cap0, bv = beavers(), sh = storageHint();
   anim.set("g:" + p, now()); float(p, d ? `${d > 0 ? "+" : "−"}${Math.abs(d)} storage` : k ? `−${k} gal` : "Free", d < 0 ? "#ffb27a" : "#b6f08a");
   say(d ? `${what}: storage ${d > 0 ? "+" : "−"}${Math.abs(d)}.` : cb || bv ? note1(cb || bv) + "." : sh ? sh + "." : `${what} ${c.g === 1 ? "planted" : "grown"}.`);
@@ -482,8 +500,8 @@ function storageHint() { if (!STORE || S.phase !== "play") return "";
 let noUndo = false; // the level solver (tools/) plays thousands of moves and needs no undo history
 function snapshot() { hintOff(); if (!noUndo) history.push(JSON.stringify(S)); if (S.phase === "play") S.moved = 1 } // moved: you've acted this run, so spill warnings may show (LOU-292)
 function build(mv) {
-  if (S.water < mv.cost) { say(`Need ${mv.cost - S.water} more gal.`, true); return }
-  snapshot();
+  if (S.water < mv.cost) { say(`Need ${mv.cost - S.water} more gal.`, true); sfx("no"); return }
+  snapshot(); sfx("move"); buzz(8);
   S.water -= mv.cost;
   if (at(mv.p).river) { // ran into another river: merge into it
     const t = at(mv.p).rid, me = S.active, a = root(me), b = root(t), g = Math.min(a, b), other = g === a ? b : a; at(mv.from).to = mv.p;
@@ -517,7 +535,7 @@ function build(mv) {
   S.head = mv.p;
   if (b.t === "cave" && b.mate) { const q = b.mate, k = at(q); k.river = true; k.rid = S.active; k.from = null; anim.set(q + "", now() + 500); S.head = q;
     const r2 = claimRunoff([q]); notes.push("Through the cave") }
-  if (b.t === "ocean") { S.phase = "won"; wave = now(); float(mv.p, "Splash!", "#ffffff"); say("You reached the sea!"); return }
+  if (b.t === "ocean") { S.phase = "won"; sfx("sea"); wave = now(); float(mv.p, "Splash!", "#ffffff"); say("You reached the sea!"); return }
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.unshift(`This river is stuck. Switch to your ${riverName(openRivers()[0]).toLowerCase()}`); say(note1(notes) + ".", true); return }
   if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on. Island scored."); return }
   if (!moves().size && RECH) { notes.unshift("Dead end. Tap your river to rechannel"); say(note1(notes) + ".", true); return }
@@ -538,6 +556,7 @@ function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   if (S.dry > 0) S.dry--; if (f.wx === "drought") S.dry = 1;
   S.water += f.gain; bump("cWater"); wave = now(); if (f.gain > 0 && !quiet) { const j = $("cWater"); j.classList.remove("fill"); void j.offsetWidth; j.classList.add("fill") } // the jar refills with a teal pour
   const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp; if (sp) { if (!S.spilled) { S.spillT = S.turn - 1; S.spill1 = sp } S.spilled = (S.spilled || 0) + sp } // the first spill is what the level-complete sheet names
+  sfx("cycle"); buzz(18); if (sp) sfx("spill");
   const src = S.rivers[0] && S.rivers[0].src; if (src) float(src, `+${f.gain - sp} gal`, "#bfe4ff");
   if (f.wx === "rain") { notes.push("Rainstorm: +2 gal"); sky = {kind:"rain", t0:now()} }
   if (f.dry) { notes.push(`Drought: flow −1 ${S.dry ? "this turn and next" : "this turn"}`); sky = {kind:"drought", t0:now()} }
@@ -657,7 +676,7 @@ function pick(p) {
   if (PLACE && c.t !== "source") { const why = placeWhy(p); if (why) { ring(p); say(why, true); return } ring(p); sel = p; renderCard(); say("Place your source here?"); return }
   if (c.t !== "source" || (M.mainSource && p + "" !== M.mainSource + "")) { say(M.mainSource ? "Start from the ringed source." : "Tap a source to start.", true); return }
   start(p) }
-function start(p, placed) { const c = at(p); closeCard();
+function start(p, placed) { const c = at(p); closeCard(); track("level_start");
   if (!placed) snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.phase = "play"; syncCap(); hsel = true; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield;
   anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal per water cycle`, "#bfe4ff");
   const ro = claimRunoff([p]);
@@ -668,7 +687,37 @@ const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("No undos left. Restart from the menu.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0, hu = S.hints || 0; closeCard(); hintOff(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; S.hints = hu; anim.clear(); fx.length = 0; say("Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { closeCard(); hintOff(); hsel = false; padB = 0; winOld = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
+function restart() { if (S && S.phase !== "pick") track("restart", {turn:S.turn}); closeCard(); hintOff(); hsel = false; padB = 0; winOld = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
+
+// ---------- Sound and haptics (LOU-293). Every sound is made in code with Web Audio, so there are no audio files to load or
+// license. They are quiet and short, and the first one plays only after the player's first tap (it starts the audio context).
+let AC = null, moveRun = 0, moveT = 0;
+function audio() { if (quiet || POSTER || !soundOn()) return null; try { AC ||= new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume() } catch (_) { return null } return AC }
+function tone(f, d, {type = "sine", vol = .08, to = 0, at = 0, attack = .006} = {}) { const a = audio(); if (!a) return; const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + attack); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + .03) }
+function hiss(d, {vol = .05, f = 1200, to = 0, at = 0, q = .8} = {}) { const a = audio(); if (!a) return; const t = a.currentTime + at, n = Math.max(1, Math.floor(a.sampleRate * d)), buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
+  const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(); src.buffer = buf; bp.type = "bandpass"; bp.frequency.setValueAtTime(f, t); if (to) bp.frequency.exponentialRampToValueAtTime(to, t + d); bp.Q.value = q;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .03); g.gain.exponentialRampToValueAtTime(.0001, t + d); src.connect(bp); bp.connect(g); g.connect(a.destination); src.start(t); src.stop(t + d + .02) }
+const SFX = {
+  move() { const t = now(); moveRun = t - moveT < 1500 ? Math.min(moveRun + 1, 9) : 0; moveT = t; const f = 520 * Math.pow(2, moveRun / 12); tone(f, .16, {to:f * 1.5, vol:.07}); tone(f * 2, .08, {vol:.02, at:.012}) }, // a soft water plink; its pitch steps up with each move in a row
+  cycle() { hiss(.45, {vol:.05, f:500, to:1600}); tone(330, .3, {to:520, vol:.03, at:.05}) },   // a short pour as the jar fills
+  spill() { hiss(.22, {vol:.06, f:1800, to:700, at:.32}) },                                     // a small splash
+  grow() { tone(660, .09, {to:880, vol:.06, type:"triangle"}) },                                // a gentle pop
+  star(i = 0) { const f = [784, 988, 1175][i % 3]; tone(f, .5, {vol:.06, type:"triangle"}); tone(f * 2, .4, {vol:.02, at:.02}) }, // a soft chime
+  sea() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .35, {vol:.06, at:i * .11, type:"triangle"})) }, // a short rising phrase
+  no() { tone(150, .1, {vol:.07, to:110}) },                                                    // a low, quiet tap: can't afford
+};
+const sfx = (k, ...a) => { try { if (SFX[k]) SFX[k](...a) } catch (_) {} };
+// Haptics, where the device supports it: a short tick on a move, a slightly longer one on Next water cycle, a double tick on a star.
+const buzz = pat => { if (quiet || POSTER || !hapticsOn()) return; try { if (navigator.vibrate) navigator.vibrate(pat) } catch (_) {} };
+
+// ---------- Seeing where players drop off (LOU-293). It sends nothing: which service to use is Dan's decision. Until then this
+// only keeps the last events in memory (FT.tracked), so the calls can be checked.
+// Events: level_start · guided_step {step} · level_complete {stars, turns} · hint_used {kind} · restart {turn} · level_left {turn}
+const TRACKED = []; function track(event, details = {}) { TRACKED.push({event, map:M.id, ...details}); if (TRACKED.length > 100) TRACKED.shift() }
 
 // ---------- Level complete (LOU-287, design board 8). Reaching the sea locks input and the camera pulls back to the whole island
 // (about 1s). Three big stars sit over the island, the middle one bigger; the result sheet slides up from the bottom with one
@@ -698,12 +747,21 @@ function winSheet(old) { const el = $("win"), t0 = reduce || old ? 0 : 1.05, gap
   $("wGoals").innerHTML = rows.map((r, i) => `<li class="${r[0] ? "got" : "missed"}" style="--d:${(t0 + .4 + i * gap).toFixed(2)}s"><i class="rst">${starSvg(r[0])}</i><div><b>${r[1]}</b><small>${r[2] || ""}</small></div>${r[0] ? CHECK : ""}</li>`).join("")
     + (M.learned ? M.learned.map(t => `<li class="learn"><span>${t}</span></li>`).join("") : "");
   tx("againT", M.daily ? "Play again (practice)" : n < 3 ? "Replay for 3 stars" : "Replay");
+  if (!old) { rows.slice(0, 3).forEach((r, i) => { if (r[0]) setTimeout(() => { sfx("star", i); buzz([12, 50, 12]) }, (t0 + .4 + i * gap) * 1000) }); track("level_complete", {stars:n, turns:S.turn}) }
   // the big button: the next level with its name and new rule; on the last level, the level list with the star total
   const m = /^c2-(\d+)$/.exec(M.id), L = window.LEVELS;
   if (m && $("next")) { const k = +m[1], nx = L && L[k]; tx("nextT", nx ? "Next level" : "Campaign complete");
     tx("nextS", nx ? `Level ${nx[0]} · ${nx[1]}${/^New: /.test(nx[2]) ? " · " + nx[2] : ""}` : L && window.levelStars ? `${L.reduce((a, l) => a + window.levelStars(l[0]), 0)} of ${L.length * 3} stars` : "") }
   el.style.setProperty("--t0", t0 + "s"); el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in");
   if (!reduce && view.z !== null && lay.w) { padB = 420; tgt = {x:B.x + B.w / 2, y:B.y + B.h / 2 + 170 / lay.fit, z:1, n:0} } } // pull back to the whole island, sitting above the sheet
+
+// ---------- Settings (LOU-293): the same list of switches as the Settings page, in a sheet. settings.js draws it.
+let setWait = null;
+function openSettings() { const w = $("setw"); w.hidden = false;
+  setWait ||= new Promise(res => { if (window.FlowSettings) return res(); const el = document.createElement("script"); el.src = ROOT + "settings.js"; el.onload = el.onerror = () => res(); document.head.appendChild(el) });
+  setWait.then(() => { if (window.FlowSettings) window.FlowSettings.render($("setBody"), {root:ROOT, onReset:() => { history = []; restart() }}); else $("setBody").textContent = "Settings couldn't load. Check your connection." }) }
+$("setw").addEventListener("click", e => { if (e.target === $("setw") || e.target === $("setX")) $("setw").hidden = true });
+if (document.addEventListener) document.addEventListener("flowtile-setting", () => { reduce = motionNow(); document.documentElement.classList.toggle("reduce", reduce); sync() }); // a switch changed: it applies at once
 
 // ---------- Hints (LOU-291): campaign levels only. Each level's 3-star solution is saved in solutions.js by the level solver
 // (tools/solve.mjs). While you're still on that solution's path, a hint shows its next step: a ghost ring on the next tile, a
@@ -738,7 +796,7 @@ function hintRoute() { const h = S.head; if (!h) return null; const dist = new M
 function hintOff() { if (!hint) return; hint = null; const g = $("hghost"); if (g) g.hidden = true; $("end").classList.remove("hinted") }
 async function useHint() { if (!hintShown()) return; if (!hintsLeft()) { say("No hints left this attempt.", true); return } await solutions(); if (!hintShown()) return;
   let h = hintNext(); if (!h) { const pts = hintRoute(); if (!pts) { say("No way to the sea from here. Try Undo.", true); return } h = {kind:"route", pts} }
-  closeCard(); hintOff(); S.hints = (S.hints || 0) + 1; hint = {...h, t0:now()}; if (h.kind === "move") hsel = true; // the rings show too, so following it is one tap
+  closeCard(); hintOff(); S.hints = (S.hints || 0) + 1; hint = {...h, t0:now()}; track("hint_used", {kind:h.kind}); if (h.kind === "move") hsel = true; // the rings show too, so following it is one tap
   if (h.kind === "cycle") $("end").classList.add("hinted");
   if (h.kind === "grow") { const g = $("hghost"); g.innerHTML = AICON[h.icon] || ""; g.hidden = false }
   if (h.p) { const o = iso(...h.p), sx = (o.x * scale + off.x) / lay.dpr, sy = (o.y * scale + off.y) / lay.dpr; if (view.z !== null && (sx < 40 || sx > lay.w - 40 || sy < lay.topH + 40 || sy > lay.topH + lay.availH - 60)) tgt = {x:o.x, y:o.y, n:0} } // bring a far tile on screen
@@ -774,7 +832,8 @@ function jar() { const play = S.phase === "play", g = play ? forecast().gain : S
   [...nb.children].forEach((l, i) => { requestAnimationFrame(() => l.style.transform = `translateY(${lv(i + 1)}px)`) });
   const warn = !!S.moved; // not before your first move: you don't know what spilling is yet
   $("cWater").classList.toggle("spilling", warn && (sp > 0 || (STORE && S.water >= S.cap && g > 0)));
-  tx("jNext", sp && warn ? "" : " next cycle"); tx("jSpill", sp && warn ? ` · ${sp} spill` : "") }
+  tx("jNext", sp && warn ? "" : " next cycle"); { const js = $("jSpill"), h = sp && warn ? ` · ${SPILL}${sp} spill` : ""; if (js && js.innerHTML !== h) js.innerHTML = h } }
+const SPILL = '<svg class="spi" viewBox="0 0 16 14" aria-hidden="true"><path d="M8 1.500S5 5 5 7.300a3 3 0 006 0C11 5 8 1.500 8 1.500z"/><path class="spl" d="M1.500 8.500l2.200 1.200M14.500 8.500l-2.200 1.200M2.500 12.500h11"/></svg>'; // a drop landing with a splash: a spill is never told by colour alone (LOU-293)
 // Next water cycle (LOU-270): muted while you can still afford something, bright and pulsing once you can't.
 const nothingLeft = () => !affordable() && !canPlant();
 function sync() {
@@ -786,7 +845,7 @@ function sync() {
   goals();
   const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
   if (play) { const f = forecast(), g = STORE ? Math.min(f.gain, Math.max(0, S.cap - S.water)) : f.gain, sp = f.gain - g;
-    gain.innerHTML = `+${g} water${sp && S.moved ? `<span class="sp"> · ${sp} spill</span>` : ""}`; gain.classList.toggle("spill", sp > 0 && !!S.moved) }
+    gain.innerHTML = `+${g} water${sp && S.moved ? `<span class="sp"> · ${SPILL}${sp} spill</span>` : ""}`; gain.classList.toggle("spill", sp > 0 && !!S.moved) }
   { const ub = $("uBadge"), left = UNDOS - (S.undos || 0); ub.hidden = !hard(); ub.textContent = Math.max(0, left) } // hard mode: undos left
   if ($("mGuide")) $("mGuide").hidden = !TUT || !!tutStep();
   { const st = stuckNow(), el = $("stuck"); if (el.hidden === st) el.hidden = !st; $("stUndo").disabled = !history.length }
@@ -1042,7 +1101,7 @@ function tapTile(p, hold = false) { if (seaAct) seaDone(false);
   if (hsel) { const m = moves().get(p + "");
     if (m) { const st = actions(p).find(a => a.k === "stream");
       if (st && canDo(st)) { if (seaAsk(p, st)) return; runAct(st); return } // the river stays selected; the bar (and Next water cycle) is always there (LOU-294)
-      if (st) { ringShake = {k:p + "", t0:now()}; return } } // a grey ring: a gentle shake, nothing else
+      if (st) { ringShake = {k:p + "", t0:now()}; sfx("no"); return } } // a grey ring: a gentle shake, nothing else
     hsel = false }
   if (sel && same(sel, p)) { closeCard(); return } // the same tile again closes the panel
   ring(p); sel = p; renderCard(); draw(); // always the panel first, so you see what you're paying for (LOU-284 replaces LOU-234's one-tap rule)
@@ -1172,7 +1231,7 @@ function tutCheck() { const t = now(), card = $("tutc"), on = !!tutStep();
   if (S.phase === "won" && (S.obj || 0) < OBJ.length) { S.obj = OBJ.length; save() }
   if (t < tutWait) { tutHand(); return }
   let i = S.obj || 0;
-  while (i < OBJ.length && S.phase !== "won" && objDone(OBJ[i])) { const o = OBJ[i], seen = objShown === i; S.obj = ++i; save();
+  while (i < OBJ.length && S.phase !== "won" && objDone(OBJ[i])) { const o = OBJ[i], seen = objShown === i; S.obj = ++i; track("guided_step", {step:i}); save();
     if (seen) { // tick, sparkle and cheer; then the step's callout if it has one; then the next step
       const a = tutTiles(tval(o.target, G)), p = a && a[0] && S.phase !== "pick" ? a[0] : S.head;
       tx("tutT", CHEERS[(i - 1) % CHEERS.length]); tx("tutS", ""); card.classList.add("ok"); if (!reduce) { card.classList.remove("tick"); void card.offsetWidth; card.classList.add("tick") }
@@ -1222,7 +1281,8 @@ function goals() {
   const key = list.map(c => c.st + text(c.s)).join("|"); if (key === chipKey) return; chipKey = key; const el = $("goals");
   const html = short => list.map(({i, s, st}) => `<span class="goal ${st}" data-i="${i}"${["bloom", "groves"].includes(s.type) ? ' id="cBloom"' : ""}>${st === "live" ? CHECK : STAR}<span>${text(s, short)}</span></span>`).join("");
   el.innerHTML = html(false); if (el.scrollWidth > el.clientWidth + 1) el.innerHTML = html(true); // one line at 390px: shorten the labels before wrapping
-  for (const {i, st} of list) { const was = chipWas[i]; chipWas[i] = st; if (was === undefined || was === st || reduce) continue; const c = el.querySelector(`[data-i="${i}"]`); if (!c) continue;
+  for (const {i, st} of list) { const was = chipWas[i]; chipWas[i] = st; if (was === undefined || was === st) continue; if (st === "got" && S.phase === "play") { sfx("star", i); buzz([12, 50, 12]) } // a soft chime and a double tick for a star
+    if (reduce) continue; const c = el.querySelector(`[data-i="${i}"]`); if (!c) continue;
     if (st === "got") c.classList.add("earn"); else if (st === "miss") c.classList.add("lose") } // a short pulse and sparkle when earned (0.4s); a missed goal greys with a thin strike
 }
 
@@ -1259,7 +1319,6 @@ const view = {z:null, cx:0, cy:0}, lay = {w:0, h:0, topH:0, availH:0, dpr:1, fit
 let tgt = null;
 const R = 46, SQ3 = Math.sqrt(3), DEPTH = 30, PLAY_W = 390, PLAY_SCALE = 1.3; // R = 46 at a 390px-wide screen (A4)
 const INK = "rgba(40,70,60,.22)", INK_M = "rgba(50,60,55,.35)", INK_T = "rgba(40,80,60,.4)", PAPER = "#ffffff", HAND = "'M PLUS Rounded 1c', Nunito, sans-serif", NUM = HAND;
-try { if (document.head && !document.querySelector("link[data-mplus]")) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap"; l.dataset.mplus = "1"; document.head.appendChild(l) } } catch (_) {}
 const hsh = (x, y) => Math.abs(((x + 11) * 73856093) ^ ((y + 7) * 19349663)) % 97;
 const world = (x, y) => [x * SQ3 * R + (y & 1 ? SQ3 * R / 2 : 0), y * 1.5 * R];
 const proj = (wx, wy) => ({x:(wx - wy) * .7071, y:(wx + wy) * .3536});
@@ -2009,10 +2068,10 @@ function sheetPan(p, over = 0) { if (view.z === null || !lay.w) return;
 $("sheet").addEventListener("click", e => { if (e.target.closest("#sclose")) { if (TUT && !tutTap(null, true)) return; hsel = false; closeCard(); draw(); return }
   const b = e.target.closest("button[data-a]"); if (!b) return; const a = cardActs[+b.dataset.a]; if (!a) return;
   if (b.classList.contains("off")) { tutNo(); return } // a locked tutorial step: only its own button answers
-  if (a.far) { b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); return } // the sea, but not next to the river's end yet
+  if (a.far) { b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); sfx("no"); return } // the sea, but not next to the river's end yet
   if (canDo(a) && a.k === "stream" && sel && seaAsk(sel, a)) return;
   if (!canDo(a)) { let n = b.querySelector(".sneed"); if (!n) { n = document.createElement("small"); n.className = "sneed swarn"; b.appendChild(n) } n.textContent = `Need ${a.cost - S.water} more gal`; // the message line is hidden while the panel is open
-    b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); return }
+    b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope"); sfx("no"); return }
   runAct(a) });
 // The tutorial's veil: a pale wash over the board that clears, with a soft edge, around the tiles in `holes` (null: no hole).
 function veil(holes, a) { if (a <= 0) return; ctx.save();
@@ -2101,7 +2160,7 @@ function menu(open) { const m = $("menu"); if (open) { $("mHint").hidden = !hint
 $("menuBtn").onclick = () => menu(true); $("hintBtn").onclick = useHint;
 $("menu").addEventListener("click", e => { if (e.target === $("menu")) { menu(false); return } const b = e.target.closest("[data-m]"); if (!b) return; const k = b.dataset.m;
   if (k === "restart") { $("mConf").hidden = false; return } if (k === "restartNo") { $("mConf").hidden = true; return }
-  menu(false); if (k === "hint") { useHint(); return } if (k === "guide") { try { localStorage.setItem(GUIDE_KEY, "1") } catch (_) {} restart(); return } if (k === "restartYes") restart(); else if (k === "help") openGuide(); else if (k === "zoom") zoomTo(view.z > 1.02 ? 1 : lay.zAuto) });
+  menu(false); if (k === "hint") { useHint(); return } if (k === "settings") { openSettings(); return } if (k === "guide") { try { localStorage.setItem(GUIDE_KEY, "1") } catch (_) {} restart(); return } if (k === "restartYes") restart(); else if (k === "help") openGuide(); else if (k === "zoom") zoomTo(view.z > 1.02 ? 1 : lay.zAuto) });
 $("guide").addEventListener("click", e => { const b = e.target.closest(".gtile"); if (!b) return; const g = guideList[+b.dataset.g]; for (const x of $("guide").querySelectorAll(".gtile")) x.classList.toggle("on", x === b);
   $("gDet").innerHTML = `${g.icon}<div><b>${g.name}</b><span>${g.text}</span><em>${g.cost}</em></div>` });
 addEventListener("keydown", e => { if (e.key === "Escape") { if (!$("menu").hidden) { menu(false); return } hsel = false; closeCard(); draw() } });
@@ -2115,6 +2174,10 @@ $("guide").addEventListener("click", async e => { if (!e.target.closest("#codeBt
 // Share (LOU-288): copies a short line ("Flow Tile Daily 11-12 · 47 pts · ★★☆") and confirms with a toast.
 async function copyText(t) { try { await navigator.clipboard.writeText(t); return true } catch (_) {} try { const a = document.createElement("textarea"); a.value = t; a.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(a); a.select(); const ok = document.execCommand("copy"); a.remove(); return ok } catch (_) { return false } }
 let toastT2 = 0; function dToast(t) { const e = $("dToast"); if (!e) return; e.textContent = t; e.hidden = false; e.classList.remove("in"); void e.offsetWidth; e.classList.add("in"); clearTimeout(toastT2); toastT2 = setTimeout(() => { e.hidden = true }, 2200) }
+if ($("shareLv")) $("shareLv").onclick = async () => { const n = +$("wStars").dataset.n || 0, url = location.href.split(/[?#]/)[0];
+  const text = `Flow Tile · ${stripTags(M.label)} · ${"★".repeat(n)}${"☆".repeat(3 - n)}${PERF ? ` · ${score().total} points` : ` · turn ${S.turn}`}`;
+  try { if (navigator.share) { await navigator.share({title:"Flow Tile", text, url}); return } } catch (e) { if (e && e.name === "AbortError") return }
+  dToast(await copyText(text + "\n" + url) ? "Copied. Paste it anywhere." : "Couldn't copy on this device.") };
 if ($("share")) $("share").onclick = async () => { const best = Math.max(getNum(bestKey), S.phase === "won" ? score().total : 0), n = perfStars(best), stars = "★".repeat(n) + "☆".repeat(3 - n);
   const txt = M.daily ? `Flow Tile Daily ${M.day ? M.day.slice(5) : ""} · ${best} pts · ${stars}` : `Flow Tile · ${M.label}: ${best} points ${stars}\n${location.href}`;
   dToast(await copyText(txt) ? "Copied. Paste it anywhere." : "Couldn't copy on this device.") };
@@ -2128,11 +2191,22 @@ function loop() { if (opening) openStep(); if (tgt) glide(); else draw(); if (!r
 if (POSTER || !load()) { S = fresh(); guideInit() }
 if (POSTER) { document.documentElement.classList.add("poster"); if (TUT) S.obj = OBJ.length } else openRun(); // a new run opens with the level banner and a glide to its source; a run in progress goes straight to its river (LOU-285)
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
-if ("serviceWorker" in navigator && !POSTER) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
+if ("serviceWorker" in navigator && !POSTER) { const had = !!navigator.serviceWorker.controller;
+  addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (had) $("upToast").hidden = false }) } // "New version · Reload"
+$("upGo").onclick = () => location.reload();
+// Leaving a level unfinished (LOU-293): the run is already saved on every move; this only notes it.
+addEventListener("pagehide", () => { if (S && S.phase === "play" && S.moved && !POSTER) track("level_left", {turn:S.turn}) });
+// The Back button (LOU-293): from a campaign level it goes to the Levels page, and from there the browser's own Back goes home.
+// Next level replaces the page, so levels don't pile up behind you. Coming from the Levels page, Back already does the right thing.
+if (/^c2-\d+$/.test(M.id) && !POSTER && window.history && window.history.pushState) { try { const ss = window.sessionStorage, ref = document.referrer || "";
+    const viaList = /\/river\/(\?.*)?$/.test(ref) || (ss.getItem("ft.viaList") === "1" && /\/level\/\d+\/(\?.*)?$/.test(ref)); ss.setItem("ft.viaList", viaList ? "1" : "0");
+    if (!viaList) { window.history.pushState({ft:1}, ""); addEventListener("popstate", () => { save(); location.replace(ROOT + "river/") }) }
+    if ($("next")) $("next").addEventListener("click", e => { e.preventDefault(); location.replace($("next").href) }) } catch (_) {} }
 if (M.daily && !POSTER && S.phase === "pick" && getNum(bestKey)) { winOld = true; sync() } // already played today: straight to the result, with Play again (practice)
 
 // for debugging / tests
-window.FT = {get lay() { return lay }, hint:{next:() => hintNext(), route:() => hintRoute(), use:() => useHint(), load:o => { SOL = o }, get now() { return hint }, get left() { return hintsLeft() }, get shown() { return hintShown() }}, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
+window.FT = {get lay() { return lay }, get tracked() { return TRACKED }, sfx, crash, frame() { const t = performance.now(); draw(); return performance.now() - t }, hint:{next:() => hintNext(), route:() => hintRoute(), use:() => useHint(), load:o => { SOL = o }, get now() { return hint }, get left() { return hintsLeft() }, get shown() { return hintShown() }}, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const o = iso(...p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = o.x, cy = o.y;

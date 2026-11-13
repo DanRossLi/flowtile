@@ -88,8 +88,14 @@ Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the me
 - **All islands** (https://danrossli.github.io/flowtile/world/): every level by chapter, plus Perfection and the Daily island, with your best stars.
 - **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, meadow you grow and fish, 3 per grove, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
 - **Daily island** (`/daily/`): generated from the date, so everyone gets the same island. Add `?d=YYYY-MM-DD` to play another day's island. **Share score** copies your result.
-- **Hard mode**: turn it on in the **☰** menu to get 3 undos per level.
+- **Hard mode**: turn it on in **Settings** to get 3 undos per level.
 - **Map codes**: **☰** → **How to play** → **Copy map code** copies a link that plays the map at `/custom/#<code>`.
+
+## Sound, settings and sharing
+
+Sounds are made in code with Web Audio (no audio files), with haptics where the phone supports them. **Settings** (the gear on the home page, or **☰** → **Settings** in a level) has Sound, Haptics, Reduced motion, Guidance, Hard mode and Reset progress. The typeface is hosted in `fonts/`, so the game loads nothing from other sites and plays offline. `share.png` is the picture a shared link shows.
+
+`track(event, details)` in `play.js` marks where players drop off (level start, guided steps, level complete, hints, restarts, leaving a level). It sends nothing until a service is chosen.
 
 ## Install on your phone
 
