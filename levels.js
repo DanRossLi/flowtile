@@ -18,8 +18,8 @@ window.LEVELS = [
   [14, "Dry Lightning", "New: wildfire", "17×11", 2],
   [15, "High Water", "New: floods", "18×11", 2],
   [16, "Dunes", "New: salt flats. A long desert", "20×12", 3],
-  [17, "Highlands", "Ridges, caves and a second spring", "22×13", 3],
-  [18, "Delta", "Three springs, lakes and marsh", "24×14", 3],
+  [17, "Highlands", "Ridges, caves and a second source", "22×13", 3],
+  [18, "Delta", "Three sources, lakes and marsh", "24×14", 3],
   [19, "Wild Country", "Everything, on one wild island", "28×18", 3],
   [20, "The Great Island", "The finale: 40×40", "40×40", 4],
 ];

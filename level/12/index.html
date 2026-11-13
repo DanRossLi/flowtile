@@ -19,7 +19,7 @@
 <script>
 // Single player campaign (Dan, Nov 12): level 12 of 20, built by the seeded campaign builder and checked by the bot.
 // Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S spring for a tributary (2 gal/turn)
+// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
 window.MAP = {
   id: "level-12",
   label: "Level 12 · Rain Pools",
@@ -55,14 +55,14 @@ window.MAP = {
   bloomLabel: "Meadows",
   bloomKind: "meadows",
   turnGoal: 11,
-  startHint: "Tap the spring on the left to start.",
+  startHint: "Tap the source on the left to start.",
   next: "../13/",
   cycle: true,
   weather: {"3": "rain", "6": "drought"},
   help: [
-    "Tap the spring on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your stream's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the stream.",
+    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
+    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
+    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
     "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
     "<b>Sand</b> is free to cross but cuts your <b>flow by 1</b>. <b>Springs</b> are free and add <b>+1 flow</b>.",
     "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",

@@ -19,11 +19,11 @@
 <script>
 // Single player campaign (Dan, Nov 12): level 17 of 20, built by the seeded campaign builder and checked by the bot.
 // Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
-// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S spring for a tributary (2 gal/turn)
+// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S source for a tributary (2 gal/turn)
 window.MAP = {
   id: "level-17",
   label: "Level 17 · Highlands",
-  lesson: "Ridges, caves and a second spring in the hills.",
+  lesson: "Ridges, caves and a second source in the hills.",
   types: [
     "___Br_Br_BB__B_FFB_g_~",
     "__rLLLBBrtBB__m._rB__~",
@@ -61,19 +61,19 @@ window.MAP = {
   bloomLabel: "Meadows",
   bloomKind: "meadows",
   turnGoal: 8,
-  startHint: "Tap the big spring on the left to start your main river.",
+  startHint: "Tap the big source on the left to start your main river.",
   next: "../18/",
   tributaries: true,
   help: [
-    "Tap the spring on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
-    "Tap your stream's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
-    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the stream.",
+    "Tap the source on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
+    "Tap your river's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
+    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the river.",
     "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
     "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
     "A <b>lake</b> fills all at once for <b>2 gal a tile</b>.",
-    "Tap a second spring to start a <b>tributary</b>; it joins your flow once it reaches your river.",
+    "Tap a second source to start a <b>tributary</b>; it joins your flow once it reaches your river.",
     "<b>Caves</b>: in one, out of its pair, for the normal tile cost."],
-  pickHint: "Start with the big spring on the left. The smaller springs are for tributaries."
+  pickHint: "Start with the big source on the left. The smaller sources are for tributaries."
 };
 </script>
 <script src="../../play.js"></script>
