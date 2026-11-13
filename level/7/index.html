@@ -42,6 +42,7 @@ window.MAP = {
     "11111111110",
     "11111111110"],
   guided: true,
+  opening: [["m", 1, 3], ["m", 2, 3], ["c"], ["m", 3, 3]], // what the guided steps make you do, for the level solver (tools/solve.mjs)
   objectives: [
     {text: g => `A lake is ahead. <b>Flow to its edge</b> (${[[1, 3], [2, 3]].filter(([x, y]) => g.on(x, y)).length}/2).`, target: g => g.next([[1, 3], [2, 3]]), lock: true, move: true, needs: 1, done: g => g.on(2, 3)},
     {text: "A lake costs 2 gal a tile. <b>Tap Next water cycle</b> to save up.", target: "end", lock: true, done: g => g.turn >= 2},

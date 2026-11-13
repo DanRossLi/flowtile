@@ -891,3 +891,21 @@ button.seaptr:active:not(:disabled){transform:scale(.97);box-shadow:0 8px 24px r
 .lvb.chapter span::first-letter{text-transform:uppercase}
 /* Skip guidance sits on the left under the chips, clear of the zoom button on the right (LOU-290) */
 .tutskip{left:6px;right:auto}
+/* Hint (LOU-291): a 42px lightbulb above the bottom bar, right of the river strip, with the hints left on a small badge */
+button.hintb{pointer-events:auto;position:absolute;right:12px;bottom:9px;z-index:3;display:grid;place-items:center;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(30,60,60,.16);color:#24434a;cursor:pointer}
+button.hintb[hidden]{display:none}
+button.hintb:active{transform:scale(.94);box-shadow:0 8px 24px rgba(30,60,60,.16)}
+.hintb svg{width:21px;height:21px;fill:none;stroke:#24434a;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.hintb span{position:absolute;right:-3px;top:-3px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#24434a;color:#fff;font:800 11px var(--hand)}
+.hintb.none{opacity:.55}.hintb.none span{background:#8fa0a3}
+.sheeted .hintb,#stuck:not([hidden])~.hintb,#seaq:not([hidden])~.hintb{display:none}
+.mrow .mnote{margin-left:auto;font-style:normal;font-weight:800;font-size:13px;color:#4f6f70;white-space:nowrap}
+/* the ghost icon over the tile to grow next, and the glow on Next water cycle when that's the next step */
+.hghost{position:fixed;z-index:5;pointer-events:none;display:grid;place-items:center;width:46px;height:46px;margin:-46px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.82);box-shadow:0 0 0 2.5px #ffd98a,0 8px 20px rgba(30,60,60,.2);animation:hbob 1s ease-in-out infinite}
+.hghost[hidden]{display:none}
+.hghost svg{width:28px;height:28px;opacity:.9}
+@keyframes hbob{50%{transform:translateY(-4px)}}
+button.nwc.hinted{box-shadow:0 0 0 3px #ffd98a,0 0 18px 4px rgba(255,217,138,.9),0 8px 24px rgba(30,60,60,.16);animation:hglow 1s ease-in-out infinite}
+@keyframes hglow{50%{box-shadow:0 0 0 5px #ffd98a,0 0 26px 8px rgba(255,217,138,.95),0 8px 24px rgba(30,60,60,.16)}}
+@media (prefers-reduced-motion:reduce){.hghost,button.nwc.hinted{animation:none}}
+.mrow[hidden],button.mrow[hidden]{display:none}

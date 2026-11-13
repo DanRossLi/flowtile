@@ -65,6 +65,10 @@ A 24-level campaign in four chapters of six (LOU-290). Levels 1 to 3 are short g
 
 The first campaign's levels with rules the campaign now holds back (tributaries, beavers, alpine trees, rain pools, rechannel, wildfire, floods, salt) are **Extra islands** under All islands: `/extra/fork/`, `/extra/dam-builders/`, `/extra/snowline/`, `/extra/rain-pools/`, `/extra/second-thoughts/`, `/extra/dry-lightning/`, `/extra/high-water/`, `/extra/dunes/`. Its 40×40 finale is a big map at `/big/40/`.
 
+### Level solver and hints
+
+`node tools/solve.mjs` (plain Node, no packages) plays every campaign level with the game's own rules and reports the fewest turns to the sea, the fewest with all three stars, and any weak level. `node tools/solve.mjs --write` also sets each "By turn N" and saves the 3-star solutions to `solutions.js`, which the in-game **Hint** button reads (3 hints per attempt, campaign levels only). Rerun it whenever a level or a rule changes.
+
 ## More maps
 
 | Map | URL | Teaches |

@@ -48,6 +48,7 @@ window.MAP = {
     "1111111111111110"],
   weather: {"3": "rain", "5": "rain", "7": "drought"},
   guided: true,
+  opening: [["m", 1, 0], ["m", 2, 0], ["c"]], // what the guided steps make you do, for the level solver (tools/solve.mjs)
   objectives: [
     {text: g => `Flow <b>2 tiles</b> (${[[1, 0], [2, 0]].filter(([x, y]) => g.on(x, y)).length}/2).`, target: g => g.next([[1, 0], [2, 0]]), lock: true, move: true, needs: 1, done: g => g.on(2, 0)},
     {text: "<b>Tap Next water cycle.</b>", sub: "The Sky chip shows the forecast.", target: "end", lock: true, done: g => g.turn >= 2,

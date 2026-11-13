@@ -118,7 +118,8 @@ document.body.innerHTML = `
       
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
-    <div class="overlay bottom" id="bottom">${M.guided && M.objectives ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg class="odrop" viewBox="0 0 24 24"><path d="M12 3.5S6.5 10 6.5 13.8a5.5 5.5 0 0011 0C17.5 10 12 3.5 12 3.5z"/></svg><svg class="otick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="tutn" id="tutN"></span></div>` : ""}<div class="stuck seaq" id="seaq" role="alertdialog" aria-label="Finish here?" hidden><span><b>Finish here?</b><small id="seaO"></small></span><div><button type="button" id="seaKeep">Keep playing</button><button type="button" id="seaFin">Finish</button></div></div><div class="stuck" id="stuck" role="alert" hidden><b id="stuckT">Your river is stuck.</b><div><button type="button" id="stUndo">Undo last move</button><button type="button" id="stRestart">Restart level</button></div></div><div class="rstrip" id="rstrip" role="status" hidden><i class="rsico" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i><b id="rsName">Your river</b><span class="fpill" id="rsFlow"></span><span class="rshint" id="rsHint">Tap a ring</span></div><div class="msg" id="msg" role="status"></div></div>
+    <div class="overlay bottom" id="bottom">${M.guided && M.objectives ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg class="odrop" viewBox="0 0 24 24"><path d="M12 3.5S6.5 10 6.5 13.8a5.5 5.5 0 0011 0C17.5 10 12 3.5 12 3.5z"/></svg><svg class="otick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="tutn" id="tutN"></span></div>` : ""}<div class="stuck seaq" id="seaq" role="alertdialog" aria-label="Finish here?" hidden><span><b>Finish here?</b><small id="seaO"></small></span><div><button type="button" id="seaKeep">Keep playing</button><button type="button" id="seaFin">Finish</button></div></div><div class="stuck" id="stuck" role="alert" hidden><b id="stuckT">Your river is stuck.</b><div><button type="button" id="stUndo">Undo last move</button><button type="button" id="stRestart">Restart level</button></div></div><div class="rstrip" id="rstrip" role="status" hidden><i class="rsico" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i><b id="rsName">Your river</b><span class="fpill" id="rsFlow"></span><span class="rshint" id="rsHint">Tap a ring</span></div><div class="msg" id="msg" role="status"></div><button type="button" class="hintb" id="hintBtn" aria-label="Hint" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.6 10.8c.6.5 1 1.300 1.100 2.200h5c.1-.9.5-1.700 1.100-2.200A6 6 0 0012 3z"/></svg><span id="hintN">3</span></button></div>
+    <div class="hghost" id="hghost" aria-hidden="true" hidden></div>
     ${M.guided && M.objectives ? `<div class="hand" id="hand" aria-hidden="true" hidden><span class="htap"></span><svg class="hsvg" viewBox="0 0 34 44"><g class="hout"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/><rect x="11" y="34" width="18" height="8" rx="2.5"/></g><g class="hin"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/></g><path class="hcrease" d="M16.8 17v5M22.4 18.5v4.5M27.6 21v3.5M11.6 4.2h3.6"/><rect class="hcuff" x="11" y="34" width="18" height="8" rx="2.5"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div>` : ""}
     <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
     <div class="lvb" id="lvb" role="status" hidden><i class="lvbi" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i><div><b id="lvbT"></b><span id="lvbS"></span></div></div>
@@ -144,6 +145,7 @@ document.body.innerHTML = `
   <div class="mwrap" id="menu" hidden><div class="msheet" role="dialog" aria-label="Menu">
     <i class="mgrip" aria-hidden="true"></i>
     <div class="mhead"><b>${M.label}</b><span id="mTurn"></span></div>
+    <button type="button" class="mrow" data-m="hint" id="mHint" hidden><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.6 10.8c.6.5 1 1.300 1.100 2.200h5c.1-.9.5-1.700 1.100-2.200A6 6 0 0012 3z"/></svg></i><span>Hint<small>Shows your next good move</small></span><em class="mnote" id="mHintN"></em></button>
     <button type="button" class="mrow" data-m="help"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.200 9a3 3 0 015.600 1.200c0 2-2.800 2.600-2.800 4.300"/><circle cx="12" cy="18.200" r=".6" fill="currentColor"/></svg></i><span>How to play<small>Tap any tile to see what it does</small></span></button>
     <button type="button" class="mrow" data-m="zoom"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></i><span><span id="mZoom">Whole island</span><small id="mZoomS">Zoom out to plan your route</small></span></button>
     <button type="button" class="mrow" data-m="guide" id="mGuide" hidden><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></i><span>Play with guidance<small>Restarts this level with the steps</small></span></button>
@@ -447,7 +449,7 @@ function storageHint() { if (!STORE || S.phase !== "play") return "";
   return `Next tile costs ${c}. Grow storage first` }
 
 let noUndo = false; // the level solver (tools/) plays thousands of moves and needs no undo history
-function snapshot() { if (!noUndo) history.push(JSON.stringify(S)); if (S.phase === "play") S.moved = 1 } // moved: you've acted this run, so spill warnings may show (LOU-292)
+function snapshot() { hintOff(); if (!noUndo) history.push(JSON.stringify(S)); if (S.phase === "play") S.moved = 1 } // moved: you've acted this run, so spill warnings may show (LOU-292)
 function build(mv) {
   if (S.water < mv.cost) { say(`Need ${mv.cost - S.water} more gal.`, true); return }
   snapshot();
@@ -634,8 +636,56 @@ function start(p, placed) { const c = at(p); closeCard();
 const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("No undos left. Restart from the menu.", true); return }
-  const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0; closeCard(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; anim.clear(); fx.length = 0; say("Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
+  const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0, hu = S.hints || 0; closeCard(); hintOff(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; S.hints = hu; anim.clear(); fx.length = 0; say("Stepped back."); if (S.phase === "pick") zoomTo(1) }
+function restart() { closeCard(); hintOff(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
+
+// ---------- Hints (LOU-291): campaign levels only. Each level's 3-star solution is saved in solutions.js by the level solver
+// (tools/solve.mjs). While you're still on that solution's path, a hint shows its next step: a ghost ring on the next tile, a
+// ghost icon on the next build, or a glow on Next water cycle. Off the path, it shows the cheapest route from the river's end
+// to the sea as a dotted line. Each shows for about 3s. 3 hints per attempt; a hint costs no stars. Not in Daily or Perfection,
+// and not while a guided step is locked.
+const HINTS = 3, HINT_ON = /^c2-\d+$/.test(M.id) && !PERF, HINT_MS = 3000;
+let SOL = window.SOLUTIONS || null, solWait = null, hint = null;
+function solutions() { if (SOL) return Promise.resolve(SOL); return solWait ||= new Promise(res => { const el = document.createElement("script"); el.src = ROOT + "solutions.js"; el.onload = el.onerror = () => { SOL = window.SOLUTIONS || {}; res(SOL) }; document.head.appendChild(el) }) }
+const hintsLeft = () => Math.max(0, HINTS - (S.hints || 0));
+const hintShown = () => { if (!HINT_ON || !S || S.phase !== "play") return false; const o = tutStep(); return !(o && o.lock) };
+// The saved solution's next step, or null when you've left its path.
+function hintNext() { const sol = SOL && SOL[M.id]; if (!sol || !sol.steps) return null;
+  const route = new Set(sol.steps.filter(a => a[0] === "m").map(a => a[1] + "," + a[2]));
+  for (const p of ORDER) { const c = at(p); if (c.river && c.rid >= 0 && !["source", "ocean", "lake", "cave"].includes(c.t) && !route.has(p + "")) return null } // a river tile the solution never uses
+  let turn = 1; const want = {}, G0 = {g:1, m:MEADOW, t:TREES};
+  for (const a of sol.steps) {
+    if (a[0] === "c") { if (S.turn > turn) { turn++; continue } return {kind:"cycle"} }
+    const q = [a[1], a[2]], k = q + "", c = at(q);
+    if (a[0] === "m") { if (c.river) continue; const m = moves().get(k); if (!m) return null; return m.cost <= S.water ? {kind:"move", p:q} : {kind:"cycle"} }
+    const from = want[k] ?? (G0[M.types[q[1]][q[0]]] || 0), to = a[0] === "gr" ? 1 : from === 0 ? MEADOW : from + 1; want[k] = to; // "g" on bare ground is grass and then a meadow
+    if ((c.g || 0) >= to) continue; if (c.river || !plantable(q)) return null;
+    return growCost(c) <= S.water ? {kind:"grow", p:q, icon:c.g === 0 ? "grass" : c.g === 1 ? "meadow" : "trees"} : {kind:"cycle"} }
+  return null }
+// The cheapest route from the river's end to the sea: Dijkstra on what each tile costs to enter (a lake is paid once; caves are left out).
+function hintRoute() { const h = S.head; if (!h) return null; const dist = new Map([[h + "", 0]]), prev = new Map(), todo = [h]; let end = null;
+  const enter = (from, q) => { const c = at(q); if (c.river || c.t === "boulder" || c.t === "source" || c.t === "bed" || c.t === "cave") return -1; if (c.t === "lake") return at(from).t === "lake" && at(from).lake === c.lake ? 0 : LAKE_TILE_COST * S.lakes[c.lake].tiles.length;
+    return c.t === "spring" || c.t === "sand" ? 0 : (M.tileCost ?? 1) + (c.t === "rock" ? 1 : 0) };
+  while (todo.length) { todo.sort((a, b) => dist.get(b + "") - dist.get(a + "")); const q = todo.pop(), d = dist.get(q + ""); if (at(q).t === "ocean") { end = q; break }
+    for (const n of nbrs(q)) { const e = enter(q, n); if (e < 0) continue; if (!dist.has(n + "") || d + e < dist.get(n + "")) { dist.set(n + "", d + e); prev.set(n + "", q); todo.push(n) } } }
+  if (!end) return null; const pts = []; for (let q = end; q; q = prev.get(q + "")) pts.push(q); return pts.reverse() }
+function hintOff() { if (!hint) return; hint = null; const g = $("hghost"); if (g) g.hidden = true; $("end").classList.remove("hinted") }
+async function useHint() { if (!hintShown()) return; if (!hintsLeft()) { say("No hints left this attempt.", true); return } await solutions(); if (!hintShown()) return;
+  let h = hintNext(); if (!h) { const pts = hintRoute(); if (!pts) { say("No way to the sea from here. Try Undo.", true); return } h = {kind:"route", pts} }
+  closeCard(); hintOff(); S.hints = (S.hints || 0) + 1; hint = {...h, t0:now()}; if (h.kind === "move") hsel = true; // the rings show too, so following it is one tap
+  if (h.kind === "cycle") $("end").classList.add("hinted");
+  if (h.kind === "grow") { const g = $("hghost"); g.innerHTML = AICON[h.icon] || ""; g.hidden = false }
+  if (h.p) { const o = iso(...h.p), sx = (o.x * scale + off.x) / lay.dpr, sy = (o.y * scale + off.y) / lay.dpr; if (view.z !== null && (sx < 40 || sx > lay.w - 40 || sy < lay.topH + 40 || sy > lay.topH + lay.availH - 60)) tgt = {x:o.x, y:o.y, n:0} } // bring a far tile on screen
+  save(); sync(); draw() }
+// Drawn each frame while a hint is up: the ghost ring, the dotted route, and where the ghost icon floats.
+function hintDraw(T, t) { if (!hint) return; const k = (T - hint.t0) / HINT_MS; if (k >= 1 || S.phase !== "play") { hintOff(); return }
+  const a = k < .08 ? k / .08 : k > .85 ? (1 - k) / .15 : 1, pu = reduce ? 1 : .72 + .28 * osc(t, .9);
+  if (hint.kind === "route") { ctx.save(); ctx.globalAlpha = a; ctx.setLineDash([1, 10]); ctx.lineDashOffset = reduce ? 0 : -t * 16; ctx.beginPath();
+    hint.pts.forEach((q, i) => { const o = iso(...q), y = o.y + (isSea(q) ? DEPTH : 0); i ? ctx.lineTo(o.x, y) : ctx.moveTo(o.x, y) }); ctx.shadowColor = "rgba(20,60,70,.45)"; ctx.shadowBlur = 3 * scale; ink("rgba(255,255,255,.96)", 5); ctx.restore();
+    const e = hint.pts[hint.pts.length - 1], o = iso(...e); ctx.globalAlpha = a * pu; ctx.beginPath(); ctx.ellipse(o.x, o.y + (isSea(e) ? DEPTH : 0), 20, 10, 0, 0, 7); ink("#ffffff", 3); ctx.globalAlpha = 1 }
+  else if (hint.p) { const o = iso(...hint.p), y = o.y + (isSea(hint.p) ? DEPTH : 0); ctx.save(); ctx.globalAlpha = a * pu; ctx.shadowColor = "rgba(255,217,138,.95)"; ctx.shadowBlur = 12 * scale; ctx.setLineDash([8, 6]); ctx.lineDashOffset = reduce ? 0 : -t * 10;
+    ctx.beginPath(); ctx.ellipse(o.x, y, 33, 16.5, 0, 0, 7); ink("#ffe9a8", 4.2); ctx.restore();
+    if (hint.kind === "grow") { const g = $("hghost"), r = cv.getBoundingClientRect(), d = cv.width / r.width; g.style.left = (r.left + (o.x * scale + off.x) / d) + "px"; g.style.top = (r.top + ((o.y - 30) * scale + off.y) / d) + "px"; g.style.opacity = a } } }
 
 // ---------- UI
 let quiet = false; // set by the test solver: skip the screen
@@ -681,6 +731,7 @@ function sync() {
     if (S.msg) toastT = setTimeout(() => me.classList.add("fade"), S.warn ? 6500 : 4200); else me.classList.add("fade");
     if (!reduce) { me.classList.remove("pop"); void me.offsetWidth; me.classList.add("pop") } }
   me.classList.toggle("warn", !!S.warn);
+  { const hb = $("hintBtn"), on = hintShown(); if (hb.hidden === on) hb.hidden = !on; tx("hintN", hintsLeft()); hb.classList.toggle("none", !hintsLeft()) } // the lightbulb: campaign levels, not while a guided step is locked
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length || (hard() && (S.undos || 0) >= UNDOS);
   { const ready = S.phase === "play" && nothingLeft(); $("end").classList.toggle("ready", ready); $("end").classList.toggle("muted", S.phase === "play" && !ready) }
   const won = S.phase === "won"; $("win").hidden = !won; $("bottom").hidden = won; if (!won) $("wStars").dataset.n = "";
@@ -1816,6 +1867,7 @@ function draw() {
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
     ctx.globalAlpha = 1 - k; rpath(hexPts(r.p, R * (1 + k * .25)), 9); ink("#ffffff", 2.2); ctx.globalAlpha = 1 }
   seaBadges(T, selOn ? flowTo : []);
+  hintDraw(T, t);
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (const b of badges) { const dim = va > 0 && !(b.key && aim && aim.has(b.key)) && !b.pk && !b.text; if (dim) ctx.globalAlpha = 1 - .65 * va; badge(b, t, dim ? 1 - .65 * va : 1); ctx.globalAlpha = 1 } // labels outside the step dim with the map
   // paper clouds drift across, each with a shadow on the ground; inked birds cross now and then
@@ -1988,12 +2040,12 @@ $("tcard").addEventListener("click", e => {
 $("end").onclick = () => tutGate("end") && endTurn(); $("undo").onclick = () => tutGate("undo") && undo(); $("again").onclick = restart;
 $("stUndo").onclick = () => undo(); $("stRestart").onclick = () => restart(); $("seaKeep").onclick = () => seaDone(false); $("seaFin").onclick = () => seaDone(true);
 // The menu (LOU-286): Restart (behind a confirm), How to play, whole island / zoom, hard mode, Home. Tap outside to close.
-function menu(open) { const m = $("menu"); if (open) { $("hard").checked = hard(); $("mConf").hidden = true; tx("mZoom", view.z > 1.02 ? "Whole island" : "Zoom in"); tx("mZoomS", view.z > 1.02 ? "Zoom out to plan your route" : "Back to your river"); tx("mTurn", S.turn ? "Turn " + S.turn : ""); m.hidden = false; m.classList.remove("bye"); return }
+function menu(open) { const m = $("menu"); if (open) { $("mHint").hidden = !hintShown(); tx("mHintN", hintsLeft() + " left"); $("hard").checked = hard(); $("mConf").hidden = true; tx("mZoom", view.z > 1.02 ? "Whole island" : "Zoom in"); tx("mZoomS", view.z > 1.02 ? "Zoom out to plan your route" : "Back to your river"); tx("mTurn", S.turn ? "Turn " + S.turn : ""); m.hidden = false; m.classList.remove("bye"); return }
   if (m.hidden) return; if (reduce) { m.hidden = true; return } m.classList.add("bye"); setTimeout(() => { m.hidden = true; m.classList.remove("bye") }, 180) }
-$("menuBtn").onclick = () => menu(true);
+$("menuBtn").onclick = () => menu(true); $("hintBtn").onclick = useHint;
 $("menu").addEventListener("click", e => { if (e.target === $("menu")) { menu(false); return } const b = e.target.closest("[data-m]"); if (!b) return; const k = b.dataset.m;
   if (k === "restart") { $("mConf").hidden = false; return } if (k === "restartNo") { $("mConf").hidden = true; return }
-  menu(false); if (k === "guide") { try { localStorage.setItem(GUIDE_KEY, "1") } catch (_) {} restart(); return } if (k === "restartYes") restart(); else if (k === "help") openGuide(); else if (k === "zoom") zoomTo(view.z > 1.02 ? 1 : lay.zAuto) });
+  menu(false); if (k === "hint") { useHint(); return } if (k === "guide") { try { localStorage.setItem(GUIDE_KEY, "1") } catch (_) {} restart(); return } if (k === "restartYes") restart(); else if (k === "help") openGuide(); else if (k === "zoom") zoomTo(view.z > 1.02 ? 1 : lay.zAuto) });
 $("guide").addEventListener("click", e => { const b = e.target.closest(".gtile"); if (!b) return; const g = guideList[+b.dataset.g]; for (const x of $("guide").querySelectorAll(".gtile")) x.classList.toggle("on", x === b);
   $("gDet").innerHTML = `${g.icon}<div><b>${g.name}</b><span>${g.text}</span><em>${g.cost}</em></div>` });
 addEventListener("keydown", e => { if (e.key === "Escape") { if (!$("menu").hidden) { menu(false); return } hsel = false; closeCard(); draw() } });
@@ -2019,7 +2071,7 @@ sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resiz
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get lay() { return lay }, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
+window.FT = {get lay() { return lay }, hint:{next:() => hintNext(), route:() => hintRoute(), use:() => useHint(), load:o => { SOL = o }, get now() { return hint }, get left() { return hintsLeft() }, get shown() { return hintShown() }}, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const o = iso(...p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = o.x, cy = o.y;

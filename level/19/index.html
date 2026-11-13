@@ -46,6 +46,7 @@ window.MAP = {
     "111111111111110",
     "111111111111110"],
   guided: true,
+  opening: [["m", 0, 7], ["m", 1, 7], ["m", 2, 7]], // what the guided steps make you do, for the level solver (tools/solve.mjs)
   objectives: [
     {text: g => `<b>Flow into the cave</b> (${[[0, 7], [1, 7], [2, 7]].filter(([x, y]) => g.on(x, y)).length}/3).`, sub: "It costs the same as any tile.", target: g => g.next([[0, 7], [1, 7], [2, 7]]), lock: true, move: true, needs: 1, done: g => g.on(2, 7),
       after: ["river", "Caves come in pairs: in one, out of the other."]}],
