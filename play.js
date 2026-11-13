@@ -118,7 +118,7 @@ document.body.innerHTML = `
       ${M.objectives && !M.tutorial ? `<div class="obj" id="obj" role="status"><i class="ock" id="oTick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><span class="otext" id="oText"></span><span class="odots" id="oDots" aria-hidden="true"></span>${M.next ? `<button type="button" class="oskip" id="oSkip" aria-label="Skip lesson">Skip</button>` : ""}</div>` : ""}
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
-    <div class="overlay bottom" id="bottom">${M.tutorial ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg class="odrop" viewBox="0 0 24 24"><path d="M12 3.5S6.5 10 6.5 13.8a5.5 5.5 0 0011 0C17.5 10 12 3.5 12 3.5z"/></svg><svg class="otick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="tutn" id="tutN"></span></div>` : ""}<div class="msg" id="msg" role="status"></div></div>
+    <div class="overlay bottom" id="bottom">${M.tutorial ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg class="odrop" viewBox="0 0 24 24"><path d="M12 3.5S6.5 10 6.5 13.8a5.5 5.5 0 0011 0C17.5 10 12 3.5 12 3.5z"/></svg><svg class="otick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="tutn" id="tutN"></span></div>` : ""}<div class="stuck" id="stuck" role="alert" hidden><b id="stuckT">Your river is stuck.</b><div><button type="button" id="stUndo">Undo last move</button><button type="button" id="stRestart">Restart level</button></div></div><div class="msg" id="msg" role="status"></div></div>
     ${M.tutorial ? `<div class="hand" id="hand" aria-hidden="true" hidden><span class="htap"></span><svg class="hsvg" viewBox="0 0 34 44"><g class="hout"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/><rect x="11" y="34" width="18" height="8" rx="2.5"/></g><g class="hin"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/></g><path class="hcrease" d="M16.8 17v5M22.4 18.5v4.5M27.6 21v3.5M11.6 4.2h3.6"/><rect class="hcuff" x="11" y="34" width="18" height="8" rx="2.5"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div><div class="ttitle" id="ttitle" aria-hidden="true" hidden><b>Flow Tile</b><span>Every river starts as a spring</span></div>` : ""}
     <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
     <div class="lvb" id="lvb" role="status" hidden><b id="lvbT"></b><span id="lvbS"></span></div>
@@ -135,28 +135,24 @@ document.body.innerHTML = `
       </div>
     </div></div>
   </div>
-  <div class="actions">
-    <button id="undo" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></i><span>Undo</span></button>
-    <button id="restart" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.7 2.8L3 8"/><path d="M3 3v5h5"/></svg></i><span>Restart</span></button>
-    <button id="helpBtn" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 9a3 3 0 015.6 1.2c0 2-2.8 2.6-2.8 4.3"/><circle cx="12" cy="18.2" r=".6" fill="currentColor"/></svg></i><span>Help</span></button>
-    <button id="end" class="rb go"><i><svg class="cyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3"/><path d="M18.2 2.8l-.9 3.9-3.9-.9"/></svg><em class="gain" id="gain" hidden></em></i><span>Next Water Cycle</span></button>
+  <div class="actions" id="actions">
+    <button type="button" id="menuBtn" class="bbtn" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+    <button type="button" id="end" class="nwc"><svg class="cyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3"/><path d="M18.2 2.8l-.9 3.9-3.9-.9"/></svg><span class="nwl">Next water cycle</span><em class="gain" id="gain" hidden></em></button>
+    <button type="button" id="undo" class="bbtn" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg><b class="ubadge" id="uBadge" hidden></b></button>
   </div>
+  <div class="mwrap" id="menu" hidden><div class="msheet" role="dialog" aria-label="Menu">
+    <button type="button" class="mrow" data-m="restart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.700 2.800L3 8"/><path d="M3 3v5h5"/></svg><span>Restart level</span></button>
+    <div class="mconf" id="mConf" hidden><span>Restart this level? This run is lost.</span><button type="button" class="mgo" data-m="restartYes">Restart</button><button type="button" data-m="restartNo">Cancel</button></div>
+    <button type="button" class="mrow" data-m="help"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.200 9a3 3 0 015.600 1.200c0 2-2.800 2.600-2.800 4.300"/><circle cx="12" cy="18.200" r=".6" fill="currentColor"/></svg><span>How to play</span></button>
+    <button type="button" class="mrow" data-m="zoom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span id="mZoom">Whole island</span></button>
+    <label class="mrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.600 5.600 6 .700-4.500 4.100 1.300 6L12 16.400 6.600 19.400l1.300-6L3.400 9.300l6-.700z"/></svg><span>Hard mode <small>3 undos per level</small></span><input type="checkbox" id="hard"><i class="msw" aria-hidden="true"></i></label>
+    <a class="mrow" href="${ROOT}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span>Home</span></a>
+  </div></div>
   <div class="sheet" id="sheet" hidden><div class="spanel" id="spanel" role="group" aria-label="Selection"></div><div class="sacts" id="sacts"></div></div>
 </div>
-<dialog id="help" aria-labelledby="helpTitle">
+<dialog id="help" class="guide" aria-labelledby="helpTitle">
   <h2 id="helpTitle">How to play</h2>
-  <ul>
-    <li><b class="wtr">Water</b> (blue) is what you have right now, in gallons. Every cost is paid in water. <b class="flw">Flow</b> (teal, in brackets next to your water) is how much each water cycle brings. Tap <b>Water</b> at the top for your storage${TRIB ? " and each river" : ""}.</li>
-    ${M.lesson ? `<li><b>This map:</b> ${M.lesson}</li>` : ""}
-    <li>To move the stream, tap its <b>end</b>, then <b>tap a ring</b>: every tile it can flow to gets one, with its cost in water above it. Grey rings cost more than you have. Tap any other tile to see what it does and what it costs, then choose.</li>
-    ${PLACE ? `<li><b>Place your source:</b> before you start, tap a source, or any glowing land tile (bare ground, grass, meadow or sand, at least ${SEA_GAP} tiles from the sea) to start your river there with <b>+${PLACE_FLOW} flow</b>.</li>` : ""}
-    ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
-    <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, meadow you grow and fish, 3 per grove, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
-  </ul>
-  <div class="opts">
-    <label class="hard"><input type="checkbox" id="hard"> Hard mode: <b>3 undos</b> per map</label>
-    <div class="orow"><a class="btn" href="${ROOT}world/">All islands</a><button type="button" id="codeBtn">Copy map code</button></div>
-  </div>
+  <div id="guide"></div>
   <form method="dialog"><button class="end">Got it</button></form>
 </dialog>`;
 if (!M.next && !M.share) document.getElementById("wRow").classList.add("one");
@@ -453,8 +449,8 @@ function build(mv) {
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.push(`This river can't go on. Tap your ${riverName(openRivers()[0]).toLowerCase()} to switch`); say(notes.join(". ") + ".", true); return }
   if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on: the island is scored. Undo to try another way."); return }
   if (!moves().size && RECH) { notes.push("Dead end. Tap a tile upstream on your river to rechannel from there (it costs all your water)"); say(notes.join(". ") + ".", true); return }
-  if (!moves().size) { S.phase = "stuck"; say("Dead end: nowhere left to go. Undo or restart.", true); return }
-  if (S.income === 0 && !affordable()) { S.phase = "stuck"; say("Your flow is 0 and you can't afford another tile. Undo or restart.", true); return }
+  if (!moves().size) { S.phase = "stuck"; say(""); return } // the stuck helper takes over (LOU-286): no dead-end screen
+  if (S.income === 0 && !affordable()) { S.phase = "stuck"; say(""); return }
   const sh = storageHint();
   if (sh) notes.push(sh); else if (!affordable() && !canPlant()) notes.push(`Out of water. Tap Next Water Cycle for +${S.income} gal`);
   say(notes.length ? notes.join(". ") + "." : "Keep building, or tap Next Water Cycle.");
@@ -633,7 +629,9 @@ function sync() {
   goals();
   const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
   if (play) { const f = forecast(), g = STORE ? Math.min(f.gain, Math.max(0, S.cap - S.water)) : f.gain, sp = f.gain - g;
-    gain.textContent = sp ? `+${g} · ${sp} ${CYCLE ? "to cloud" : "spill"}` : `+${f.gain} gal`; gain.classList.toggle("spill", sp > 0) }
+    gain.innerHTML = `+${g}${sp ? `<span class="sp"> · ${sp} spill</span>` : ""}`; gain.classList.toggle("spill", sp > 0) }
+  { const ub = $("uBadge"), left = UNDOS - (S.undos || 0); ub.hidden = !hard(); ub.textContent = Math.max(0, left) } // hard mode: undos left
+  { const st = stuckNow(), el = $("stuck"); if (el.hidden === st) el.hidden = !st; $("stUndo").disabled = !history.length }
   if (CYCLE || WX) { const nx = skyNext(); tx("hSky", nx.text); tx("lSky", nx.turn > S.turn ? `Sky · T${nx.turn}` : "Sky"); $("cSky").className = "wx sky " + nx.kind; $("cSky").setAttribute("aria-label", nx.long) }
   if ((S.head || "") + "|" + S.active !== lastHead) { lastHead = (S.head || "") + "|" + S.active; follow() }
   // the message is a short toast that fades (LOU-262); warnings stay a little longer
@@ -654,10 +652,7 @@ function sync() {
     $("wGoals").innerHTML = rows.map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>+${v}</b></li>`).join("") + `<li class="g3 extra"><i></i><span>${sc.total > prevBest && prevBest ? "New best! Before" : "Best score"}</span><b>${sc.total > prevBest && prevBest ? prevBest : Math.max(prevBest, sc.total)}</b></li>`;
   } else if (won && TUT) {
     $("winTitle").textContent = "You reached the sea!"; $("wStars").innerHTML = ""; $("wStars").dataset.n = "t"; $("wStars").removeAttribute("aria-label");
-    const J = (k, body) => `<svg class="sjar" viewBox="0 0 40 52" aria-hidden="true"><defs><clipPath id="sj${k}"><path d="M8 7h24v31a12 12 0 01-24 0z"/></clipPath></defs><path class="jglass" d="M8 7h24v31a12 12 0 01-24 0z"/><g clip-path="url(#sj${k})">${body}</g><path class="jink" d="M8 7v31a12 12 0 0024 0V7"/><path class="jrim" d="M6 6.5h28"/></svg>`;
-    $("wGoals").innerHTML = [[J("w", '<rect x="0" y="26" width="40" height="30" fill="#5aa9d0"/>'), "wtr", "Water", "is what you spend."],
-      [J("f", '<rect x="0" y="30" width="40" height="30" fill="#5aa9d0"/><rect x="0" y="17" width="40" height="13" fill="#62e0c8" opacity=".7"/>'), "flw", "Flow", "is what you earn each cycle. Your river's width shows it."],
-      [J("s", '<rect x="0" y="12" width="40" height="44" fill="#5aa9d0" opacity=".35"/>') .replace('<path class="jrim"', '<path class="jn" d="M28 14h4M28 21h4M28 28h4M28 35h4M28 42h4"/><path class="jrim"'), "sto", "Storage", `is how much you can hold (${S.cap} gal now). The rest spills.`]]
+    $("wGoals").innerHTML = [[miniJar("w"), "wtr", "Water", "is what you spend."], [miniJar("f"), "flw", "Flow", "is what you earn each cycle. Your river's width shows it."], [miniJar("s"), "sto", "Storage", `is how much you can hold (${S.cap} gal now). The rest spills.`]]
       .map(([svg, cls, t, v]) => `<li class="sum">${svg}<span><b class="${cls}">${t}</b> ${v}</span></li>`).join("");
     tx("again", "Replay tutorial");
   } else if (won) {
@@ -674,6 +669,33 @@ function sync() {
   draw();
 }
 
+// Stuck helper (LOU-286): no affordable move or build and Next water cycle wouldn't change that, or the river's end has no tile
+// it can enter. Not on rechannel maps while you can still rechannel (there the game points at Rechannel), and not in the tutorial.
+function stuckNow() { if (TUT || !S.head) return false; if (S.phase === "stuck") return true; if (S.phase !== "play" || RECH) return false;
+  if (TRIB && openRivers().length) return false; const mv = [...moves().values()]; if (!mv.length) return true;
+  if (affordable() || canPlant() || (S.water >= PLANT_COST && ORDER.some(plantable))) return false;
+  if (forecast().gain <= 0 && !(S.clouds || []).length && !WX) return true; // a water cycle brings nothing
+  return STORE && Math.min(...mv.map(m => m.cost)) > S.cap && !ORDER.some(plantable) } // costs more than you can ever store
+// Small jars for Water, Flow and Storage (the tutorial's summary and the tile guide use the jar's own visuals)
+function miniJar(k) { const body = {w:'<rect x="0" y="26" width="40" height="30" fill="#5aa9d0"/>', f:'<rect x="0" y="30" width="40" height="30" fill="#5aa9d0"/><rect x="0" y="17" width="40" height="13" fill="#62e0c8" opacity=".7"/>', s:'<rect x="0" y="12" width="40" height="44" fill="#5aa9d0" opacity=".35"/>'}[k];
+  return `<svg class="sjar" viewBox="0 0 40 52" aria-hidden="true"><defs><clipPath id="sj${k}"><path d="M8 7h24v31a12 12 0 01-24 0z"/></clipPath></defs><path class="jglass" d="M8 7h24v31a12 12 0 01-24 0z"/><g clip-path="url(#sj${k})">${body}</g><path class="jink" d="M8 7v31a12 12 0 0024 0V7"/>${k === "s" ? '<path class="jn" d="M28 14h4M28 21h4M28 28h4M28 35h4M28 42h4"/>' : ""}<path class="jrim" d="M6 6.5h28"/></svg>` }
+// ---------- How to play is a tile guide (LOU-286): Water, Flow and Storage in three lines, then the tile types on this map only.
+// Tap one for its name, its rule and its cost. The text is the tile panel's (LOU-284), so there is one source of it.
+let guideList = [];
+function guideCost(c) { const base = M.tileCost ?? 1;
+  if (c.g >= TREES || c.g === MEADOW) return c.wild ? "Wild: it was here before you" : `${PLANT_COST} gal to grow`; if (c.g === 1) return "Free to grow";
+  return {boulder:"The river can't cross it", lake:`${LAKE_TILE_COST} gal a tile, filled all at once`, sand:"Free to cross", spring:"Free to cross", rock:`${base + 1} gal to cross`, ocean:`${base} gal to reach`, source:"Free: your river starts here", bed:"The river can't run here again", cave:`${base} gal to enter`}[c.t] || `${base} gal to cross` }
+function renderGuide() { const seen = new Map();
+  for (const p of ORDER) { const c = at(p); if (c.river && !["source", "ocean", "lake"].includes(c.t)) continue; const n = tileName(c).replace(" · fertile", ""); if (!seen.has(n)) seen.set(n, {name:n, icon:tileIcon(c), text:tileBrief(p), cost:guideCost(c)}) }
+  if (STORE) for (const [n, g, text] of [["Grass", 1, "Free next to your river. The ground you grow on."], ["Meadow", MEADOW, "Beside your river: +1 storage for each tree next to it."], ["Trees", TREES, "No storage. Every 3 touching trees beside your river: +1 flow."]])
+    seen.set(n, {name:n, icon:tileIcon({t:"bare", g}), text, cost:guideCost({t:"bare", g})}); // what you can grow, in the settled words
+  guideList = [...seen.values()];
+  $("guide").innerHTML = `<ul class="gjars"><li>${miniJar("w")}<span><b class="wtr">Water</b> is what you spend.</span></li><li>${miniJar("f")}<span><b class="flw">Flow</b> is what you earn each cycle.</span></li>${STORE ? `<li>${miniJar("s")}<span><b>Storage</b> is how much you can hold.</span></li>` : ""}</ul>
+    <h3>Tiles on this island</h3><div class="ggrid">${guideList.map((g, i) => `<button type="button" class="gtile" data-g="${i}" aria-label="${g.name}">${g.icon}<span>${g.name}</span></button>`).join("")}</div>
+    <div class="gdet" id="gDet" role="status"><small>Tap a tile to see what it does.</small></div>
+    <h3>${PERF ? "Your goal" : "Stars on this level"}</h3><ul class="gaims">${aims().map(a => `<li>${a}</li>`).join("")}</ul>
+    <div class="grow2"><a class="btn" href="${ROOT}tutorial/">Replay tutorial</a><button type="button" id="codeBtn">Copy map code</button></div>` }
+function openGuide() { renderGuide(); try { $("help").showModal() } catch (_) {} }
 // ---------- tile card: tap a tile to see what it does and choose an action
 let sel = null, cardActs = [], hsel = false; // hsel: the stream's end is selected (LOU-258)
 function tileName(c) {
@@ -985,7 +1007,7 @@ function calloutOff() { const el = $("callout"); tutCallT = 0; tutDim = null; $(
 function tutHand() { const h = $("hand"); if (!h) return; const ui = tutUi(), a = tutAim(); let x = null, y = null, tx0, ty0;
   const cb = !$("sheet").hidden && a && sel && a.has(sel + "") && $("sacts").querySelector("button.main:not(.off)"); // the tile's panel is open: point at its button
   if (cb) { const q = cb.querySelector(".sbtn").getBoundingClientRect(), r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(...sel); tx0 = q.right - 7; ty0 = q.top + q.height * .3; x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d }
-  else if (ui) { const b = $(ui === "end" ? "end" : "cWater").querySelector(ui === "end" ? "i" : ".jsvg") || $(ui === "end" ? "end" : "cWater"), q = b.getBoundingClientRect(); x = q.left + q.width / 2; y = q.top + q.height * .5; tx0 = q.left + q.width * .82; ty0 = q.top + q.height * .78 }
+  else if (ui) { const b = ui === "end" ? $("end") : $("cWater").querySelector(".jsvg"), q = b.getBoundingClientRect(); x = q.left + q.width / 2; y = q.top + q.height * .5; tx0 = ui === "end" ? q.right - 30 : q.left + q.width * .82; ty0 = q.top + q.height * .7 }
   else if (a && S.phase !== "won") { const r = cv.getBoundingClientRect(), d = cv.width / r.width, k = [...a][0].split(",").map(Number), o = iso(...k); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d; tx0 = x + 21 * scale / d; ty0 = y + 9 * scale / d }
   if (x == null || tutArrive) { h.hidden = true; if (!tutArrive && tutShown()) tutPlace(null); return } h.hidden = false; h.style.left = (tx0 - 15.5) + "px"; h.style.top = (ty0 - 1) + "px"; tutPlace(x, y) }
 // The instruction card sits next to the action: under the target, or above it. It keeps its side from one step to the next
@@ -1864,16 +1886,25 @@ $("tcard").addEventListener("click", e => {
   if (e.target.closest("#tclose")) { closeCard(); return }
   const rb = e.target.closest("button[data-r]"); if (rb && !rb.disabled && S.phase === "play") { const i = +rb.dataset.r; if (i !== S.active) { activate(i); say(`Now building the ${riverName(i).toLowerCase()}.`) } return }
 });
-$("end").onclick = () => tutGate("end") && endTurn(); $("undo").onclick = () => tutGate("undo") && undo(); $("restart").onclick = () => tutGate("restart") && restart(); $("again").onclick = restart;
-addEventListener("keydown", e => { if (e.key === "Escape") { hsel = false; closeCard(); draw() } });
+$("end").onclick = () => tutGate("end") && endTurn(); $("undo").onclick = () => tutGate("undo") && undo(); $("again").onclick = restart;
+$("stUndo").onclick = () => undo(); $("stRestart").onclick = () => restart();
+// The menu (LOU-286): Restart (behind a confirm), How to play, whole island / zoom, hard mode, Home. Tap outside to close.
+function menu(open) { const m = $("menu"); if (open) { $("hard").checked = hard(); $("mConf").hidden = true; tx("mZoom", view.z > 1.02 ? "Whole island" : "Zoom in"); m.hidden = false; m.classList.remove("bye"); return }
+  if (m.hidden) return; if (reduce) { m.hidden = true; return } m.classList.add("bye"); setTimeout(() => { m.hidden = true; m.classList.remove("bye") }, 180) }
+$("menuBtn").onclick = () => menu(true);
+$("menu").addEventListener("click", e => { if (e.target === $("menu")) { menu(false); return } const b = e.target.closest("[data-m]"); if (!b) return; const k = b.dataset.m;
+  if (k === "restart") { $("mConf").hidden = false; return } if (k === "restartNo") { $("mConf").hidden = true; return }
+  menu(false); if (k === "restartYes") restart(); else if (k === "help") openGuide(); else if (k === "zoom") zoomTo(view.z > 1.02 ? 1 : lay.zAuto) });
+$("guide").addEventListener("click", e => { const b = e.target.closest(".gtile"); if (!b) return; const g = guideList[+b.dataset.g]; for (const x of $("guide").querySelectorAll(".gtile")) x.classList.toggle("on", x === b);
+  $("gDet").innerHTML = `${g.icon}<div><b>${g.name}</b><span>${g.text}</span><em>${g.cost}</em></div>` });
+addEventListener("keydown", e => { if (e.key === "Escape") { if (!$("menu").hidden) { menu(false); return } hsel = false; closeCard(); draw() } });
 addEventListener("keydown", e => { if (e.key === " " && !$("help").open) { e.preventDefault(); if (tutGate("end")) endTurn() } });
-$("helpBtn").onclick = () => { $("hard").checked = hard(); $("help").showModal() };
 $("hard").onchange = e => { try { localStorage.setItem(HARD_KEY, e.target.checked ? "1" : "0") } catch (_) {} sync() };
 // Map codes: the map as a short text you can share; /custom/#<code> plays it.
 function mapCode() { const keep = {...M}; delete keep.help; delete keep.next; delete keep.share; delete keep.startHint;
   const b = new TextEncoder().encode(JSON.stringify(keep)); let bin = ""; b.forEach(x => bin += String.fromCharCode(x)); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") }
-$("codeBtn").onclick = async () => { const url = new URL("custom/#" + mapCode(), ROOT).href; let ok = false; try { await navigator.clipboard.writeText(url); ok = true } catch (_) {}
-  $("codeBtn").textContent = ok ? "Link copied!" : "Copy failed"; if (!ok) prompt("Map code link:", url); setTimeout(() => $("codeBtn").textContent = "Copy map code", 1800) };
+$("guide").addEventListener("click", async e => { if (!e.target.closest("#codeBtn")) return; const url = new URL("custom/#" + mapCode(), ROOT).href; let ok = false; try { await navigator.clipboard.writeText(url); ok = true } catch (_) {}
+  $("codeBtn").textContent = ok ? "Link copied!" : "Copy failed"; if (!ok) prompt("Map code link:", url); setTimeout(() => { if ($("codeBtn")) $("codeBtn").textContent = "Copy map code" }, 1800) });
 if ($("share")) $("share").onclick = async () => { const sc = score(), n = perfStars(sc.total), txt = `Flow Tile · ${M.label}: ${sc.total} points ${"★".repeat(n)}${"☆".repeat(3 - n)}${sc.sea ? " · reached the sea" : ""}\n${location.href}`;
   try { if (navigator.share) await navigator.share({text:txt}); else { await navigator.clipboard.writeText(txt); $("share").textContent = "Copied!" } } catch (_) {} };
 $("help").addEventListener("click", e => { if (e.target === $("help")) $("help").close() }); // tap backdrop to close

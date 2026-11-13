@@ -22,7 +22,7 @@ Plain HTML/JS, no build step, no framework.
 
 Every map opens on a **goal card**: what the map teaches and its three star goals. It shows again after **Restart**, and the map's lesson is at the top of the help (?).
 
-Controls: tap your stream's **end** to select it. Every tile it can flow to gets a **ring** with its cost above it (grey if you can't afford it), and a river panel takes the bottom bar's place; tap a ring to flow there, and the rings follow the new end. Tap the end again, the panel's chevron or empty space to let go. Tapping any other tile opens the **tile panel**: what the tile is and does right now, with every option as its own round button along the bottom (label, cost and effect; the main choice is mint-teal, unaffordable ones are grey). Tapping land never moves the stream by itself; **Flow here** is one of the buttons when the tile is next to the river's end. **Undo** steps back one action, **Restart** resets the map, **Next Water Cycle** (or Space on a keyboard) adds your **flow** to your **water**; its badge shows what you will get, and warns when some would spill. Water is blue and flow is teal everywhere. A finished run isn't restored: the next visit starts the map fresh. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
+Controls: tap your stream's **end** to select it. Every tile it can flow to gets a **ring** with its cost above it (grey if you can't afford it), and a river panel takes the bottom bar's place; tap a ring to flow there, and the rings follow the new end. Tap the end again, the panel's chevron or empty space to let go. Tapping any other tile opens the **tile panel**: what the tile is and does right now, with every option as its own round button along the bottom (label, cost and effect; the main choice is mint-teal, unaffordable ones are grey). Tapping land never moves the stream by itself; **Flow here** is one of the buttons when the tile is next to the river's end. The bottom bar is **☰ Menu**, a big **Next water cycle** pill and **Undo**. Undo steps back one action; Restart, How to play (a guide to the tiles on the map), the whole-island view, Hard mode and Home are in the menu. **Next water cycle** (or Space on a keyboard) adds your **flow** to your **water**; its badge shows what you will get, and warns when some would spill. Water is blue and flow is teal everywhere. A finished run isn't restored: the next visit starts the map fresh. The board shows the whole island until you pick a source, then zooms in on your stream and follows it: drag to look around, pinch or scroll to zoom, and the corner button shows the whole map.
 
 ## Look
 
@@ -64,8 +64,8 @@ Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the me
 - **All islands** (https://danrossli.github.io/flowtile/world/): every level by chapter, plus Perfection and the Daily island, with your best stars.
 - **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, meadow you grow and fish, 3 per grove, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
 - **Daily island** (`/daily/`): generated from the date, so everyone gets the same island. Add `?d=YYYY-MM-DD` to play another day's island. **Share score** copies your result.
-- **Hard mode**: tick it in the **?** menu to get 3 undos per map.
-- **Map codes**: **?** → **Copy map code** copies a link that plays the map at `/custom/#<code>`.
+- **Hard mode**: turn it on in the **☰** menu to get 3 undos per level.
+- **Map codes**: **☰** → **How to play** → **Copy map code** copies a link that plays the map at `/custom/#<code>`.
 
 ## Install on your phone
 

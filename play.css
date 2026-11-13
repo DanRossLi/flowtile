@@ -731,3 +731,78 @@ button.sact.nope .sbtn{animation:tshake .4s}
 .gpop::before{content:"";position:absolute;left:calc(var(--ax,50%) - 7px);top:-6px;border:7px solid transparent;border-top:0;border-bottom-color:#fff}
 .jar.nosrc #cFlow{visibility:hidden}
 @media (prefers-reduced-motion:reduce){.lvb.in,.gpop{animation:none}.lvb.in{animation:fadein .3s both}.lvb.bye{transform:translateX(-50%)}}
+/* Bottom bar (LOU-286): Menu, a big Next water cycle pill, Undo. Restart lives in the menu. */
+.app .actions{display:flex;align-items:center;gap:10px;padding:8px 10px 6px;background:none;box-shadow:none}
+button.bbtn{position:relative;flex:none;display:grid;place-items:center;width:52px;height:52px;padding:0;border:0;border-radius:50%;background:var(--glass,#fff);color:var(--paper-ink);box-shadow:var(--soft)}
+button.bbtn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+button.bbtn:disabled{opacity:.4}
+.ubadge{position:absolute;right:-3px;top:-3px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#24434a;color:#fff;font:800 11px/18px var(--hand);text-align:center}
+.ubadge[hidden]{display:none}
+button.nwc{flex:1;min-width:0;min-height:58px;display:flex;align-items:center;justify-content:center;gap:9px;padding:6px 14px;border:0;border-radius:999px;background:linear-gradient(180deg,#9fd7c9,#5fae9c);color:#0f3a33;box-shadow:0 4px 0 #3f8a7a,var(--soft);font-family:var(--display);font-weight:800;font-size:17px;white-space:nowrap}
+button.nwc:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #3f8a7a,var(--soft)}
+button.nwc .cyc{flex:none;width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transform-origin:50% 50%;animation:cyc 6s linear infinite}
+button.nwc .nwl{overflow:hidden;text-overflow:ellipsis}
+button.nwc .gain{flex:none;font-style:normal;font-family:var(--hand);font-weight:800;font-size:15px;color:#0f6f5e;background:rgba(255,255,255,.9);border-radius:999px;padding:2px 9px}
+button.nwc .gain[hidden]{display:none}
+button.nwc .gain .sp{color:#b5562f}
+button.nwc.muted{background:linear-gradient(180deg,#e3ecee,#c7d5da);color:#4c6468;box-shadow:0 4px 0 #9fb2b8,var(--soft)}
+button.nwc.muted .cyc{animation-duration:14s}
+button.nwc.ready{animation:ready2 1.6s ease-in-out infinite}
+button.nwc:disabled{opacity:.5}
+button.nwc.aim{animation:aim 1.2s ease-in-out infinite}
+.tlock .actions>button:not(.aim),.tcall .actions>button{opacity:.45;filter:grayscale(1);transition:opacity .3s,filter .3s}
+.tlock .actions #menuBtn{opacity:1;filter:none}
+@media (max-width:359px){button.nwc{font-size:15px;gap:6px;padding:6px 10px}button.nwc .cyc{width:22px;height:22px}}
+@media (orientation:landscape) and (max-height:540px){.app .actions{flex-wrap:wrap;align-content:flex-end;justify-content:space-between;padding:10px 6px}button.nwc{order:-1;flex:0 0 100%;white-space:normal;line-height:1.1;font-size:15px;flex-wrap:wrap}}
+/* Menu sheet */
+.mwrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(36,67,74,.28);animation:fadein .18s both}
+.mwrap[hidden]{display:none}
+.mwrap.bye{opacity:0;transition:opacity .18s}
+.msheet{width:min(560px,100%);box-sizing:border-box;padding:10px 12px calc(14px + env(safe-area-inset-bottom,0px));border-radius:24px 24px 0 0;background:rgba(255,255,255,.97);box-shadow:0 -8px 30px rgba(30,60,60,.2);display:grid;gap:4px;font-family:var(--hand);animation:msup .24s cubic-bezier(.3,1.2,.5,1)}
+@keyframes msup{from{transform:translateY(40px);opacity:0}}
+.mrow,button.mrow{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;box-sizing:border-box;padding:8px 12px;border:0;border-radius:14px;background:none;box-shadow:none;color:#24434a;font:800 16px var(--hand);text-align:left;text-decoration:none;cursor:pointer}
+.mrow:active,button.mrow:active:not(:disabled){background:#eef4f2;transform:none;box-shadow:none}
+.mrow svg{flex:none;width:22px;height:22px;fill:none;stroke:#4f6f70;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mrow span{flex:1}.mrow small{display:block;font-weight:500;font-size:13px;color:#4f6f70}
+.mrow input{position:absolute;opacity:0;pointer-events:none}
+.msw{flex:none;position:relative;width:44px;height:26px;border-radius:999px;background:#cfdadb;transition:background .15s}
+.msw::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.mrow input:checked+.msw{background:#5fae9c}.mrow input:checked+.msw::after{transform:translateX(18px)}
+.mrow input:focus-visible+.msw{outline:3px solid var(--gold);outline-offset:2px}
+.mconf{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px 10px 46px;font:500 14px var(--hand);color:#4f6f70}
+.mconf[hidden]{display:none}
+.mconf span{flex:1 1 100%}
+.mconf button{padding:8px 16px;border-radius:999px;font:800 14px var(--hand);background:#eef4f2;box-shadow:none}
+.mconf button.mgo{background:#b5562f;color:#fff}
+/* Stuck helper: a small card above the bar */
+.stuck{pointer-events:auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin:0 2px 8px;padding:10px 14px;border-radius:18px;background:rgba(255,255,255,.95);box-shadow:var(--soft);color:#24434a;font-family:var(--hand);animation:msgpop .3s cubic-bezier(.3,1.5,.5,1)}
+.stuck[hidden]{display:none}
+.stuck b{font-weight:800;font-size:16px}
+.stuck div{display:flex;gap:8px}
+.stuck button{padding:8px 14px;border-radius:999px;font:800 14px var(--hand);background:#eef4f2;box-shadow:none;color:#24434a}
+.stuck button:first-child{background:linear-gradient(180deg,#9fd7c9,#5fae9c);color:#0f3a33}
+.stuck button:disabled{display:none}
+/* How to play: the tile guide */
+dialog.guide{width:min(440px,calc(100% - 20px));max-height:calc(100% - 24px);box-sizing:border-box;padding:16px 16px 14px;overflow:auto;font-family:var(--hand)}
+dialog.guide h2{margin:0 0 8px;font-size:22px}
+dialog.guide h3{margin:14px 0 6px;font:800 13px var(--hand);letter-spacing:.05em;text-transform:uppercase;color:#4f6f70}
+.gjars,.gaims{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.gjars li{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;color:#24434a}
+.gjars .sjar{flex:none;width:24px;height:31px}
+.gjars b{font-weight:800}.gjars b.wtr{color:#2f7fb8}.gjars b.flw{color:#1d8f78}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px}
+button.gtile{display:grid;justify-items:center;gap:2px;padding:6px 2px 5px;border:0;border-radius:14px;background:#f1f6f5;box-shadow:none;color:#24434a;font:800 12px/1.15 var(--hand)}
+button.gtile .tblock{width:48px;height:40px}
+button.gtile.on{background:#d9f3ec;box-shadow:inset 0 0 0 2px #5fae9c}
+.gdet{display:flex;align-items:center;gap:10px;min-height:64px;margin-top:8px;padding:8px 12px;border-radius:14px;background:#f1f6f5;color:#24434a}
+.gdet .tblock{flex:none}
+.gdet b{display:block;font-weight:800;font-size:17px}
+.gdet span{display:block;font-size:14px;line-height:1.3;color:#3f5c5d}
+.gdet em{display:inline-block;margin-top:4px;font-style:normal;font-weight:800;font-size:13px;color:#2f7fb8;background:#fff;border-radius:999px;padding:1px 9px}
+.gdet small{font-size:14px;color:#4f6f70}
+.gaims li{font-size:15px;color:#24434a;padding-left:22px;position:relative}
+.gaims li::before{content:"\2605";position:absolute;left:0;color:#e0b04a}
+.grow2{display:flex;gap:8px;margin:14px 0 4px}
+.grow2 .btn,.grow2 button{flex:1;text-align:center;text-decoration:none;padding:9px 8px;border-radius:999px;font:800 14px var(--hand);background:#eef4f2;box-shadow:none;color:#24434a}
+dialog.guide form .end{width:100%;margin-top:10px}
+@media (prefers-reduced-motion:reduce){button.nwc .cyc,button.nwc.ready,button.nwc.aim,.msheet,.mwrap,.stuck{animation:none}}
