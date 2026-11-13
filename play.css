@@ -628,17 +628,38 @@ button.act:disabled{background:#e3e8e8;color:#7d8b8b;box-shadow:none}
 .tutc.near{box-sizing:border-box;position:fixed;z-index:29;margin:0;max-width:none;transition:left .35s cubic-bezier(.3,1.2,.5,1),top .35s cubic-bezier(.3,1.2,.5,1)}
 .tutc.near::before{content:"";position:absolute;left:calc(var(--ax,50%) - 8px);top:-7px;border:8px solid transparent;border-top:0;border-bottom-color:rgba(255,255,255,.95)}
 .tutc.near.up::before{top:auto;bottom:-7px;border:8px solid transparent;border-bottom:0;border-top-color:rgba(255,255,255,.95)}
-/* Welcome screen on a fresh tutorial (Dan, Nov 12) */
-.welcome{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:rgba(214,230,234,.55);backdrop-filter:blur(2px);animation:fadein .4s both}
-.welcome[hidden]{display:none}
-.welcome.bye{opacity:0;transition:opacity .4s}
-.wcard{width:min(340px,100%);padding:26px 22px 18px;border-radius:26px;background:rgba(255,255,255,.96);box-shadow:var(--soft);text-align:center;color:var(--paper-ink);animation:msgpop .5s .1s cubic-bezier(.3,1.5,.5,1) both}
-.wdrop{width:58px;height:58px;margin:0 auto 6px;animation:wbob 2.4s ease-in-out infinite}
-.wdrop path{fill:#5aa9d0}.wdrop .wsh{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;opacity:.8}
-@keyframes wbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.wcard h2{margin:0 0 8px;font-size:25px;line-height:1.15}
-.wcard p{margin:0 0 18px;font:500 16px/1.4 var(--hand);color:var(--label,#5b7473)}
-.wcard .go{display:block;width:100%;border:0;border-radius:999px;padding:13px;font:800 18px var(--display);color:#0f3a33;background:linear-gradient(180deg,#8fe3cf,#5cc7ad);box-shadow:0 4px 0 #3e9c86;cursor:pointer}
-.wcard .go:active{transform:translateY(3px);box-shadow:0 1px 0 #3e9c86}
-.wskip{margin-top:10px;border:0;background:none;color:var(--label,#5b7473);font:500 14px var(--hand);text-decoration:underline;cursor:pointer}
-@media (prefers-reduced-motion:reduce){.wdrop,.wcard,.welcome{animation:none}.tutc.near{transition:none}}
+@media (prefers-reduced-motion:reduce){.tutc.near{transition:none}}
+/* Tutorial polish (LOU-282): no welcome popup. The title rides the glide, step 1 fades in as the camera settles, the card shows
+   a water drop and "1 / 15", callouts take their turn alone, and the jar refills with a teal pour. */
+.tutc,.hand{opacity:0;transition:opacity .3s}
+.tutc.show,.hand.show{opacity:1}
+.tutc.near{transition:left .35s cubic-bezier(.3,1.2,.5,1),top .35s cubic-bezier(.3,1.2,.5,1),opacity .3s}
+.tutc .ock{position:relative;background:#dff1fa}
+.tutc .ock svg{position:absolute;transition:opacity .2s}
+.tutc .ock .odrop{opacity:1;fill:#4a9cc8;stroke:none}
+.tutc.ok .ock .odrop,.tutc.all .ock .odrop{opacity:0}
+.tutn{flex:none;align-self:flex-start;font:800 12px var(--hand);color:var(--label,#5b7473);white-space:nowrap;padding-top:2px}
+.tutn:empty{display:none}
+.ttitle{position:absolute;left:0;right:0;top:14%;z-index:3;text-align:center;pointer-events:none;opacity:0;color:#2f5552;text-shadow:0 0 14px rgba(255,255,255,.9),0 0 4px rgba(255,255,255,.8)}
+.ttitle[hidden]{display:none}
+.ttitle b{display:block;font:800 42px/1.1 var(--display)}
+.ttitle span{display:block;margin-top:4px;font:500 18px var(--hand)}
+.tut #top,.tut .actions,.tut .zoom{transition:opacity .3s}
+.arriving #top,.arriving .actions,.arriving .zoom,.arriving #bottom{opacity:0;pointer-events:none}
+.callout small{display:block;margin-top:2px;font-size:13px;color:var(--label,#5b7473)}
+.callout b{font-weight:800}
+.callout.bye{opacity:0;transition:opacity .2s}
+.tlock .stats>.stat.lit{opacity:1;filter:none}
+.tcall .stats>.stat:not(.lit),.tcall .actions .rb{opacity:.45;filter:grayscale(1);transition:opacity .3s,filter .3s}
+.jfill{fill:none;stroke:var(--teal,#62e0c8);stroke-width:4;stroke-linecap:round;stroke-dasharray:14 40;stroke-dashoffset:14;opacity:0}
+.jar.fill .jfill{animation:jfill .9s ease-in}
+@keyframes jfill{0%{opacity:0;stroke-dashoffset:14}15%{opacity:.95}80%{opacity:.95}100%{opacity:0;stroke-dashoffset:-40}}
+.tut .card li.sum{grid-template-columns:auto 1fr;gap:12px;padding:8px 0}
+.tut .card li.sum span{font-size:14px;font-weight:500;line-height:1.3;color:var(--paper-ink)}
+.tut .card li.sum b{font-family:inherit;font-size:15px;font-weight:800;text-align:left}
+.sum b.wtr{color:#2f7fb8}.sum b.flw{color:#1d8f78}.sum b.sto{color:var(--paper-ink)}
+.sjar{width:30px;height:39px}
+.sjar .jglass{fill:#eef6f8}.sjar .jink,.sjar .jrim{stroke:#86a6ae;filter:none}.sjar .jn{stroke:#86a6ae;opacity:1}
+@media (prefers-reduced-motion:reduce){.tutc,.hand,.callout.bye{transition:none}.jar.fill .jfill{animation:none}}
+.tut .card li.sum b.wtr{color:#2f7fb8}.tut .card li.sum b.flw{color:#1d8f78}.tut .card li.sum b.sto{color:var(--paper-ink)}
+.tut #wStars{display:none}

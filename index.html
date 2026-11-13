@@ -36,6 +36,8 @@
   .pill{flex:none;font-weight:800;font-size:14px;color:#0f3a33;background:linear-gradient(180deg,var(--mint),var(--mint-d));border-radius:999px;padding:8px 14px;box-shadow:0 3px 0 var(--lip)}
   .tut.done .pill{background:var(--paper-2);color:var(--label);box-shadow:none}
   .tut.new{box-shadow:var(--soft),0 0 0 3px rgba(255,217,138,.95)}
+  .played{display:block;margin:8px 0 0 auto;padding:4px 6px;border:0;background:none;color:var(--label);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+  .played[hidden]{display:none}
   .tag{position:absolute;top:-9px;left:16px;font-weight:800;font-size:11px;letter-spacing:.04em;background:#ffd98a;color:#5a3d06;border-radius:999px;padding:2px 9px}
   /* single player */
   .sp{padding:16px}
@@ -70,9 +72,10 @@
 
   <a class="card tut" id="tut" href="tutorial/">
     <span class="ico" style="background:#5fae9c"><svg viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4z"/><path d="M8 9v5c0 1.5 2 3 4 3s4-1.5 4-3V9"/><path d="M20 7v6"/></svg></span>
-    <span class="grow"><span class="ttl">Tutorial</span><span class="txt" id="tutTxt">Learn to play in two minutes</span></span>
+    <span class="grow"><span class="ttl">Tutorial</span><span class="txt" id="tutTxt">Learn to play in about 3 minutes</span></span>
     <span class="pill" id="tutPill">Start</span>
   </a>
+  <button type="button" class="played" id="played" hidden>I've played before</button>
 
 
   <div class="card sp" style="margin-top:14px">
@@ -130,7 +133,11 @@ else { go.href = `level/${first + 1}/`; go.innerHTML = `${done ? "Continue" : "S
 const tut = get("flowtile.tutorial"), tutRun = get("flowtile.run.v5.tutorial"), T = document.getElementById("tut");
 if (tut === "done") { T.classList.add("done"); document.getElementById("tutTxt").textContent = "Done. Replay it any time."; document.getElementById("tutPill").textContent = "Replay" }
 else if (tutRun) { document.getElementById("tutTxt").textContent = "Pick up where you left off"; document.getElementById("tutPill").textContent = "Continue" }
-else if (!done) { T.classList.add("new"); T.insertAdjacentHTML("afterbegin", '<span class="tag">NEW HERE?</span>') }
+else if (!done && tut !== "skipped") { // a first-time visitor: this card is the welcome (LOU-282), with "I've played before" as a small link
+  T.classList.add("new"); T.insertAdjacentHTML("afterbegin", '<span class="tag">NEW HERE?</span>');
+  document.getElementById("tutTxt").textContent = "Every river starts as a spring. Learn by doing, about 3 minutes.";
+  const pb = document.getElementById("played"); pb.hidden = false;
+  pb.onclick = () => { try { localStorage.setItem("flowtile.tutorial", "skipped") } catch (_) {} T.classList.remove("new"); T.querySelector(".tag").remove(); document.getElementById("tutTxt").textContent = "Learn to play in about 3 minutes"; pb.hidden = true } }
 // New game
 const d = new Date(), day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, db = num("flowtile.best.daily-" + day);
 document.getElementById("tDaily").textContent = db ? `Today's best: ${db}` : "Not played today";

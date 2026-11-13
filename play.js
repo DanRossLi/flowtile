@@ -105,7 +105,7 @@ document.body.innerHTML = `
               <g class="jlvl" id="jWater"><path class="jwave" d="M-20 2q5-3 10 0t10 0t10 0t10 0t10 0t10 0t10 0v60h-70z"/></g></g>
             <g id="jNotch"></g>
             <path class="jink" d="M8 7v31a12 12 0 0024 0V7"/><path class="jrim" d="M6 6.5h28"/>
-            <g class="jpour" id="jPour"><path class="jstream" d="M32 7q5 1 5 9v10"/><circle class="jdrop d1" cx="37" cy="30" r="1.6"/><circle class="jdrop d2" cx="37" cy="30" r="1.3"/></g>
+            <path class="jfill" d="M20 1v30"/><g class="jpour" id="jPour"><path class="jstream" d="M32 7q5 1 5 9v10"/><circle class="jdrop d1" cx="37" cy="30" r="1.6"/><circle class="jdrop d2" cx="37" cy="30" r="1.3"/></g>
           </svg><span class="jnums"><b><i id="hWater">0</i>${STORE ? `<small class="cap"> / <i id="hCap">0</i></small>` : ""}</b><em id="cFlow"><i class="jin">+<i id="hFlow">0</i><span id="jNext"> next cycle</span></i><i class="jsp" id="jSpill"></i></em></span></button>
       </div>
       <div class="subrow">
@@ -118,8 +118,8 @@ document.body.innerHTML = `
       ${M.objectives && !M.tutorial ? `<div class="obj" id="obj" role="status"><i class="ock" id="oTick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><span class="otext" id="oText"></span><span class="odots" id="oDots" aria-hidden="true"></span>${M.next ? `<button type="button" class="oskip" id="oSkip" aria-label="Skip lesson">Skip</button>` : ""}</div>` : ""}
     </div>
     <button class="icon sq zoom" id="fitBtn" aria-label="Show the whole map"></button>
-    <div class="overlay bottom" id="bottom">${M.tutorial ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="odots" id="tutD" aria-hidden="true"></span></div>` : ""}<div class="msg" id="msg" role="status"></div></div>
-    ${M.tutorial ? `<div class="hand" id="hand" aria-hidden="true" hidden><span class="htap"></span><svg class="hsvg" viewBox="0 0 34 44"><g class="hout"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/><rect x="11" y="34" width="18" height="8" rx="2.5"/></g><g class="hin"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/></g><path class="hcrease" d="M16.8 17v5M22.4 18.5v4.5M27.6 21v3.5M11.6 4.2h3.6"/><rect class="hcuff" x="11" y="34" width="18" height="8" rx="2.5"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div><div class="welcome" id="welcome" hidden><div class="wcard"><svg class="wdrop" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4C24 4 9 21 9 30a15 15 0 0030 0C39 21 24 4 24 4z"/><path class="wsh" d="M17 30a7 7 0 007 7"/></svg><h2>Welcome to Flow Tile</h2><p>Every river starts as a spring. Spend water to carve yours across the island, grow the land around it, and reach the sea.</p><button type="button" class="go" id="wGo">Let's go</button><button type="button" class="wskip" id="wSkip">I've played before</button></div></div>` : ""}
+    <div class="overlay bottom" id="bottom">${M.tutorial ? `<div class="tutc" id="tutc" role="status"><i class="ock" aria-hidden="true"><svg class="odrop" viewBox="0 0 24 24"><path d="M12 3.5S6.5 10 6.5 13.8a5.5 5.5 0 0011 0C17.5 10 12 3.5 12 3.5z"/></svg><svg class="otick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i><div class="tutx"><span id="tutT"></span><small id="tutS"></small></div><span class="tutn" id="tutN"></span></div>` : ""}<div class="msg" id="msg" role="status"></div></div>
+    ${M.tutorial ? `<div class="hand" id="hand" aria-hidden="true" hidden><span class="htap"></span><svg class="hsvg" viewBox="0 0 34 44"><g class="hout"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/><rect x="11" y="34" width="18" height="8" rx="2.5"/></g><g class="hin"><rect x="10" y="1.5" width="7" height="24" rx="3.5"/><rect x="16.5" y="13" width="6.2" height="13" rx="3.1"/><rect x="22.2" y="15" width="5.8" height="12" rx="2.9"/><rect x="27.4" y="18" width="5" height="10" rx="2.5"/><rect x="8" y="19" width="24.4" height="17" rx="7.5"/><rect x="2.6" y="19.5" width="6.2" height="13" rx="3.1" transform="rotate(-38 5.7 26)"/></g><path class="hcrease" d="M16.8 17v5M22.4 18.5v4.5M27.6 21v3.5M11.6 4.2h3.6"/><rect class="hcuff" x="11" y="34" width="18" height="8" rx="2.5"/></svg><svg class="harrow" viewBox="0 0 24 24"><path d="M12 3v15M6 12l6 6 6-6"/></svg></div><div class="callout" id="callout" role="status" hidden></div><div class="ttitle" id="ttitle" aria-hidden="true" hidden><b>Flow Tile</b><span>Every river starts as a spring</span></div>` : ""}
     <div class="tcard" id="tcard" role="group" aria-label="Tile details" hidden></div>
     <div class="banner" id="banner" aria-hidden="true" hidden><b id="bTurn"></b><small id="bSub"></small></div>
     <div class="win" id="win" hidden><div class="card" role="dialog" aria-labelledby="winTitle">
@@ -443,7 +443,7 @@ function forecast(turn = S.turn + 1) {
 function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
   const f = forecast(), notes = []; S.turn++; S.clouds ||= [];
   if (S.dry > 0) S.dry--; if (f.wx === "drought") S.dry = 1;
-  S.water += f.gain; bump("cWater"); wave = now();
+  S.water += f.gain; bump("cWater"); wave = now(); if (f.gain > 0 && !quiet) { const j = $("cWater"); j.classList.remove("fill"); void j.offsetWidth; j.classList.add("fill") } // the jar refills with a teal pour
   const sp = STORE ? Math.max(0, S.water - S.cap) : 0; S.water -= sp;
   const src = S.rivers[0] && S.rivers[0].src; if (src) float(src, `+${f.gain - sp} gal`, "#bfe4ff");
   if (f.wx === "rain") { notes.push("Rainstorm: +2 gal"); sky = {kind:"rain", t0:now()} }
@@ -576,7 +576,7 @@ const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("Hard mode: no undos left on this map. Restart to try again.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0; closeCard(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; anim.clear(); fx.length = 0; say(hard() ? `Stepped back. Hard mode: ${UNDOS - S.undos} undo${UNDOS - S.undos === 1 ? "" : "s"} left.` : "Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); if (TUT) { objShown = -1; tutWait = 0; $("callout").hidden = true; if (!reduce) tutArrive = {}; else zoomTo(lay.zAuto) } else { zoomTo(1); showGoal() } }
+function restart() { closeCard(); hsel = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(M.startHint); if (TUT) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); showGoal() } }
 
 // ---------- UI
 let quiet = false; // set by the test solver: skip the screen
@@ -628,7 +628,11 @@ function sync() {
     $("wGoals").innerHTML = rows.map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>+${v}</b></li>`).join("") + `<li class="g3 extra"><i></i><span>${sc.total > prevBest && prevBest ? "New best! Before" : "Best score"}</span><b>${sc.total > prevBest && prevBest ? prevBest : Math.max(prevBest, sc.total)}</b></li>`;
   } else if (won && TUT) {
     $("winTitle").textContent = "You reached the sea!"; $("wStars").innerHTML = ""; $("wStars").dataset.n = "t"; $("wStars").removeAttribute("aria-label");
-    $("wGoals").innerHTML = (M.learned || []).map(([t, v], i) => `<li class="got g${i % 3}"><i></i><span>${t}</span><b>${v}</b></li>`).join("");
+    const J = (k, body) => `<svg class="sjar" viewBox="0 0 40 52" aria-hidden="true"><defs><clipPath id="sj${k}"><path d="M8 7h24v31a12 12 0 01-24 0z"/></clipPath></defs><path class="jglass" d="M8 7h24v31a12 12 0 01-24 0z"/><g clip-path="url(#sj${k})">${body}</g><path class="jink" d="M8 7v31a12 12 0 0024 0V7"/><path class="jrim" d="M6 6.5h28"/></svg>`;
+    $("wGoals").innerHTML = [[J("w", '<rect x="0" y="26" width="40" height="30" fill="#5aa9d0"/>'), "wtr", "Water", "is what you spend."],
+      [J("f", '<rect x="0" y="30" width="40" height="30" fill="#5aa9d0"/><rect x="0" y="17" width="40" height="13" fill="#62e0c8" opacity=".7"/>'), "flw", "Flow", "is what you earn each cycle. Your river's width shows it."],
+      [J("s", '<rect x="0" y="12" width="40" height="44" fill="#5aa9d0" opacity=".35"/>') .replace('<path class="jrim"', '<path class="jn" d="M28 14h4M28 21h4M28 28h4M28 35h4M28 42h4"/><path class="jrim"'), "sto", "Storage", `is how much you can hold (${S.cap} gal now). The rest spills.`]]
+      .map(([svg, cls, t, v]) => `<li class="sum">${svg}<span><b class="${cls}">${t}</b> ${v}</span></li>`).join("");
     tx("again", "Replay tutorial");
   } else if (won) {
     const bl = bloomCount(), goals = [[true, `Reached the sea · turn ${S.turn}`], [bl >= BLOOM_GOAL, M.noSand ? "Never crossed sand" : BLOOM_GOAL ? (M.bloomKind === "springs" ? `Through ${bl}/${BLOOM_GOAL} springs` : M.bloomLabel ? `${M.bloomLabel} on ${bl}/${BLOOM_GOAL} tiles` : `Bloomed ${bl}/${BLOOM_GOAL} tiles`) : "Bloom goal (none on this map)"], [S.turn <= TURN_GOAL, `Turn ${S.turn} (goal: by turn ${TURN_GOAL})`]];
@@ -861,25 +865,30 @@ function objCheck() { if (!OBJ.length || !S) return; if (TUT) return tutCheck();
 // step costs; short of it, the card says to tap Next Water Cycle), noCycle (Next Water Cycle waits), before/after: [where, text]
 // callouts (where: "jar", "end", "river" or [x,y]), done(g).
 const TUT = !!M.tutorial, CHEERS = ["Nice!", "Got it", "Great!", "Yes!", "Lovely"];
-let tutWait = 0, tutArrive = null, tutCallT = 0;
+// LOU-282: the tutorial runs as one smooth line. tutWait: nothing new appears before this time. tutPend: a callout waiting for the
+// cheer to finish. tutIn: when the current step's ring, veil, hand and card started fading in together (0.3s). tutDim: a callout is
+// up, so the board dims. tutMute: taps are ignored (the tap that skipped the glide).
+let tutWait = 0, tutArrive = null, tutCallT = 0, tutPend = null, tutIn = 0, tutDim = null, tutMute = 0, tutSide = "", tutStage = -1;
 const tval = (v, g) => typeof v === "function" ? v(g) : v;
 const tutStep = () => S && (S.obj || 0) < OBJ.length ? OBJ[S.obj || 0] : null;
 const tutTiles = t => Array.isArray(t) ? (Array.isArray(t[0]) ? t : [t]) : null;
 const tutShort = o => { const n = o && tval(o.needs, G) || 0; return S.phase === "play" && n > S.water };
-function tutAim() { const o = tutStep(); if (!o || now() < tutWait || tutShort(o)) return null; const t = tval(o.target, G); if (!t || t === "end" || t === "water") return null;
+const tutShown = () => objShown === (S.obj || 0) && now() >= tutWait && !tutArrive; // the current step is on screen
+const tutK = () => reduce ? 1 : clamp01((now() - tutIn) / 300); // 0 → 1 while a step fades in
+function tutAim() { const o = tutStep(); if (!o || !tutShown() || tutShort(o)) return null; const t = tval(o.target, G); if (!t || t === "end" || t === "water") return null;
   if (t === "source") return new Set(S.phase === "pick" ? ORDER.filter(p => at(p).t === "source").map(String) : []);
   const l = tutTiles(t); return l && l.length ? new Set(l.map(String)) : null }
-function tutUi() { const o = tutStep(); if (!o || now() < tutWait) return ""; if (tutShort(o)) return "end"; const t = tval(o.target, G); return t === "end" || t === "water" ? t : "" }
+function tutUi() { const o = tutStep(); if (!o || !tutShown()) return ""; if (tutShort(o)) return "end"; const t = tval(o.target, G); return t === "end" || t === "water" ? t : "" }
 // May this tile be tapped now?
-function tutTap(p) { if (tutArrive) { tutArrive.t0 = -1e9; return false } const o = tutStep(); if (!o || !o.lock || S.phase === "won") return true;
-  if (now() < tutWait) return false; if (tutShort(o)) { tutNo(); return false }
+function tutTap(p) { if (tutArrive) { tutArrive.t0 = -1e9; return false } if (now() < tutMute) return false; const o = tutStep(); if (!o || !o.lock || S.phase === "won") return true;
+  if (!tutShown()) return false; if (tutShort(o)) { tutNo(); return false }
   const allow = tutTiles(tval(o.allow || o.target, G)) || (tval(o.target, G) === "source" ? ORDER.filter(q => at(q).t === "source") : []);
   if (p && allow.some(q => same(q, p))) return true;
   if (p && o.move && headTiles(S.active).some(q => same(q, p))) { hsel = true; return false } // the end stays selected
   tutNo(); return false }
 // May this button be pressed now?
 function tutGate(k) { if (!TUT || S.phase !== "play") return true; const o = tutStep(); if (!o) return true;
-  if (now() < tutWait) return false;
+  if (!tutShown()) return false;
   if (k === "end") { if (o.noCycle) { tutNo(); return false } if (!o.lock || tutUi() === "end") return true; tutNo(); return false }
   if (k === "water" && tutUi() === "water") return true;
   if (o.lock) { tutNo(); return false } return true }
@@ -889,60 +898,83 @@ function tutText() { const o = tutStep(), i = S.obj || 0, c = $("tutc"); if (!c)
   if (S.phase === "won" || !o) { tx("tutT", "You reached the sea!"); tx("tutS", ""); c.classList.add("all") }
   else if (tutShort(o)) { $("tutT").innerHTML = "Out of water. <b>Tap Next Water Cycle.</b>"; tx("tutS", `Your flow (+${S.income}) refills it every cycle.`) }
   else { $("tutT").innerHTML = tval(o.text, G); tx("tutS", tval(o.sub, G) || "") }
-  $("tutD").innerHTML = OBJ.map((_, k) => `<i class="${k < i ? "d" : k === i ? "c" : ""}"></i>`).join("") }
-// A small white pill pointing at the jar, a button, the river's end or a tile; it hides itself after 2.5s.
+  tx("tutN", i < OBJ.length ? `${i + 1} / ${OBJ.length}` : "") }
+// The card and the hand fade in and out together.
+function tutShow(on) { for (const id of ["tutc", "hand"]) $(id).classList.toggle("show", on) }
+// A callout explains one idea the first time you feel it (LOU-282): a white pill pointing at the exact part of the jar ("water",
+// "flow", "rim"), a button ("end"), the river's end ("river") or a tile [x, y]. The rest dims for 2.5s; no tap needed.
+const CALL_MS = 2500;
 function callout(where, text) { const el = $("callout"); if (!el || !where) return; const r = cv.getBoundingClientRect(), d = cv.width / r.width;
-  let x, y, below = false;
-  if (where === "jar" || where === "end") { const b = $(where === "jar" ? "cWater" : "end").getBoundingClientRect(); x = b.left + b.width / 2; if (where === "jar") { y = b.bottom + 8; below = true } else y = b.top - 8 }
+  let x, y, below = false; const hud = {jar:"#cWater", water:"#cWater .jsvg", rim:"#cWater .jsvg", flow:"#cFlow", end:"#end"}[where];
+  if (hud) { const b = document.querySelector(hud).getBoundingClientRect(); x = b.left + b.width / 2; if (where === "end") y = b.top - 8; else { y = b.bottom + 8; below = true } }
   else { const p = where === "river" ? S.head : where, o = iso(...p); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d - 26 }
   el.innerHTML = tval(text, G); el.classList.toggle("below", below); el.hidden = false;
   const w = el.offsetWidth; el.style.left = Math.max(8, Math.min(innerWidth - w - 8, x - w / 2)) + "px"; el.style.top = (below ? y : y - el.offsetHeight) + "px";
   el.style.setProperty("--ax", (x - Math.max(8, Math.min(innerWidth - w - 8, x - w / 2))) + "px");
-  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); tutCallT = now() + 2500 }
-// Point the hand at the target: a tile on the board or a button.
-function tutHand() { const h = $("hand"); if (!h) return; const ui = tutUi(), a = tutAim(); let x = null, y = null;
+  el.classList.remove("pop", "bye"); void el.offsetWidth; el.classList.add("pop"); tutCallT = now() + CALL_MS;
+  tutDim = {t0:now(), at:hud ? null : (where === "river" ? S.head : where)}; if (hud && where !== "end") $("cWater").classList.add("lit"); document.body.classList.add("tcall");
+  if (where === "flow") wave = now() } // the river pulses along its length: its width is its flow
+function calloutOff() { const el = $("callout"); tutCallT = 0; tutDim = null; $("cWater").classList.remove("lit"); document.body.classList.remove("tcall"); if (!el || el.hidden) return;
+  if (reduce) { el.hidden = true; return } el.classList.add("bye"); setTimeout(() => { if (!tutCallT) el.hidden = true }, 220) }
+// Point the hand at the target: a tile on the board or a button. The fingertip touches the lower right edge of the ring or
+// button, so it never hides the target's own label (LOU-282).
+function tutHand() { const h = $("hand"); if (!h) return; const ui = tutUi(), a = tutAim(); let x = null, y = null, tx0, ty0;
   const cb = !$("tcard").hidden && a && sel && a.has(sel + "") && $("tcard").querySelector("button[data-a]:not([disabled])");
-  if (cb) { const q = cb.getBoundingClientRect(); x = q.right - 40; y = q.top + q.height * .5 }
-  else if (ui) { const b = $(ui === "end" ? "end" : "cWater").querySelector(ui === "end" ? "i" : ".jsvg") || $(ui === "end" ? "end" : "cWater"), q = b.getBoundingClientRect(); x = q.left + q.width / 2; y = q.top + q.height * .55 }
-  else if (a && S.phase !== "won") { const r = cv.getBoundingClientRect(), d = cv.width / r.width, k = [...a][0].split(",").map(Number), o = iso(...k); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d }
-  if (x == null || tutArrive) { h.hidden = true; if (!tutArrive && now() >= tutWait) tutPlace(null); return } h.hidden = false; h.style.left = (x - 15.5) + "px"; h.style.top = (y - 1) + "px"; tutPlace(x, y) }
-// The instruction card sits next to the action: under the target, or above it when the target is low on the screen.
-// With no target it goes back to the bottom of the screen.
+  if (cb) { const q = cb.getBoundingClientRect(); x = tx0 = q.right - 40; y = ty0 = q.top + q.height * .5 }
+  else if (ui) { const b = $(ui === "end" ? "end" : "cWater").querySelector(ui === "end" ? "i" : ".jsvg") || $(ui === "end" ? "end" : "cWater"), q = b.getBoundingClientRect(); x = q.left + q.width / 2; y = q.top + q.height * .5; tx0 = q.left + q.width * .82; ty0 = q.top + q.height * .78 }
+  else if (a && S.phase !== "won") { const r = cv.getBoundingClientRect(), d = cv.width / r.width, k = [...a][0].split(",").map(Number), o = iso(...k); x = r.left + (o.x * scale + off.x) / d; y = r.top + (o.y * scale + off.y) / d; tx0 = x + 21 * scale / d; ty0 = y + 9 * scale / d }
+  if (x == null || tutArrive) { h.hidden = true; if (!tutArrive && tutShown()) tutPlace(null); return } h.hidden = false; h.style.left = (tx0 - 15.5) + "px"; h.style.top = (ty0 - 1) + "px"; tutPlace(x, y) }
+// The instruction card sits next to the action: under the target, or above it. It keeps its side from one step to the next
+// unless it wouldn't fit there. With no target it goes back to the bottom of the screen.
 function tutPlace(x, y) { const c = $("tutc"); if (!c) return;
-  if (x == null) { if (c.classList.contains("near")) { c.classList.remove("near", "up"); c.style.left = c.style.top = c.style.width = "" } return }
-  const w = Math.min(330, innerWidth - 24), l = Math.max(12, Math.min(innerWidth - w - 12, x - w / 2)), up = y > innerHeight * .58;
-  c.classList.add("near"); c.classList.toggle("up", up); c.style.width = w + "px"; c.style.left = l + "px"; c.style.setProperty("--ax", (x - l) + "px");
-  c.style.top = (up ? y - 62 - c.offsetHeight : y + 58) + "px" }
-// Glide the camera to the step's target tiles (or back to the river's end).
-function tutLook() { const a = tutAim(); if (!a || view.z === null || !lay.w) { follow(true); return } let x = 0, y = 0, n = 0; for (const k of a) { const o = iso(...k.split(",").map(Number)); x += o.x; y += o.y; n++ }
-  tgt = {x:x / n, y:y / n, n:0}; if (reduce) { view.cx = tgt.x; view.cy = tgt.y; tgt = null; applyView() } }
-function tutCheck() {
-  if (now() < tutWait) { tutHand(); return }
+  if (x == null) { if (c.classList.contains("near")) { c.classList.remove("near", "up"); c.style.left = c.style.top = c.style.width = "" } tutSide = ""; return }
+  const w = Math.min(330, innerWidth - 24), l = Math.max(12, Math.min(innerWidth - w - 12, x - w / 2));
+  c.classList.add("near"); c.style.width = w + "px"; const hgt = c.offsetHeight, bt = $("board").getBoundingClientRect();
+  const fitsDown = y + 62 + hgt < Math.min(innerHeight, bt.bottom) - 6, fitsUp = y - 66 - hgt > bt.top + lay.topH;
+  const up = tutSide === "up" ? fitsUp || !fitsDown : tutSide === "down" ? !fitsDown && fitsUp : !fitsDown; tutSide = up ? "up" : "down";
+  c.classList.toggle("up", up); c.style.left = l + "px"; c.style.setProperty("--ax", (x - l) + "px");
+  c.style.top = (up ? y - 66 - hgt : y + 62) + "px" }
+// The camera stays still from one step to the next unless the new target is off screen (or under the top bar or the bottom
+// of the board); then it pans there gently before the new ring and hand appear. Returns true when it has to pan.
+function tutLook() { const o = tutStep(); if (!o || view.z === null || !lay.w || S.phase === "won") return false; const t = tval(o.target, G);
+  const l = t === "source" ? ORDER.filter(p => at(p).t === "source") : tutShort(o) ? null : tutTiles(t); if (!l || !l.length) return false;
+  let x = 0, y = 0, out = false; for (const q of l) { const w = iso(...q), sx = (w.x * scale + off.x) / lay.dpr, sy = (w.y * scale + off.y) / lay.dpr; x += w.x; y += w.y;
+    if (sx < 44 || sx > lay.w - 44 || sy < lay.topH + 56 || sy > lay.h - 130) out = true }
+  if (!out) return false; tgt = {x:x / l.length, y:y / l.length, n:0};
+  if (reduce) { view.cx = tgt.x; view.cy = tgt.y; tgt = null; applyView(); return false } return true }
+function tutCheck() { const t = now(), card = $("tutc");
+  if (tutPend && t >= tutPend.at) { const q = tutPend; tutPend = null; tutShow(false); callout(...q.args) } // the cheer is over: the callout takes its turn
+  if (tutCallT && t > tutCallT) calloutOff();
+  if (tutArrive) { $("hand").hidden = true; return }
+  if (t < tutWait) { tutHand(); return }
   if (S.phase === "won" && (S.obj || 0) < OBJ.length) { S.obj = OBJ.length; try { localStorage.setItem("flowtile.tutorial", "done") } catch (_) {} save() }
   let i = S.obj || 0;
   while (i < OBJ.length && objDone(OBJ[i])) { const o = OBJ[i], seen = objShown === i; S.obj = ++i; save();
-    if (seen) { // tick, sparkle and cheer, then the next step after 0.6s
-      const c = $("tutc"), a = tutTiles(tval(o.target, G)), p = a && a[0] && S.phase !== "pick" ? a[0] : S.head;
-      tx("tutT", CHEERS[(i - 1) % CHEERS.length]); tx("tutS", ""); c.classList.add("ok"); if (!reduce) { c.classList.remove("tick"); void c.offsetWidth; c.classList.add("tick") }
-      if (p) { float(p, "✓", "#ffffff"); ring(p) } if (o.after) callout(...o.after);
-      tutWait = now() + 600; $("hand").hidden = true; return } }
-  $("tutc").classList.remove("ok");
-  const o = tutStep(); if (o && o.move && S.phase === "play" && !tutShort(o)) hsel = true;
-  if (i !== objShown || tutShort(o) !== S.tutShort) { const first = objShown !== i; objShown = i; S.tutShort = tutShort(o); tutText(); if (first) { if (o && o.before) callout(...o.before); tutLook() } }
+    if (seen) { // tick, sparkle and cheer; then the step's callout if it has one; then the next step
+      const a = tutTiles(tval(o.target, G)), p = a && a[0] && S.phase !== "pick" ? a[0] : S.head;
+      tx("tutT", CHEERS[(i - 1) % CHEERS.length]); tx("tutS", ""); card.classList.add("ok"); if (!reduce) { card.classList.remove("tick"); void card.offsetWidth; card.classList.add("tick") }
+      if (p) { float(p, "✓", "#ffffff"); ring(p) }
+      tutWait = t + 600; if (o.after && S.phase !== "won") { tutPend = {at:t + 600, args:o.after}; tutWait += CALL_MS + 300 }
+      $("hand").classList.remove("show"); return } }
+  card.classList.remove("ok");
+  const o = tutStep(); if (o && o.move && S.phase === "play") hsel = !tutShort(o);
+  if (i !== objShown) { // a new step: pan first if its target is off screen, then everything fades in together
+    if (tutStage !== i) { tutStage = i; tutShow(false); if (tutLook()) { tutWait = t + 520; return } }
+    objShown = i; S.tutShort = tutShort(o); tutText(); tutIn = t; tutShow(true) }
+  else if (tutShort(o) !== S.tutShort) { S.tutShort = tutShort(o); tutText(); tutIn = t }
   else if (o && typeof o.text === "function") tutText();
-  if (tutCallT && now() > tutCallT) { $("callout").hidden = true; tutCallT = 0 }
   const ui = tutUi(); $("end").classList.toggle("aim", ui === "end"); $("cWater").classList.toggle("aim", ui === "water");
   document.body.classList.toggle("tlock", !!(o && o.lock && S.phase !== "won")); tutHand() }
-// Arrival: the camera glides in over the sea and settles on the island (3s; a tap skips it).
-function arrive() { if (!lay.w || view.z === null) { draw(); return } const a = tutArrive;
-  if (!a.from) { const f = focusPoint(); a.from = {x:B.x - B.w * .9, y:B.y + B.h * .2, z:Math.max(.55, lay.zAuto * .35)}; a.to = {x:f.x, y:f.y, z:lay.zAuto}; a.t0 = now() }
-  if (a.hold) a.t0 = now(); // the welcome screen is up: wait at the start of the glide
+// Arrival (LOU-282): no welcome popup. The camera starts over the sea and glides in for 3s while the title fades in and out
+// over the sky; a tap anywhere skips to the end. Step 1 fades in as the camera settles.
+function arrive() { if (!lay.w || view.z === null) { draw(); return } const a = tutArrive, tt = $("ttitle");
+  if (!a.from) { const f = focusPoint(); a.from = {x:B.x - B.w * .9, y:B.y + B.h * .2, z:Math.max(.55, lay.zAuto * .35)}; a.to = {x:f.x, y:f.y, z:lay.zAuto}; a.t0 = now(); document.body.classList.add("arriving"); tt.hidden = false }
   const k = Math.min(1, (now() - a.t0) / 3000), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
   view.cx = a.from.x + (a.to.x - a.from.x) * e; view.cy = a.from.y + (a.to.y - a.from.y) * e; view.z = a.from.z + (a.to.z - a.from.z) * e; applyView();
-  if (k >= 1) { tutArrive = null; tutText() } }
+  tt.style.opacity = Math.min(clamp01(k / .22), clamp01((.82 - k) / .22));
+  if (k >= 1) { tutArrive = null; tt.hidden = true; document.body.classList.remove("arriving"); tutMute = now() + 350; tutWait = now() } }
 if (TUT) {
-  $("wGo").onclick = () => { const w = $("welcome"); w.classList.add("bye"); if (tutArrive) { tutArrive.hold = false; tutArrive.t0 = now() } setTimeout(() => { w.hidden = true; w.classList.remove("bye") }, reduce ? 0 : 400) };
-  $("wSkip").onclick = () => { try { localStorage.setItem("flowtile.tutorial", "skipped") } catch (_) {} location.href = ROOT };
+  addEventListener("pointerdown", () => { if (tutArrive && tutArrive.from) tutArrive.t0 = -1e9 }, true); // a tap anywhere skips the glide
   $("tutSkip").onclick = () => { if (!confirm("Skip the tutorial? You can replay it any time from the home page.")) return; try { localStorage.setItem("flowtile.tutorial", "skipped") } catch (_) {} location.href = ROOT };
 }
 if (OBJ.length && $("oSkip")) $("oSkip").onclick = () => { try { localStorage.setItem("flowtile.seen." + M.id, "skipped") } catch (_) {} location.href = M.next };
@@ -1548,9 +1580,13 @@ function draw() {
     if (s !== 1) ctx.restore();
   }
   if (!TUT && hsel && S.phase === "play" && mv.size) { ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); for (const k of mv.keys()) hexPts(k.split(",").map(Number), R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fillStyle = "rgba(222,228,229,.34)"; ctx.fill("evenodd") } // the river's end is selected: the tiles it can flow to stay bright
-  if (tq && !aim) { ctx.fillStyle = "rgba(222,228,229,.62)"; ctx.fillRect(-1e5, -1e5, 2e5, 2e5) } // the target is a button: grey the whole board
-  else if (aim && TUT) { ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); for (const k of aim) hexPts(k.split(",").map(Number), R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fillStyle = "rgba(222,228,229,.62)"; ctx.fill("evenodd") } // tutorial: everything but the target greys out
-  else if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = TUT ? "rgba(30,50,60,.34)" : "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
+  // tutorial (LOU-282): a soft, light veil over everything but the target, with a feathered edge so the island stays pretty
+  // and fades in and out (about 0.3s) instead of popping
+  const veilOn = TUT && S.phase !== "won" && !tutArrive && !!(tutDim || tq || aim);
+  if (veilOn) veilHoles = tutDim ? (tutDim.at ? [tutDim.at] : null) : aim ? [...aim].map(k => k.split(",").map(Number)) : null;
+  veilA = reduce ? +veilOn : veilA + ((veilOn ? 1 : 0) - veilA) * .16; const va = veilA < .02 ? 0 : veilA;
+  if (va) veil(veilHoles, .42 * va);
+  if (aim && !TUT) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = TUT ? "rgba(30,50,60,.34)" : "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
   for (const p of ORDER) {
     const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4); if (!onScreen(o)) continue;
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
@@ -1561,7 +1597,7 @@ function draw() {
       ctx.save(); if (ok) { ctx.shadowColor = "#ffcf6a"; ctx.shadowBlur = (12 + 6 * pu) * scale } rpath(d(), 9); ink(ok ? `rgba(255,212,120,${.85 + .15 * pu})` : "rgba(150,150,150,.75)", 3.4); ctx.restore();
       if (ok) { rpath(d(), 9); ink("rgba(255,255,255,.75)", 1.2) }
       badges.push({o, pk, ok, text: pk ? `+${c.yield}` : m.cost ? `−${m.cost}` : "0", sand: !!m && c.t === "sand"});
-    } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true});
+    } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true, key:p + ""});
     } else if (PLACE && S.phase === "pick" && placeable(p)) { // tiles you can place a source on glow softly (LOU-263)
       rpath(d(), 8); ctx.fillStyle = `rgba(255,255,255,${.2 + .12 * osc(t, 2.5, h * .05)})`; ctx.fill();
     } else if (plantable(p) && (!c.pre || riverBy(p)) && (!tq || (aim && aim.has(p + "")))) { // a map's own greens away from the river can still be grown by tapping
@@ -1588,12 +1624,12 @@ function draw() {
     if (on) ell(o.x, o.y, R * .7, R * .35, "rgba(255,255,255,.22)");
     ctx.beginPath(); ctx.ellipse(o.x, o.y, R * .62, R * .31, 0, 0, 7); ink("rgba(255,255,255,.95)", on ? 3.4 : 2.4);
     if (!reduce) { ctx.globalAlpha = (1 - k) * .8; ctx.beginPath(); ctx.ellipse(o.x, o.y, R * (.62 + .22 * k), R * (.31 + .11 * k), 0, 0, 7); ink("#ffffff", 2); ctx.globalAlpha = 1 } }
-  if (aim) { const k = reduce ? 1 : .6 + .4 * osc(t, 1.4); for (const key of aim) { const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
+  if (aim) { const k = (reduce ? 1 : .6 + .4 * osc(t, 1.4)) * (TUT ? tutK() : 1); for (const key of aim) { const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
   if (sel) { rpath(hexPts(sel, R - 3), 9); ctx.fillStyle = "rgba(255,217,138,.25)"; ctx.fill(); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3); ctx.restore() }
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
     ctx.globalAlpha = 1 - k; rpath(hexPts(r.p, R * (1 + k * .25)), 9); ink("#ffffff", 2.2); ctx.globalAlpha = 1 }
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  for (const b of badges) badge(b, t);
+  for (const b of badges) { const dim = va > 0 && !(b.key && aim && aim.has(b.key)) && !b.pk && !b.text; if (dim) ctx.globalAlpha = 1 - .65 * va; badge(b, t, dim ? 1 - .65 * va : 1); ctx.globalAlpha = 1 } // labels outside the step dim with the map
   // paper clouds drift across, each with a shadow on the ground; inked birds cross now and then
   if (!reduce) {
     const bk = (t % 34) / 12; if (bk < 1) { const x0 = B.x - 60 + bk * (B.w + 120), y0 = B.y + B.h * .3 - bk * 40;
@@ -1624,12 +1660,20 @@ function draw() {
 // Wave marks sit on open water around the island (worked out once).
 const WAVES = []; for (let i = 0; i < 40; i++) { const x = B.x - 40 + (B.w + 80) * (hsh(i, 5) / 97), y = B.y + (B.h + 40) * (hsh(9, i) / 97);
   if (!ORDER.some(q => { const o = iso(...q); return Math.abs(o.x - x) < 64 && Math.abs(o.y - y + 12) < 46 })) WAVES.push([x, y, i]) }
+let veilA = 0, veilHoles = null;
+// The tutorial's veil: a pale wash over the board that clears, with a soft edge, around the tiles in `holes` (null: no hole).
+function veil(holes, a) { if (a <= 0) return; ctx.save();
+  if (!holes || !holes.length) { ctx.fillStyle = `rgba(236,244,245,${a})`; ctx.fillRect(-1e5, -1e5, 2e5, 2e5); ctx.restore(); return }
+  let cx = 0, cy = 0; const pts = holes.map(q => iso(...q)); for (const o of pts) { cx += o.x; cy += o.y } cx /= pts.length; cy /= pts.length;
+  const rad = Math.max(...pts.map(o => Math.hypot(o.x - cx, (o.y - cy) * 2))) + R * .98; // the board is drawn 2:1, so the hole is an ellipse
+  ctx.translate(cx, cy); ctx.scale(1, .5); const g = ctx.createRadialGradient(0, 0, rad, 0, 0, rad + R * .9);
+  g.addColorStop(0, "rgba(236,244,245,0)"); g.addColorStop(1, `rgba(236,244,245,${a})`); ctx.fillStyle = g; ctx.fillRect(-1e5, -1e5, 2e5, 2e5); ctx.restore() }
 function bubble(x, y, r, fill, text, col, font) { ell(x + 1, y + 2.5, r, r, "rgba(30,60,80,.22)"); ell(x, y, r, r, fill); ctx.beginPath(); ctx.ellipse(x, y, r, r, 0, 0, 7); ink("rgba(255,255,255,.95)", 2.2);
   ctx.fillStyle = col; ctx.font = font; ctx.fillText(text, x, y + 1) }
-function badge(b, t) {
+function badge(b, t, al = 1) {
   const {o} = b;
   if (b.combo) { tag(o.x, o.y, b.combo + " flow", "#1d8f78", 15); return }
-  if (b.drop) { ctx.globalAlpha = .8 + .2 * osc(t, 2.2, o.x * .01); tag(o.x + 4, o.y - 24, "+1 flow", "#1d8f78", 15); ctx.globalAlpha = 1; return } // a paper "+1 flow" tag until the river claims it
+  if (b.drop) { ctx.globalAlpha = al * (.8 + .2 * osc(t, 2.2, o.x * .01)); tag(o.x + 4, o.y - 24, "+1 flow", "#1d8f78", 15); ctx.globalAlpha = 1; return } // a paper "+1 flow" tag until the river claims it
   if (b.plant) { const x = o.x, y = o.y + 4, f = b.ok ? "#7cc46a" : "#b9b6ac", k = b.ok ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.6)"; // a small inked sprout: you can plant here
     line([[x, y], [x, y - 7]], k, 1.4);
     ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.quadraticCurveTo(x - 8, y - 6, x - 9, y - 12); ctx.quadraticCurveTo(x - 2, y - 12, x, y - 5); ctx.fillStyle = f; ctx.fill(); ink(k, 1);
@@ -1707,14 +1751,14 @@ $("goal").addEventListener("click", e => { if (e.target === $("goal")) $("goal")
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
 function loop() { if (tutArrive) arrive(); else if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
-if (!load()) { S = fresh(); if (TUT) { $("welcome").hidden = false; if (!reduce) tutArrive = {hold:true} } }
+if (!load()) { S = fresh(); if (TUT && !reduce) { tutArrive = {}; document.body.classList.add("arriving") } } // a fresh tutorial glides in; a resumed one goes straight to its step
 if (TUT) document.body.classList.add("tut");
 else if (S.phase === "pick" && !S.turn) showGoal(); // a new run opens on the map's goal card (the tutorial has none)
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
 
 // for debugging / tests
-window.FT = {get lay() { return lay }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
+window.FT = {get lay() { return lay }, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, shown:TUT && tutShown(), arriving:!!tutArrive, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const o = iso(...p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = o.x, cy = o.y;
