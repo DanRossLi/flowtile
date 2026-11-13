@@ -89,7 +89,7 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 if (!document.querySelector("link[data-a4]")) { const l = document.createElement("link"); l.rel = "stylesheet"; l.dataset.a4 = "1";
   l.href = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap"; document.head.appendChild(l) }
 document.body.innerHTML = `
-<div class="app">
+<div class="app" id="app">
   <div class="board" id="board">
     <canvas id="cv" aria-label="Game board"></canvas>
     <div class="overlay top" id="top">
@@ -139,6 +139,7 @@ document.body.innerHTML = `
     <button id="helpBtn" class="rb"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 9a3 3 0 015.6 1.2c0 2-2.8 2.6-2.8 4.3"/><circle cx="12" cy="18.2" r=".6" fill="currentColor"/></svg></i><span>Help</span></button>
     <button id="end" class="rb go"><i><svg class="cyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3"/><path d="M18.2 2.8l-.9 3.9-3.9-.9"/></svg><em class="gain" id="gain" hidden></em></i><span>Next Water Cycle</span></button>
   </div>
+  <div class="sheet" id="sheet" hidden><div class="spanel" id="spanel" role="group" aria-label="Selection"></div><div class="sacts" id="sacts"></div></div>
 </div>
 <dialog id="goal" class="goalcard" aria-labelledby="goalTitle">
   <small class="eyebrow">${M.label}</small>
@@ -153,7 +154,7 @@ document.body.innerHTML = `
   <ul>
     <li><b class="wtr">Water</b> (blue) is what you have right now, in gallons. Every cost is paid in water. <b class="flw">Flow</b> (teal, in brackets next to your water) is how much each water cycle brings. Tap <b>Water</b> at the top for your storage${TRIB ? " and each river" : ""}.</li>
     ${M.lesson ? `<li><b>This map:</b> ${M.lesson}</li>` : ""}
-    <li>To move the stream, tap its <b>end</b> (it gets a white ring), then a glowing tile. The number is its cost in water. Tap any other tile to see what it does and what it costs, then choose.</li>
+    <li>To move the stream, tap its <b>end</b>, then <b>tap a ring</b>: every tile it can flow to gets one, with its cost in water above it. Grey rings cost more than you have. Tap any other tile to see what it does and what it costs, then choose.</li>
     ${PLACE ? `<li><b>Place your source:</b> before you start, tap a source, or any glowing land tile (bare ground, grass, meadow or sand, at least ${SEA_GAP} tiles from the sea) to start your river there with <b>+${PLACE_FLOW} flow</b>.</li>` : ""}
     ${M.help.map(h => `<li>${h}</li>`).join("\n    ")}
     <li>${PERF ? `Score as much as you can in <b>${TURN_GOAL} turns</b>: 1 point per river tile, meadow you grow and fish, 3 per grove, 2 per full lake. Reaching the sea ends the run with <b>+5</b> and <b>+1 per turn left</b>.` : `Stars: reach the sea${BLOOM_GOAL ? `, bloom <b>${BLOOM_GOAL}</b>+ tiles` : ""}, and arrive by turn <b>${TURN_GOAL}</b>.`}</li>
@@ -803,11 +804,11 @@ function tapTile(p, hold = false) {
   const hr = headRiver(p);
   if (hr >= 0) { closeCard(); if (hsel && hr === S.active) { hsel = false; draw(); return }
     if (hr !== S.active) activate(hr);
-    hsel = true; ring(p); const who = TRIB && S.rivers.length > 1 ? `the ${riverName(hr).toLowerCase()}` : "your stream";
-    const mvs = [...moves().values()], can = mvs.some(m => S.water >= m.cost);
-    say(!mvs.length ? `${who[0].toUpperCase() + who.slice(1)} has nowhere to go from here.` : can ? `Now tap a glowing tile to move ${who} there.` : `Out of water: the grey tiles cost more than your ${S.water} gal. Tap Next Water Cycle for +${S.income} gal.`, !can); return }
+    hsel = true; ring(p); draw(); return } // the rings and the river panel say the rest (LOU-283)
   if (hsel) { const m = moves().get(p + "");
-    if (m) { const st = actions(p).find(a => a.k === "stream"); if (st && canDo(st)) { runAct(st); return } if (st) { ring(p); say(shortBy(st), true); return } }
+    if (m) { const st = actions(p).find(a => a.k === "stream");
+      if (st && canDo(st)) { runAct(st); if (!TUT && hsel && S.phase === "play" && !affordable()) { hsel = false; draw() } return } // out of water: let go, so Next Water Cycle is back
+      if (st) { ringShake = {k:p + "", t0:now()}; return } } // a grey ring: a gentle shake, nothing else
     hsel = false }
   if (sel && same(sel, p)) { const a = cardActs.find(canDo); if (a) runAct(a); else closeCard(); return }
   ring(p);
@@ -960,7 +961,7 @@ function tutCheck() { const t = now(), card = $("tutc");
   const o = tutStep(); if (o && o.move && S.phase === "play") hsel = !tutShort(o);
   if (i !== objShown) { // a new step: pan first if its target is off screen, then everything fades in together
     if (tutStage !== i) { tutStage = i; tutShow(false); if (tutLook()) { tutWait = t + 520; return } }
-    objShown = i; S.tutShort = tutShort(o); tutText(); tutIn = t; tutShow(true) }
+    objShown = i; S.tutShort = tutShort(o); if (o && !o.move) hsel = false; tutText(); tutIn = t; tutShow(true) }
   else if (tutShort(o) !== S.tutShort) { S.tutShort = tutShort(o); tutText(); tutIn = t }
   else if (o && typeof o.text === "function") tutText();
   const ui = tutUi(); $("end").classList.toggle("aim", ui === "end"); $("cWater").classList.toggle("aim", ui === "water");
@@ -1543,7 +1544,7 @@ function deco(p, c, o, t, h) {
 }
 
 function draw() {
-  if (!S) return; objCheck();
+  if (!S) return; objCheck(); sheetSync();
   const T = now(), t = (T - t0) / 1000, mv = moves(), aim = objAim(), tq = TUT && S.phase === "play" && (aim || tutUi()); // tq: a tutorial step has a target, so other hints stay quiet
   // the cached layers: the sky and sea (screen space, cheap) and the island (world space, painted at a fixed resolution)
   const lw = B.w + 2 * LPAD, lh = B.h + 2 * LPAD; ps = Math.min(Math.pow(2, Math.ceil(Math.log2(scale) * 2) / 2), 4096 / Math.max(lw, lh));
@@ -1579,7 +1580,7 @@ function draw() {
     deco(p, c, o, t, h);
     if (s !== 1) ctx.restore();
   }
-  if (!TUT && hsel && S.phase === "play" && mv.size) { ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); for (const k of mv.keys()) hexPts(k.split(",").map(Number), R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fillStyle = "rgba(222,228,229,.34)"; ctx.fill("evenodd") } // the river's end is selected: the tiles it can flow to stay bright
+  const selOn = riverSel(), flowTo = [];
   // tutorial (LOU-282): a soft, light veil over everything but the target, with a feathered edge so the island stays pretty
   // and fades in and out (about 0.3s) instead of popping
   const veilOn = TUT && S.phase !== "won" && !tutArrive && !!(tutDim || tq || aim);
@@ -1590,13 +1591,14 @@ function draw() {
   for (const p of ORDER) {
     const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4); if (!onScreen(o)) continue;
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
-    const m = hsel && S.phase === "play" && (!TUT || !aim || aim.has(p + "")) ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
-    if (m || pk) { // a target tile: an amber wash with a marching dashed outline and a cost bubble; grey if you can't afford it
-      const ok = pk || S.water >= m.cost, pu = reduce ? 1 : .5 + .5 * osc(t, 1.6, h * .03); rpath(d(), 9); ctx.fillStyle = ok ? `rgba(255,224,150,${.3 + .12 * pu})` : "rgba(150,150,150,.22)"; ctx.fill();
+    const m = selOn && (!TUT || !aim || aim.has(p + "")) ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
+    if (m) flowTo.push({k:p + "", o, cost:m.cost, ok:S.water >= m.cost, sand:c.t === "sand"}); // a ring, drawn over everything standing on the board (LOU-283)
+    else if (pk) { // a source you can start from: an amber wash with a glowing outline and its flow in a bubble
+      const ok = true, pu = reduce ? 1 : .5 + .5 * osc(t, 1.6, h * .03); rpath(d(), 9); ctx.fillStyle = ok ? `rgba(255,224,150,${.3 + .12 * pu})` : "rgba(150,150,150,.22)"; ctx.fill();
       if (ok) { rpath(hexPts(p, R - 9), 8); ctx.fillStyle = "rgba(255,255,240,.22)"; ctx.fill() } // a soft lit centre
       ctx.save(); if (ok) { ctx.shadowColor = "#ffcf6a"; ctx.shadowBlur = (12 + 6 * pu) * scale } rpath(d(), 9); ink(ok ? `rgba(255,212,120,${.85 + .15 * pu})` : "rgba(150,150,150,.75)", 3.4); ctx.restore();
       if (ok) { rpath(d(), 9); ink("rgba(255,255,255,.75)", 1.2) }
-      badges.push({o, pk, ok, text: pk ? `+${c.yield}` : m.cost ? `−${m.cost}` : "0", sand: !!m && c.t === "sand"});
+      badges.push({o, pk, ok, text:`+${c.yield}`});
     } else if (c.ro === 1 && !c.river) { badges.push({o, drop:true, key:p + ""});
     } else if (PLACE && S.phase === "pick" && placeable(p)) { // tiles you can place a source on glow softly (LOU-263)
       rpath(d(), 8); ctx.fillStyle = `rgba(255,255,255,${.2 + .12 * osc(t, 2.5, h * .05)})`; ctx.fill();
@@ -1619,12 +1621,15 @@ function draw() {
     const o = iso(...d.p); ctx.globalAlpha = Math.min(1, Math.sin(k * Math.PI) * 2); deerSprite(o.x + 8 - k * 20, o.y - 4, 0); ctx.globalAlpha = 1 }
   for (let i = bolts.length - 1; i >= 0; i--) { const b = bolts[i], k = (T - b.t0) / 700; if (k >= 1 || reduce) { bolts.splice(i, 1); continue }
     const o = iso(...b.p); ctx.globalAlpha = 1 - k; line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#f5d04a", 5); line([[o.x + 10, o.y - 160], [o.x - 6, o.y - 100], [o.x + 8, o.y - 90], [o.x - 4, o.y - 20]], "#fffaf0", 2); ctx.globalAlpha = 1 }
-  // the end of each stream: a dashed ink ring with marching dashes; selected, it's bolder with a teal wash
-  for (const i of liveRivers()) for (const q of headTiles(i)) { const o = iso(...q), on = hsel && i === S.active, k = reduce ? 0 : (t / 1.6) % 1;
-    if (on) ell(o.x, o.y, R * .7, R * .35, "rgba(255,255,255,.22)");
-    ctx.beginPath(); ctx.ellipse(o.x, o.y, R * .62, R * .31, 0, 0, 7); ink("rgba(255,255,255,.95)", on ? 3.4 : 2.4);
-    if (!reduce) { ctx.globalAlpha = (1 - k) * .8; ctx.beginPath(); ctx.ellipse(o.x, o.y, R * (.62 + .22 * k), R * (.31 + .11 * k), 0, 0, 7); ink("#ffffff", 2); ctx.globalAlpha = 1 } }
-  if (aim) { const k = (reduce ? 1 : .6 + .4 * osc(t, 1.4)) * (TUT ? tutK() : 1); for (const key of aim) { const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
+  // the end of each stream: a faint white ring that pulses outward. Selected (LOU-283): a white ring with a soft fill and a chevron
+  // bobbing above it, and a ring with its cost on every tile it can flow to.
+  for (const i of liveRivers()) for (const q of headTiles(i)) { const o = iso(...q), on = selOn && i === S.active, k = reduce ? 0 : (t / 1.6) % 1;
+    if (on) { ell(o.x, o.y, 17, 8.5, "rgba(255,255,255,.35)"); ctx.beginPath(); ctx.ellipse(o.x, o.y, 17, 8.5, 0, 0, 7); ink("#ffffff", 3); chevron(o.x, o.y - 26, t) }
+    else { ctx.beginPath(); ctx.ellipse(o.x, o.y, 17, 8.5, 0, 0, 7); ink("rgba(255,255,255,.8)", 2);
+      if (!reduce) { ctx.globalAlpha = (1 - k) * .7; ctx.beginPath(); ctx.ellipse(o.x, o.y, 17 + 9 * k, 8.5 + 4.5 * k, 0, 0, 7); ink("#ffffff", 1.6); ctx.globalAlpha = 1 } } }
+  if (selOn) { ringMem = flowTo; ringOn = T } const ra = selOn ? (reduce ? 1 : clamp01((T - ringOff) / 160)) : (reduce ? 0 : 1 - clamp01((T - ringOn) / 200)); if (!selOn) ringOff = T; // rings fade out over 0.2s when you let go
+  if (ra > 0) ringMem.forEach((f, i) => flowRing(f, i, t, ra * (TUT && selOn ? Math.max(.25, tutK()) : 1)));
+  if (aim) { const k = (reduce ? 1 : .6 + .4 * osc(t, 1.4)) * (TUT ? tutK() : 1); for (const key of aim) { if (flowTo.some(f => f.k === key)) continue; const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
   if (sel) { rpath(hexPts(sel, R - 3), 9); ctx.fillStyle = "rgba(255,217,138,.25)"; ctx.fill(); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3); ctx.restore() }
   for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], k = (T - r.t0) / 350; if (k >= 1) { rings.splice(i, 1); continue }
     ctx.globalAlpha = 1 - k; rpath(hexPts(r.p, R * (1 + k * .25)), 9); ink("#ffffff", 2.2); ctx.globalAlpha = 1 }
@@ -1661,6 +1666,42 @@ function draw() {
 const WAVES = []; for (let i = 0; i < 40; i++) { const x = B.x - 40 + (B.w + 80) * (hsh(i, 5) / 97), y = B.y + (B.h + 40) * (hsh(9, i) / 97);
   if (!ORDER.some(q => { const o = iso(...q); return Math.abs(o.x - x) < 64 && Math.abs(o.y - y + 12) < 46 })) WAVES.push([x, y, i]) }
 let veilA = 0, veilHoles = null;
+// LOU-283: the river's end is selected (in the tutorial, only while a "flow" step is on screen)
+let ringMem = [], ringOn = -1e9, ringOff = -1e9, ringShake = null;
+function riverSel() { if (!hsel || S.phase !== "play") return false; if (!TUT) return true; const o = tutStep(); return !o || (tutShown() && !!o.move && !tutShort(o)) }
+function chevron(x, y, t) { const b = reduce ? 0 : -1.5 + 1.5 * Math.cos(t * TAU); // bobs 3px, once a second
+  ctx.save(); ctx.translate(x, y + b); ctx.beginPath(); ctx.moveTo(-6, 1); ctx.lineTo(0, 7); ctx.lineTo(6, 1); ink("rgba(40,80,90,.25)", 5); ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(0, 6); ctx.lineTo(6, 0); ink("#ffffff", 3); ctx.restore() }
+// A ring on a tile the river can flow to: teal glow, a pale mint ring that breathes (each a little out of step), a teal disc,
+// and a white cost tag above. Grey when you can't afford it; a grey ring you tap shakes.
+function flowRing(f, i, t, a) { const {o, ok} = f, br = reduce ? .5 : .5 + .5 * Math.sin((t - i * .12) / 1.6 * TAU), rx = 24 + 3 * br;
+  let dx = 0; if (ringShake && ringShake.k === f.k) { const k = (now() - ringShake.t0) / 420; if (k >= 1 || reduce) ringShake = null; else dx = Math.sin(k * Math.PI * 5) * 3.5 * (1 - k) }
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(o.x + dx, o.y);
+  if (ok) { ctx.save(); ctx.scale(1, .5); const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 34); g.addColorStop(0, "rgba(98,224,200,.34)"); g.addColorStop(1, "rgba(98,224,200,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 34, 0, 7); ctx.fill(); ctx.restore() }
+  ctx.beginPath(); ctx.ellipse(0, 0, rx, rx / 2, 0, 0, 7); ink(ok ? "rgba(232,255,248,.95)" : "rgba(226,230,231,.9)", 5);
+  ctx.beginPath(); ctx.ellipse(0, 0, rx, rx / 2, 0, 0, 7); ink(ok ? "rgba(63,191,164,.9)" : "rgba(150,157,161,.85)", 1.6);
+  ell(0, 0, 14, 7, ok ? "rgba(98,224,200,.55)" : "rgba(170,176,180,.5)"); ctx.beginPath(); ctx.ellipse(0, 0, 14, 7, 0, 0, 7); ink(ok ? "#2fa88f" : "#8f979b", 2.4);
+  ell(-3, -2, 6, 2.4, "rgba(255,255,255,.55)");
+  // the cost tag: a white pill with the blue water drop and the cost ("1", "2" for rock, "free" for sand)
+  const txt = f.cost ? String(f.cost) : "free"; ctx.font = `800 12px ${HAND}`; const tw = ctx.measureText(txt).width, w = Math.max(34, tw + 24), y = -24;
+  rrect(-w / 2, y - 9, w, 18, 9); ctx.fillStyle = ok ? "rgba(255,255,255,.94)" : "rgba(238,240,240,.9)"; ctx.fill();
+  const x0 = -w / 2 + 9; ctx.beginPath(); ctx.moveTo(x0, y - 5); ctx.bezierCurveTo(x0, y - 5, x0 - 4, y, x0 - 4, y + 2.4); ctx.arc(x0, y + 2.4, 4, Math.PI, 0, true); ctx.bezierCurveTo(x0 + 4, y, x0, y - 5, x0, y - 5); ctx.fillStyle = ok ? "#3f86b0" : "#9aa3a8"; ctx.fill();
+  ctx.fillStyle = ok ? "#24434a" : "#7d8589"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(txt, x0 + 4 + (w - 17) / 2 - 2, y + .5);
+  ctx.restore(); if (f.sand) { ctx.globalAlpha = a * (ok ? 1 : .6); tag(o.x + dx, o.y + 22, "−1 flow", "#1d8f78", 13); ctx.globalAlpha = 1 } }
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath() }
+// ---------- the sheet (LOU-283, LOU-284): while your river or a tile is selected, a white glass panel takes the bottom bar's place
+let sheetKey = "";
+const CHEV = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 7l5 5 5-5"/></svg>';
+function sheetSync() { const el = $("sheet"); if (!el || quiet) return; const mode = riverSel() && !sel ? "river" : "";
+  const key = !mode ? "" : [mode, S.active, S.income, S.water, flowOf(S.active), moves().size, affordable()].join("|");
+  if (key === sheetKey) return; const was = sheetKey; sheetKey = key;
+  if (!mode) { el.hidden = true; $("app").classList.remove("sheeted"); $("bottom").style.bottom = ""; return }
+  const mvs = moves().size, can = affordable(), name = TRIB && S.rivers.length > 1 ? riverName(S.active) : "Your river";
+  $("spanel").innerHTML = `<i class="sico riv" aria-hidden="true"><svg viewBox="0 0 30 20"><path d="M2 7c4-4 8 4 13 0s9 4 13 0M2 14c4-4 8 4 13 0s9 4 13 0"/></svg></i>
+    <div class="stx"><div class="sttl"><b>${name}</b><span class="fpill">flow ${flowOf(S.active)}</span></div><small>${!mvs ? "Nowhere to flow from here." : can ? "Select a ring to flow there." : `Not enough water. Close this, then tap Next Water Cycle (+${S.income}).`}</small></div>
+    <button type="button" class="sclose" id="sclose" aria-label="Close">${CHEV}</button>`;
+  $("sacts").innerHTML = ""; el.hidden = false; $("app").classList.add("sheeted"); if (!was && !reduce) { el.classList.remove("in"); void el.offsetWidth; el.classList.add("in") }
+  const br = $("board").getBoundingClientRect(), sr = el.getBoundingClientRect(); $("bottom").style.bottom = Math.max(0, br.bottom - sr.top) + "px" } // the toast sits above the panel
+$("sheet").addEventListener("click", e => { if (e.target.closest("#sclose")) { hsel = false; closeCard(); draw() } });
 // The tutorial's veil: a pale wash over the board that clears, with a soft edge, around the tiles in `holes` (null: no hole).
 function veil(holes, a) { if (a <= 0) return; ctx.save();
   if (!holes || !holes.length) { ctx.fillStyle = `rgba(236,244,245,${a})`; ctx.fillRect(-1e5, -1e5, 2e5, 2e5); ctx.restore(); return }
