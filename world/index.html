@@ -52,18 +52,15 @@
   <h1>Flow <span>Tile</span> islands</h1>
   <p class="sub">Play each island to open the next. <span class="total" id="total">★ 0</span></p>
   <div id="list"></div>
-  <footer>Hard mode, map codes and help are under <b>Help</b> on every island. Test maps: <a href="../">Spring Hill</a> · <a href="../big/">Big 18×18</a></footer>
+  <footer>Hard mode, map codes and help are under <b>Help</b> on every island. Test maps: <a href="../spring-hill/">Spring Hill</a> · <a href="../big/">Big 18×18</a></footer>
 </main>
+<script src="../levels.js"></script>
 <script>
 // The campaign: a world of islands, one biome each. An island opens when the one before it has a star.
 const WORLD = [
-  {name:"Single player", note:"Dan's original maps, in order, with no guidance. <a href=\"../river/\">The list</a>", col:"#4aa3e8", isles:[
-    ["1", "map-1-flat-v2", "Flat"], ["1a", "map-1a-sand-v3", "Sand"], ["3", "map-3-lake-v2", "Lake"], ["4", "map-4-grass", "Grass"], ["4a", "map-4a-trees-v2", "Trees"], ["5", "map-5-desert", "Desert"],
-    ["6", "map-6-tributary", "Tributary"], ["7", "map-7-rock", "Rock"], ["8", "map-8-grove", "Grove"], ["9", "map-9-pollinators", "Shade"], ["10", "map-10-mountains", "Mountains"]]},
-  {name:"Highlands", note:"Old forest that counts toward groves.", col:"#b0aa9f", isles:[
-    ["11", "map-11-forest", "Forest"]]},
-  {name:"Wild Coast", note:"Weather, living land, wildlife and fire.", col:"#58b6e6", isles:[
-    ["12", "map-12-rain", "Rain"], ["15", "map-15-harvest", "Harvest"], ["16", "map-16-wildlife", "Wildlife"], ["17", "map-17-wildfire", "Wildfire"], ["18", "map-18-fertile", "Fertile ground"], ["19", "map-19-marsh", "Marsh"], ["20", "map-20-alpine", "Alpine"], ["21", "map-21-caves", "Caves"], ["22", "map-22-rechannel", "Rechannel"], ["23", "map-23-flood", "Flood"]]},
+  // Single player (Dan, Nov 12): the 20-level campaign in its chapters, from levels.js
+  ...CHAPTERS.map((name, c) => ({name, note: c ? "" : "The Single player campaign. <a href=\"../river/\">The list</a>", col:["#4aa3e8", "#7cc94c", "#b0aa9f", "#e8c46a", "#58b6e6"][c],
+    isles: LEVELS.filter(l => l[4] === c).map(l => ["level/" + l[0], "level-" + l[0], l[1]])})),
   {name:"Challenge", note:"Score as much as you can in 20 turns.", col:"#ffd166", isles:[
     ["perfection", "perfection-island", "Perfection island", "best"]]},
 ];
@@ -72,6 +69,7 @@ const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6
 const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 let prevStars = 1, total = 0, nextMarked = false, html = "";
 WORLD.forEach((b, bi) => {
+  if (b.name === "Challenge") prevStars = 1; // Perfection is open from the home page too, so it isn't locked behind the 40×40 finale
   html += `<h2>${b.name} <i>${b.isles.length} island${b.isles.length > 1 ? "s" : ""}</i></h2><p class="biome">${b.note}</p><div class="grid">`;
   for (const [dir, id, name, best] of b.isles) {
     const st = get("flowtile.stars." + id), open = prevStars > 0; total += st;
@@ -79,7 +77,7 @@ WORLD.forEach((b, bi) => {
     html += `<a class="isle${open ? "" : " locked"}${isNext ? " next" : ""}" href="../${dir}/" data-locked="${open ? "" : "1"}">
       ${open ? (best && get("flowtile.best." + id) ? `<span class="best">Best ${get("flowtile.best." + id)}</span>` : "") : `<span class="lock">Locked</span>`}
       <div class="blob" style="background:linear-gradient(135deg,${b.col},${b.col}cc)"></div>
-      <b>${name}</b><small>${dir === "perfection" ? "Perfection · 20 turns" : "Island " + dir}</small>
+      <b>${name}</b><small>${dir === "perfection" ? "Perfection · 20 turns" : "Level " + dir.replace("level/", "")}</small>
       <div class="stars" aria-label="${st} of 3 stars">${[0, 1, 2].map(i => `<span class="${i < st ? "on" : ""}">${STAR}</span>`).join("")}</div></a>`;
     prevStars = st;
   }

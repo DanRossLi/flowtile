@@ -2,52 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 1</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 1 · Flat (Single player redo, Nov 12): a mountain pocket sits right in front of the source, so heading straight
-// for the sea runs into a dead end. Over the top costs 11 gal (sea on turn 6); under the bottom costs 13 (turn 7).
-// Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
-window.MAP = {
-  id: "map-1-flat-v2",
-  label: "Map 1 · Flat",
-  lesson: "Each tile of stream costs <b>1 gal</b>, the sea too, and your <b>flow</b> refills your water every turn. <b>Mountains</b> block the way, and straight ahead is a dead end: look before you build.",
-  types: [
-    "....B.....~",
-    "..B...B...~",
-    "....BBBB..~",
-    "S......B..~",
-    "....BBBB.B~",
-    "...B....B.~",
-    ".........B~"],
-  elev: [
-    "11111111110",
-    "11111111110",
-    "11111111110",
-    "11111111110",
-    "11111111110",
-    "11111111110",
-    "11111111110"],
-  bloomGoal: 0,
-  turnGoal: 6,
-  tileCost: 1,
-  startHint: "Tap the spring on the left to start.",
-  next: "../1a/",
-  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle.", "Tap your stream's <b>end</b>, then a glowing tile to extend it. The number is its cost in gallons. Out of water? Tap <b>Next Water Cycle</b> and your flow refills it. Water you don't spend is kept.", "Every tile costs <b>1 gal</b>, and so does the step into the sea. <b>Mountains</b> block the stream, and the stream can't cross itself.", "The pocket straight ahead has no way out. Count the tiles: over the top or under the bottom? Only one gets you there by turn <b>6</b>. Went the wrong way? Tap <b>Undo</b>."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

@@ -28,25 +28,22 @@ Controls: tap your stream's **end** to select it, then tap a glowing tile to mov
 
 Since Nov 12 the game uses the painterly look (LOU-280): an isometric island of hex tiles painted as one soft surface, with tree kinds, reeds, wildlife and white glass panels (M PLUS Rounded 1c). **The river is as wide as the flow it carries**, so you can see where springs, runoff, groves and tributaries join and where sand thins it. Every tile has six neighbours. The top bar's **water jar** shows the water you have (blue), your storage (the jar and its notches) and next cycle's flow (teal); when that flow won't fit, it pours over the lip and the text says how much will spill.
 
-## Single player (River mode)
+## Single player
 
-Dan's original maps in their original order, with no guidance: you choose where the river goes and what to grow. The list with your stars is at https://danrossli.github.io/flowtile/river/, and each map's win card goes on with **Next map**.
+A 20-level campaign that starts where the tutorial ends. Each island is bigger and harder than the last, up to a 40×40 finale. Terrain the tutorial doesn't teach gets a "New:" tip the first time it appears. A level opens once you reach the sea on the one before it. The list with your stars is at https://danrossli.github.io/flowtile/river/, each level is at `/level/N/`, and its win card goes on with **Next map**. The levels list lives in `levels.js`. The original River maps (`/1/` … `/23/`) are retired and point to the list.
 
-| Map | URL |
-|---|---|
-| 1 · Flat | https://danrossli.github.io/flowtile/1/ |
-| 1a · Sand | https://danrossli.github.io/flowtile/1a/ |
-| 3 · Lake | https://danrossli.github.io/flowtile/3/ |
-| 4 · Grass | https://danrossli.github.io/flowtile/4/ |
-| 4a · Trees | https://danrossli.github.io/flowtile/4a/ |
-| 5 · Desert | https://danrossli.github.io/flowtile/5/ |
-| 6 · Tributary | https://danrossli.github.io/flowtile/6/ |
-| 7 · Rock | https://danrossli.github.io/flowtile/7/ |
-| 8 · Grove | https://danrossli.github.io/flowtile/8/ |
-| 9 · Shade | https://danrossli.github.io/flowtile/9/ |
-| 10 · Mountains | https://danrossli.github.io/flowtile/10/ |
-
-Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–23 below carry on from Map 10.
+| Level | Size | What's new |
+|---|---|---|
+| 1 · Morning Stream | 9×6 | A small island to warm up |
+| 2 · Sandbar | 10×6 | Sand and oases |
+| 3 · Two Peaks | 11×7 | A ridge with one way through |
+| 4 · Still Water | 12×7 | New: lakes |
+| 5 · Old Wood | 12×8 | New: wild forest |
+| 6 · The Fork | 13×8 | New: tributaries |
+| 7 · Rich Soil | 14×8 | New: fertile ground |
+| 8 · Wetland | 14×9 | New: marsh |
+| 9 · Dam Builders | 15×9 | New: beavers |
+| 10 · Under the Hill | 15×9 | New: caves |
 
 ## More maps
 
@@ -54,28 +51,17 @@ Map 2 · Slope is retired (`/2/` goes to Map 3). Maps 11–23 below carry on fro
 |---|---|---|
 | Tutorial | https://danrossli.github.io/flowtile/tutorial/ | A directed tutorial: one small island, one step at a time (LOU-281) |
 | Spring Hill | https://danrossli.github.io/flowtile/spring-hill/ | The original test map, now flat |
-| 11 · Forest | https://danrossli.github.io/flowtile/11/ | Cut through the forest where the trees left beside you become groves |
-| 12 · Rain | https://danrossli.github.io/flowtile/12/ | Spill becomes a cloud that rains back; a rainstorm and a drought are forecast |
-| 15 · Harvest | https://danrossli.github.io/flowtile/15/ | Rain pools, snowmelt and moss: make room in storage before you collect |
-| 16 · Wildlife | https://danrossli.github.io/flowtile/16/ | Route through a beaver colony and grow trees by it for a pond (+1 flow); trees keep deer off your grass |
-| 17 · Wildfire | https://danrossli.github.io/flowtile/17/ | Lightning sets dry forest alight; keep your trees away from it |
-| 18 · Fertile ground | https://danrossli.github.io/flowtile/18/ | Rich soil: a meadow on it stores 1 more, its trees count double toward a grove |
-| 19 · Marsh | https://danrossli.github.io/flowtile/19/ | Run beside a marsh: it stores 2; green on both sides adds +1 flow |
-| 20 · Alpine | https://danrossli.github.io/flowtile/20/ | Grow alpine trees by the mountains; melt their snow to fill the lake |
-| 21 · Caves | https://danrossli.github.io/flowtile/21/ | A mountain wall: take the cave shortcut or the long way round |
-| 22 · Rechannel | https://danrossli.github.io/flowtile/22/ | A dead end between mountains: rechannel and go round |
-| 23 · Flood | https://danrossli.github.io/flowtile/23/ | Floods wash away the grass tile nearest your river's end; meadows, trees and marsh-guarded grass hold |
 | Perfection island | https://danrossli.github.io/flowtile/perfection/ | Every rule on: the best score in 20 turns |
 | Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |
 | Test · Big 18×18 | https://danrossli.github.io/flowtile/big/ | Sandbox: every tile type on one big slope, with storage |
 
-Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the menu pages share `paper.css`. Each map's `index.html` (the site root is the home page) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy one of the numbered folders, edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
+Every map shares `play.js` (rules, drawing, HUD) and `play.css` (layout); the menu pages share `paper.css`. Each map's `index.html` (the site root is the home page) only sets `window.MAP`: the layout, elevations, goals and rule tweaks. To add a map, copy a map folder (such as `spring-hill/`), edit its `window.MAP`, and add the folder to `LOCAL` in `sw.js`.
 
 ## Modes
 
 **Map generator:** https://danrossli.github.io/flowtile/generator/ builds a seeded island from your options (size, goal, sources, storage, how much of each terrain, wind and weather), previews it, and plays it on the Custom page or copies it as a map code.
 
-- **Islands** (https://danrossli.github.io/flowtile/world/): the campaign. Islands are grouped by biome, show your best stars, and each one opens when the one before it has a star.
+- **All islands** (https://danrossli.github.io/flowtile/world/): every level by chapter, plus Perfection and the Daily island, with your best stars.
 - **Perfection** (`mode: "perfection"`): the best score in 20 turns. You get 1 point per river tile, meadow you grow and fish, 3 per grove, and 2 per full lake. Reaching the sea ends the run with +5 and +1 per turn left. Your best score is saved.
 - **Daily island** (`/daily/`): generated from the date, so everyone gets the same island. Add `?d=YYYY-MM-DD` to play another day's island. **Share score** copies your result.
 - **Hard mode**: tick it in the **?** menu to get 3 undos per map.

@@ -2,55 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 18</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 18 · Fertile ground: dark, rich soil (f). A meadow on it stores 1 gal more, and its trees count double toward a grove (LOU-279).
-// Map key: _ bare ground  f fertile ground  ~ sea  T source (3 gal/turn)
-window.MAP = {
-  id: "map-18-fertile",
-  label: "Map 18 · Fertile ground",
-  lesson: "<b>Fertile ground.</b> The dark soil is richer: a <b>meadow</b> on it stores <b>1 more</b> (1 plus one per tree beside it), and its trees <b>count double</b> toward a grove, so <b>2 touching fertile trees</b> along the river make +1 flow. Bend your river past it.",
-  types: [
-    "____________~",
-    "_____ff_____~",
-    "T___________~",
-    "____________~",
-    "_____ff_____~"],
-  elev: [
-    "1111111111110",
-    "1111111111110",
-    "1111111111110",
-    "1111111111110",
-    "1111111111110"],
-  storage: 5,
-  bloomGoal: 2,
-  bloomLabel: "Trees",
-  bloomKind: "trees",
-  turnGoal: 7,
-  tileCost: 1,
-  showBloom: true,
-  startHint: "Tap the spring on the left to start.",
-  next: "../19/",
-  help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
-    "<b>Fertile ground</b> is the dark, furrowed soil. Grass on it is free like anywhere; a <b>meadow</b> on it stores <b>1 gal more</b> than its tree count.",
-    "Trees on fertile ground <b>count double toward a grove</b>: each counts as 2 toward the “every 3 trees: +1 flow” total, so 2 touching fertile trees along the river make +1 flow.",
-    "The river washes away what it runs over, fertile or not, so run beside the soil, not through it."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

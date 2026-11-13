@@ -2,52 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 9</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 9 · Shade (was Pollinators; pollinators were removed in LOU-279): meadows nestled into a grove store the most.
-// Map key: _ bare ground  . meadow  ~ sea  S source (2 gal/turn)
-window.MAP = {
-  id: "map-9-pollinators",
-  label: "Map 9 · Shade",
-  lesson: "<b>Meadows in the grove.</b> Trees make flow (+1 for every 3), and each tree beside a meadow stores <b>+1 gal</b>. Nestle your meadows into your grove so the same trees do both.",
-  types: [
-    "_..._____________~",
-    "_________________~",
-    "S________________~",
-    "_________________~",
-    "_________________~"],
-  elev: [
-    "111111111111111110",
-    "111111111111111110",
-    "111111111111111110",
-    "111111111111111110",
-    "111111111111111110"],
-  storage: 5,
-  bloomGoal: 0,
-  turnGoal: 9,
-  tileCost: 1,
-  startHint: "Tap the spring on the left to start.",
-  next: "../10/",
-  help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
-    "<b>Grove:</b> touching trees beside the river give <b>+1 flow for every 3</b>. Grass is free; grow it into a meadow (1 gal), then trees (1 gal).",
-    "<b>Shade:</b> a <b>meadow</b> beside your river stores <b>+1 gal for each tree</b> touching it, up to 5. Turning a meadow into trees loses its storage but adds 1 to every meadow beside it, so the layout is the puzzle.",
-    "Stars: reach the sea, and arrive by turn <b>9</b>."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

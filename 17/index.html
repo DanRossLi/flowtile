@@ -2,56 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 17</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 17 · Wildfire: lightning on turn 2 sets dry trees alight (trees not touching water), and fire spreads each turn. Land by the sea is salty.
-// Map key: _ bare ground  F wild forest  ~ sea  T source (3 gal/turn)
-window.MAP = {
-  id: "map-17-wildfire",
-  label: "Map 17 · Wildfire",
-  lesson: "<b>Wildfire.</b> Lightning sets dry trees alight on turn 2, and fire spreads. Keep your trees next to water so it can't reach them.",
-  types: [
-    "____FF______~",
-    "____FF______~",
-    "T___________~",
-    "____________~",
-    "____________~"],
-  elev: [
-    "1111111111110",
-    "1111111111110",
-    "1111111111110",
-    "1111111111110",
-    "1111111111110"],
-  storage: 5,
-  salt: true,
-  weather: {"2": "fire"},
-  bloomGoal: 2,
-  bloomLabel: "Trees",
-  turnGoal: 6,
-  tileCost: 1,
-  showBloom: true,
-  startHint: "Tap the spring on the left to start.",
-  next: "../18/",
-  help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
-    "<b>Lightning</b> strikes on <b>turn 2</b> (see the Sky chip). It sets <b>dry trees</b> alight: trees that don't touch water. Each turn the fire burns out and spreads to the trees next to it, unless water is next to the burning tile.",
-    "Burnt trees lose their grove flow, and the meadows beside them lose the storage those trees gave. Keep your trees away from dry forest, or run your river beside the forest to wet it.",
-    "<b>Salt:</b> land right next to the sea is salty. Nothing grows there."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

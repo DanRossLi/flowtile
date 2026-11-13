@@ -2,52 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 5</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 5 · Desert: mostly sand. Every sand tile cuts flow by 1, springs (oases) add it back, bare ground is safe.
-// Map key: _ bare ground  s sand  o spring  ~ sea  T source (3 gal/turn)
-window.MAP = {
-  id: "map-5-desert",
-  label: "Map 5 · Desert",
-  lesson: "<b>Plan a route.</b> Sand cuts your flow, oases add it back, and sand turns the bare ground beside it into free grass. Find the path that keeps your flow alive.",
-  types: [
-    "s_ss_ss_ss_~",
-    "s_so_ss_os_~",
-    "T_ss_ss_ss_~",
-    "s_ss_os_ss_~",
-    "s_ss_ss_ss_~"],
-  elev: [
-    "111111111110",
-    "111111111110",
-    "111111111110",
-    "111111111110",
-    "111111111110"],
-  storage: 5,
-  bloomGoal: 10,
-  turnGoal: 3,
-  tileCost: 1,
-  startHint: "Tap the spring on the left to start.",
-  next: "../6/",
-  help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
-    "Bare ground costs <b>1 gal</b> and sand is <b>free</b>. Most of this map is <b>sand</b>: each sand tile <b>cuts your flow by 1</b> for the rest of the run, but it blooms the sand around it and turns the <b>bare ground</b> next to it into <b>grass</b> for free.",
-    "<b>Springs</b> are oases: free, and <b>+1 flow</b>. <b>Bare ground</b> takes nothing away.",
-    "If your flow hits 0 you can't refill. Plan a route from oasis to oasis to the sea."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

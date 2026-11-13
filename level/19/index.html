@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Level 19</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Single player campaign (Dan, Nov 12): level 19 of 20, built by the seeded campaign builder and checked by the bot.
+// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
+// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S spring for a tributary (2 gal/turn)
+window.MAP = {
+  id: "level-19",
+  label: "Level 19 · Wild Country",
+  lesson: "Everything you've learned, on one wild island.",
+  types: [
+    "___or_F_r___B__rtBB__M__sBM~",
+    "_ss_r_F_r_M_r__BB__Lt___s_~~",
+    "__s___FBB_v_vg_BB_BL_B_r_r~~",
+    "__s____L__.B_opBrs_LvB_.___~",
+    "___gBB_LBB_FBff_BsprmB_____~",
+    "__r_gBMLB_FFB___B___BB__B_~~",
+    "___s_BF.BS_BB_B.Bg___BrF_.B~",
+    "___s.rFFrB_BBB_mB__F_BFFs_~~",
+    "__tMgB__B_r_BLLLr_FF_B__s_.~",
+    "T____B.FB___B__BB____B_grrf~",
+    "__mFFBFFBpB_Bp__B____B_ff_f~",
+    "_____B_Br__rrtL_Bfv_MBs_rLL~",
+    "__o_BBBrB_o.L_L_Bf__gBs_FF~~",
+    "__gotrpSBC_mBtL_BgBB.Bm_rF~~",
+    "__v__Bt_Bsr_L_s_B_.rMB_r_BL~",
+    "_____tLLBs___Cs_B___prffr_L~",
+    "__gBLLLoB_B__.B_BM___B__ff_~",
+    "__B___r_B_B__MMtB___rr__ss~~"],
+  elev: [
+    "1111111111111111111111111110",
+    "1111111111111111111011111100",
+    "1111111111111111111011111100",
+    "1111111011111111111011111110",
+    "1111111011111111111111111110",
+    "1111111011111111111111111100",
+    "1111111111111111111111111110",
+    "1111111111111111111111111100",
+    "1111111111111000111111111110",
+    "1111111111111111111111111110",
+    "1111111111111111111111111110",
+    "1111111111111101111111111000",
+    "1111111111110101111111111100",
+    "1111111111111101111111111100",
+    "1111111111110111111111111100",
+    "1111110011111111111111111100",
+    "1111000111111111111111111110",
+    "1111111111111111111111111100"],
+  mainSource: [0, 9],
+  waterSides: {"10,16": 2, "25,0": 4, "4,4": 1, "12,10": 3, "15,1": 3},
+  storage: 5,
+  tileCost: 1,
+  showBloom: true,
+  bloomGoal: 15,
+  bloomLabel: "Meadows",
+  bloomKind: "meadows",
+  turnGoal: 16,
+  startHint: "Tap the big spring on the left to start your main river.",
+  next: "../20/",
+  tributaries: true,
+  cycle: true,
+  weather: {"4": "rain", "8": "drought", "12": "flood"},
+  help: [
+    "Tap the spring on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
+    "Tap your stream's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
+    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the stream.",
+    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
+    "<b>Sand</b> is free to cross but cuts your <b>flow by 1</b>. <b>Springs</b> are free and add <b>+1 flow</b>.",
+    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>.",
+    "A <b>lake</b> fills all at once for <b>2 gal a tile</b>.",
+    "Tap a second spring to start a <b>tributary</b>; it joins your flow once it reaches your river.",
+    "<b>Marsh</b> beside your river stores 2 gal; the river running through drains it.",
+    "<b>Fertile ground</b>: a meadow on it stores 1 more, and its trees count double in a grove.",
+    "<b>Beavers</b>: run your river through the colony, with trees beside it, for +1 flow.",
+    "<b>Caves</b>: in one, out of its pair, for the normal tile cost.",
+    "<b>Rain pools</b>: run the river over one for +2 gal.",
+    "Watch the <b>forecast</b>: weather arrives on set turns."],
+  pickHint: "Start with the big spring on the left. The smaller springs are for tributaries."
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

@@ -2,54 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 4a</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 4a · Trees: a narrow pass with room for only a meadow and a tree side by side (LOU-279: the pass opened one tile so they fit).
-// Single player redo (Nov 12): the turn goal is 5, the best possible, so the meadow and tree have to go in without waste.
-// Map key: _ bare ground  B mountain  L lake  ~ sea  T source (3 gal/turn)
-window.MAP = {
-  id: "map-4a-trees-v2",
-  label: "Map 4a · Trees",
-  lesson: "<b>Shade.</b> Room is tight here. Put a <b>meadow</b> and a <b>tree</b> side by side above the stream: the tree stores nothing itself, but the meadow next to it holds <b>+1 gal</b>.",
-  types: [
-    "BBBBBBBB~",
-    "BB__BBBB~",
-    "T___LLL_~",
-    "BBB_BBBB~",
-    "BBBBBBBB~"],
-  elev: [
-    "111111110",
-    "111111110",
-    "111100010",
-    "111111110",
-    "111111110"],
-  storage: 5,
-  bloomGoal: 0,
-  turnGoal: 5,
-  tileCost: 1,
-  startHint: "Tap the spring on the left to start.",
-  next: "../5/",
-  help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>. Water over that spills at the next water cycle.",
-    "Tap your stream's <b>end</b>, then a glowing tile to extend it. Every tile costs <b>1 gal</b>. Run it <b>left to right</b> to the sea.",
-    "<b>Bare ground</b> next to the stream shows a leaf: tap it for <b>free grass</b>, the ground you grow on.",
-    "Tap grass and choose <b>Grow a meadow</b> (1 gal), then <b>Grow trees</b> (1 more). A meadow beside your river stores <b>+1 gal for each tree touching it</b>; trees themselves store nothing.",
-    "The <b>lake</b> costs <b>6 gal</b> and there is only room for two tiles above the stream: one meadow, one tree. Once it's full, you can plant up to 2 tiles from it."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

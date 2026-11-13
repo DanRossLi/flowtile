@@ -2,52 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 8</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 8 · Grove: a lake between two mountains, too big for your storage. Plant touching trees along the river: a grove adds flow.
-// Map key: _ bare ground  L lake  ~ sea  S source (2 gal/turn)
-window.MAP = {
-  id: "map-8-grove",
-  label: "Map 8 · Grove",
-  lesson: "<b>Groves.</b> Plant <b>3 trees touching each other</b> along your river for <b>+1 flow</b>, 6 trees for +2. Trees store nothing, but meadows beside them do.",
-  types: [
-    "______B_______~",
-    "______L_______~",
-    "S_____L_______~",
-    "______L_______~",
-    "______B_______~"],
-  elev: [
-    "111111111111110",
-    "111111011111110",
-    "111111011111110",
-    "111111011111110",
-    "111111111111110"],
-  storage: 5,
-  bloomGoal: 0,
-  turnGoal: 11,
-  tileCost: 1,
-  startHint: "Tap the spring on the left to start.",
-  next: "../9/",
-  help: [
-    "Tap the spring on the left. Its <b>flow</b> is only <b>2 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
-    "The <b>lake</b> between the mountains costs <b>6 gal</b> all at once (2 a tile), so you need to store 6. Grass is free; a <b>meadow</b> beside the stream stores <b>+1 gal for each tree</b> next to it.",
-    "<b>Grove:</b> touching trees, all beside the river, give <b>+1 flow for every 3</b> (3 trees +1, 6 trees +2). Trees store nothing, so mix meadows in.",
-    "A stream running over a tree washes it away and breaks the grove, so keep them off your route. Stars: reach the sea, and arrive by turn <b>11</b>."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

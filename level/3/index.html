@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Level 3</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#13222e">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="../../play.css">
+</head>
+<body>
+<script>
+// Single player campaign (Dan, Nov 12): level 3 of 20, built by the seeded campaign builder and checked by the bot.
+// Map key: _ bare ground  g grass  . m meadow  t trees  F wild forest  f fertile  s sand  r rock  B mountain  o spring  L lake
+// M marsh  p rain pool  v beavers  C cave  ~ sea  T main source (3 gal/turn)  S spring for a tributary (2 gal/turn)
+window.MAP = {
+  id: "level-3",
+  label: "Level 3 · Two Peaks",
+  lesson: "A ridge with one way through, and runoff for whoever finds it.",
+  types: [
+    "__B____B_~~",
+    "___om_oB_~~",
+    "___B___B_~~",
+    "__B____r__~",
+    "T_r_t__B__~",
+    "____m__Br~~",
+    "_____rrBB_~"],
+  elev: [
+    "11111111100",
+    "11111111100",
+    "11111111100",
+    "11111111110",
+    "11111111110",
+    "11111111100",
+    "11111111110"],
+  mainSource: [0, 4],
+  waterSides: {"7,2": 3, "8,6": 0},
+  storage: 5,
+  tileCost: 1,
+  showBloom: true,
+  bloomGoal: 4,
+  bloomLabel: "Meadows",
+  bloomKind: "meadows",
+  turnGoal: 4,
+  startHint: "Tap the spring on the left to start.",
+  next: "../4/",
+  help: [
+    "Tap the spring on the left to start. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>; water over that spills at the next water cycle.",
+    "Tap your stream's <b>end</b>, then a glowing tile to extend it. Most tiles cost <b>1 gal</b>, and so does the step into the sea.",
+    "<b>Rock</b> costs <b>2 gal</b>. <b>Mountains</b> block the stream.",
+    "Some <b>mountains</b> have a pool in front of one face: run your river to that <b>runoff</b> tile, through or beside it, for <b>+1 flow</b>.",
+    "Grass is free beside your river. A <b>meadow</b> beside the river stores <b>+1 gal for each tree touching it</b>; every <b>3 touching trees</b> beside the river add <b>+1 flow</b>."]
+};
+</script>
+<script src="../../play.js"></script>
+</body>
+</html>

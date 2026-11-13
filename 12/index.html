@@ -2,57 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flow Tile · Map 12</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Flow Tile">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#13222e">
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Patrick+Hand&family=Nunito:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="../play.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Tile · Single player</title>
+<meta http-equiv="refresh" content="0; url=../river/">
+<link rel="canonical" href="../river/">
 </head>
-<body>
-<script>
-// Map 12 · Rain: spilled water rises as a cloud and rains back two turns later. A rainstorm and a drought are forecast.
-// Map key: _ bare ground  . meadow  ~ sea  T source (3 gal/turn)
-window.MAP = {
-  id: "map-12-rain",
-  label: "Map 12 · Rain",
-  lesson: "<b>The water cycle.</b> Spilled water rises as a cloud and rains back two turns later. Watch the forecast for storms and droughts.",
-  types: [
-    "____________~",
-    "___.____.___~",
-    "T___________~",
-    "___.____.___~",
-    "____________~"],
-  elev: [
-    "1111111111110",
-    "1111111111110",
-    "1111111111110",
-    "1111111111110",
-    "1111111111110"],
-  storage: 5,
-  cycle: true,
-  weather: {"2": "rain", "4": "drought"},
-  bloomGoal: 3,
-  bloomLabel: "Meadows",
-  bloomKind: "meadows",
-  turnGoal: 5,
-  tileCost: 1,
-  showBloom: true,
-  startHint: "Tap the spring on the left to start.",
-  next: "../15/",
-  help: [
-    "Tap the spring on the left. Its <b>flow</b> is <b>3 gal</b> per water cycle, and you can <b>store 5 gal</b>.",
-    "Water over your storage <b>spills</b> at the next water cycle. Here it isn't lost: it rises as a <b>cloud</b>, drifts with the wind, and <b>rains back 2 turns later</b>. Rain that doesn't fit soaks into the ground.",
-    "The <b>Sky</b> chip shows what's coming: a <b>rainstorm</b> on turn 2 gives <b>+2 gal</b>, and a <b>drought</b> on turn 4 cuts your flow by 1 for 2 turns.",
-    "Grow meadows by the stream with trees beside them to store more, so you can catch the rain."]
-};
-</script>
-<script src="../play.js"></script>
+<body style="font-family:system-ui,sans-serif;padding:24px">
+<!-- The original River maps were retired on Nov 12: Single player is now a 20-level campaign (Dan: "Brand-new levels"). -->
+<p>This map has been retired. <a href="../river/">Play the Single player campaign</a>.</p>
+<script>location.replace("../river/")</script>
 </body>
 </html>

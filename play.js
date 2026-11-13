@@ -1536,8 +1536,10 @@ function draw() {
   // a lake still filling shows its empty basin fading out
   for (const p of ORDER) { const c = at(p); if (c.t === "lake" && c.river && prog(p + "") < 1) { ctx.globalAlpha = 1 - prog(p + ""); rpath(hexPts(p, R - 2), 10); ctx.fillStyle = "#dfe7d8"; ctx.fill(); ctx.globalAlpha = 1 } }
   drawRivers(t);
+  // only tiles on screen are drawn each frame (a 40×40 island has 1,600 tiles; play zoom shows a few dozen)
+  const vx0 = -off.x / scale - 140, vx1 = (cv.width - off.x) / scale + 140, vy0 = -off.y / scale - 200, vy1 = (cv.height - off.y) / scale + 140, onScreen = o => o.x > vx0 && o.x < vx1 && o.y > vy0 && o.y < vy1;
   for (const p of ORDER) {
-    const c = at(p), o = iso(...p), h = hsh(...p);
+    const c = at(p), o = iso(...p), h = hsh(...p); if (!onScreen(o)) continue;
     const kg = prog("g:" + p);
     if (kg < 1) { ctx.globalAlpha = 1 - kg; ctx.beginPath(); ctx.ellipse(o.x, o.y, 10 + kg * 34, 5 + kg * 17, 0, 0, 7); ink("rgba(255,255,255,.9)", 2.6); ctx.globalAlpha = 1 } // the green ripple
     const s = kg < 1 ? easeBack(kg) : 1;
@@ -1550,7 +1552,7 @@ function draw() {
   else if (aim && TUT) { ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); for (const k of aim) hexPts(k.split(",").map(Number), R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fillStyle = "rgba(222,228,229,.62)"; ctx.fill("evenodd") } // tutorial: everything but the target greys out
   else if (aim) { ctx.beginPath(); for (const p of ORDER) { if (aim.has(p + "") || !landTile(p)) continue; hexPts(p, R - 2).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath() } ctx.fillStyle = TUT ? "rgba(30,50,60,.34)" : "rgba(30,50,60,.16)"; ctx.fill() } // the objective's target stays bright, the rest dims a little
   for (const p of ORDER) {
-    const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4);
+    const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4); if (!onScreen(o)) continue;
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
     const m = hsel && S.phase === "play" && (!TUT || !aim || aim.has(p + "")) ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
     if (m || pk) { // a target tile: an amber wash with a marching dashed outline and a cost bubble; grey if you can't afford it
