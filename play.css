@@ -715,3 +715,19 @@ button.sact.nope .sbtn{animation:tshake .4s}
 @media (max-height:560px){.sbtn{width:52px;height:52px}.sbtn svg{width:26px;height:26px}button.sact small{display:none}.sheet{gap:8px;bottom:8px}}
 @media (prefers-reduced-motion:reduce){button.sact.nope .sbtn{animation:none}}
 .sheet.out *{pointer-events:none!important}
+/* Level start (LOU-285): no goal modal. A glass banner under the top bar, goal popovers on the star chips, an empty jar before a source is chosen. */
+.lvb{position:absolute;left:50%;top:var(--lvbTop,112px);z-index:4;transform:translateX(-50%);max-width:calc(100% - 24px);box-sizing:border-box;padding:8px 16px;border-radius:18px;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(30,60,60,.18);color:#24434a;font-family:var(--hand);text-align:center;pointer-events:none}
+.lvb[hidden]{display:none}
+.lvb b{display:block;font-weight:800;font-size:17px;line-height:1.2}
+.lvb span{display:block;font-weight:500;font-size:14px;line-height:1.25;color:#4f6f70}
+.lvb.in{animation:lvbin .35s cubic-bezier(.3,1.2,.5,1)}
+.lvb.bye{opacity:0;transform:translate(-50%,-10px);transition:opacity .25s,transform .25s}
+@keyframes lvbin{from{opacity:0;transform:translate(-50%,-18px)}}
+.goals .goal{pointer-events:auto;cursor:pointer}
+.gpop{position:absolute;z-index:5;max-width:min(300px,calc(100% - 16px));box-sizing:border-box;padding:9px 13px;border-radius:14px;background:#fff;color:#24434a;font:500 14px/1.3 var(--hand);box-shadow:0 8px 24px rgba(30,60,60,.18);pointer-events:none;animation:msgpop .25s cubic-bezier(.3,1.5,.5,1)}
+.gpop[hidden]{display:none}
+.gpop b{font-weight:800}.gpop>b{display:block;font-weight:500}
+.gpop small{display:block;margin-top:5px;font-size:13px;color:#4f6f70}
+.gpop::before{content:"";position:absolute;left:calc(var(--ax,50%) - 7px);top:-6px;border:7px solid transparent;border-top:0;border-bottom-color:#fff}
+.jar.nosrc #cFlow{visibility:hidden}
+@media (prefers-reduced-motion:reduce){.lvb.in,.gpop{animation:none}.lvb.in{animation:fadein .3s both}.lvb.bye{transform:translateX(-50%)}}
