@@ -37,6 +37,9 @@
 (() => {
 const M = window.MAP;
 const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits next to play.js
+// Poster mode (LOU-288): "?poster" draws only the island, whole, with no bars and no input. The home page shows it in a frame
+// as its picture, so the picture is the game's own art. It never reads or writes a saved run.
+const POSTER = typeof location !== "undefined" && /[?&]poster(=|&|$)/.test(location.search || "");
 const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed number of turns
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal ?? 0, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal ?? ((M.stars || []).find(s => s.type === "byTurn") || {}).n ?? 99;
 const ROOT = new URL("./", document.currentScript.src).href;
@@ -135,6 +138,7 @@ document.body.innerHTML = `
         <div class="dscore" id="wScore" hidden></div>
         <ul id="wGoals"></ul>
         ${M.share ? `<button type="button" class="dnext" id="share"><b>Share score</b><small id="nextS"></small></button>` : M.next ? `<a class="dnext" id="next" href="${M.next}"><b id="nextT">${M.nextLabel || "Next map"}</b><small id="nextS"></small></a>` : `<button type="button" class="dnext" id="again2"><b>Play again</b></button>`}
+        <div class="dtoast" id="dToast" role="status" hidden></div>
         <div class="dlinks"><button type="button" id="again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 102.600-5.900"/><path d="M4 4v5h5"/></svg><span id="againT">Replay</span></button><a href="${ROOT}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>Home</a></div>
       </div>
     </div>
@@ -664,19 +668,27 @@ const HARD_KEY = "flowtile.hard", UNDOS = 3;
 const hard = () => { try { return localStorage.getItem(HARD_KEY) === "1" } catch (_) { return false } };
 function undo() { if (!history.length) return; if (hard() && (S.undos || 0) >= UNDOS) { say("No undos left. Restart from the menu.", true); return }
   const used = (S.undos || 0) + (hard() ? 1 : 0), ob = S.obj || 0, hu = S.hints || 0; closeCard(); hintOff(); S = JSON.parse(history.pop()); S.obj = Math.max(ob, S.obj || 0); S.undos = used; S.hints = hu; anim.clear(); fx.length = 0; say("Stepped back."); if (S.phase === "pick") zoomTo(1) }
-function restart() { closeCard(); hintOff(); hsel = false; padB = 0; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
+function restart() { closeCard(); hintOff(); hsel = false; padB = 0; winOld = false; S = fresh(); history = []; anim.clear(); fx.length = 0; say(""); guideInit(); if (false) { objShown = tutStage = -1; tutWait = 0; tutPend = null; calloutOff(); $("callout").hidden = true; tutShow(false); if (!reduce) { tutArrive = {}; document.body.classList.add("arriving") } else zoomTo(lay.zAuto) } else { zoomTo(1); openRun() } }
 
 // ---------- Level complete (LOU-287, design board 8). Reaching the sea locks input and the camera pulls back to the whole island
 // (about 1s). Three big stars sit over the island, the middle one bigger; the result sheet slides up from the bottom with one
 // row per star (the goal, a reason, a teal check when earned). The stars fill one at a time, 0.35s apart. Next level is the
 // one big button, with the next level's name and new rule on its second line. Reduced motion: no pull-back, stars together.
-let winUp = false; const SP = "M12 2.6l2.9 5.9 6.5.9-4.700 4.600 1.100 6.500L12 17.400l-5.800 3.100 1.100-6.500L2.600 9.400l6.500-.9z";
+let winUp = false, winOld = false; const SP = "M12 2.6l2.9 5.9 6.5.9-4.700 4.600 1.100 6.500L12 17.400l-5.800 3.100 1.100-6.500L2.600 9.400l6.500-.9z";
 const starSvg = on => `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="so" d="${SP}"/>${on ? `<path class="sg" d="${SP}"/>` : ""}</svg>`;
 if (/^c2-\d+$/.test(M.id) && !window.LEVELS) { try { const el = document.createElement("script"); el.src = ROOT + "levels.js"; document.head.appendChild(el) } catch (_) {} } // the campaign's list: the next level's name for the teaser
-function winSheet() { const el = $("win"), t0 = reduce ? 0 : 1.05, gap = reduce ? 0 : .35; closeCard(); hsel = false; hintOff(); try { localStorage.removeItem(GUIDE_KEY) } catch (_) {}
+// Days played in a row (the Daily island): counted when a day's first run is scored.
+const DAY_MS = 864e5, dayStr = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` };
+function dailyStreak(mark) { let last = "", n = 0; try { last = localStorage.getItem("flowtile.daily.last") || ""; n = +localStorage.getItem("flowtile.daily.streak") || 0 } catch (_) {}
+  const today = dayStr(Date.now()), yest = dayStr(Date.now() - DAY_MS); if (last !== today && last !== yest) n = 0; // a missed day ends the streak
+  if (mark && last !== today) { n += 1; try { localStorage.setItem("flowtile.daily.last", today); localStorage.setItem("flowtile.daily.streak", String(n)) } catch (_) {} }
+  return n }
+function winSheet(old) { const el = $("win"), t0 = reduce || old ? 0 : 1.05, gap = reduce || old ? 0 : .35; closeCard(); hsel = false; hintOff(); try { localStorage.removeItem(GUIDE_KEY) } catch (_) {}
   let rows, n, title = "You reached the sea", scoreLine = "";
-  if (PERF) { const sc = score(), st = M.scoreStars || [20, 30, 40], prev = getNum(bestKey); n = perfStars(sc.total); if (sc.total > prev) setNum(bestKey, sc.total);
-    title = sc.sea ? "You reached the sea" : "Island scored"; scoreLine = `<b>${sc.total} point${sc.total === 1 ? "" : "s"}</b>${sc.total > prev && prev ? ` · New best (was ${prev})` : sc.total > prev ? " · New best" : ` · Best ${prev}`}`;
+  if (PERF) { const prev = getNum(bestKey), sc = old ? {total:prev, sea:0} : score(), st = M.scoreStars || [20, 30, 40]; n = perfStars(sc.total); if (sc.total > prev) setNum(bestKey, sc.total);
+    title = old ? "Played today" : sc.sea ? "You reached the sea" : "Island scored"; const best = Math.max(prev, sc.total);
+    scoreLine = `<b>${sc.total} point${sc.total === 1 ? "" : "s"}</b>${old ? "" : sc.total > prev && prev ? ` · New best (was ${prev})` : sc.total > prev ? " · New best" : ` · Best ${prev}`}`;
+    if (M.daily) { const k = dailyStreak(!old); scoreLine += `<span>Best today ${best} · ${k} day${k === 1 ? "" : "s"} in a row</span>` }
     rows = st.map(x => [sc.total >= x, `${x} points`, sc.total >= x ? `You scored ${sc.total}` : `${x - sc.total} more to go`]) }
   else { rows = STARS.map(s => { const ok = starOk(s); return [ok, ...starEnd(s, ok)] }); n = rows.filter(r => r[0]).length }
   if (n > getNum(starKey)) setNum(starKey, n);
@@ -685,7 +697,7 @@ function winSheet() { const el = $("win"), t0 = reduce ? 0 : 1.05, gap = reduce 
   $("wStars").innerHTML = rows.slice(0, 3).map((r, i) => `<span class="dst s${i}${r[0] ? " on" : ""}" style="--d:${(t0 + .4 + i * gap).toFixed(2)}s">${starSvg(r[0])}</span>`).join("");
   $("wGoals").innerHTML = rows.map((r, i) => `<li class="${r[0] ? "got" : "missed"}" style="--d:${(t0 + .4 + i * gap).toFixed(2)}s"><i class="rst">${starSvg(r[0])}</i><div><b>${r[1]}</b><small>${r[2] || ""}</small></div>${r[0] ? CHECK : ""}</li>`).join("")
     + (M.learned ? M.learned.map(t => `<li class="learn"><span>${t}</span></li>`).join("") : "");
-  tx("againT", n < 3 ? "Replay for 3 stars" : "Replay");
+  tx("againT", M.daily ? "Play again (practice)" : n < 3 ? "Replay for 3 stars" : "Replay");
   // the big button: the next level with its name and new rule; on the last level, the level list with the star total
   const m = /^c2-(\d+)$/.exec(M.id), L = window.LEVELS;
   if (m && $("next")) { const k = +m[1], nx = L && L[k]; tx("nextT", nx ? "Next level" : "Campaign complete");
@@ -788,7 +800,7 @@ function sync() {
   { const hb = $("hintBtn"), on = hintShown(); if (hb.hidden === on) hb.hidden = !on; tx("hintN", hintsLeft()); hb.classList.toggle("none", !hintsLeft()) } // the lightbulb: campaign levels, not while a guided step is locked
   $("end").disabled = S.phase !== "play"; $("undo").disabled = !history.length || (hard() && (S.undos || 0) >= UNDOS);
   { const ready = S.phase === "play" && nothingLeft(); $("end").classList.toggle("ready", ready); $("end").classList.toggle("muted", S.phase === "play" && !ready) }
-  const won = S.phase === "won"; $("bottom").hidden = won; if (won !== winUp) { winUp = won; $("app").classList.toggle("won", won); if (won) winSheet(); else { $("win").hidden = true; $("wStars").dataset.n = "" } }
+  const won = S.phase === "won" || winOld; $("bottom").hidden = won; if (won !== winUp) { winUp = won; $("app").classList.toggle("won", won); if (won) winSheet(winOld && S.phase !== "won"); else { $("win").hidden = true; $("wStars").dataset.n = "" } }
   save(); resize();
   if (sel) { if (S.phase === "play" || (S.phase === "pick" && placeable(sel))) renderCard(); else closeCard() } else if (info) renderInfo();
   draw();
@@ -1216,7 +1228,7 @@ function goals() {
 
 // ---------- persistence: keep the current run across app close/reopen
 const SAVE_KEY = "flowtile.run.v5." + M.id; // v5: growth rebalance (LOU-279)
-function save() { try { if (S.phase === "won" || S.phase === "stuck") localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, JSON.stringify({S, history, at:Date.now()})) } catch (_) {} }
+function save() { if (POSTER) return; try { if (S.phase === "won" || S.phase === "stuck") localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, JSON.stringify({S, history, at:Date.now()})) } catch (_) {} }
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
@@ -2100,8 +2112,12 @@ function mapCode() { const keep = {...M}; delete keep.help; delete keep.next; de
   const b = new TextEncoder().encode(JSON.stringify(keep)); let bin = ""; b.forEach(x => bin += String.fromCharCode(x)); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") }
 $("guide").addEventListener("click", async e => { if (!e.target.closest("#codeBtn")) return; const url = new URL("custom/#" + mapCode(), ROOT).href; let ok = false; try { await navigator.clipboard.writeText(url); ok = true } catch (_) {}
   $("codeBtn").textContent = ok ? "Link copied!" : "Copy failed"; if (!ok) prompt("Map code link:", url); setTimeout(() => { if ($("codeBtn")) $("codeBtn").textContent = "Copy map code" }, 1800) });
-if ($("share")) $("share").onclick = async () => { const sc = score(), n = perfStars(sc.total), txt = `Flow Tile · ${M.label}: ${sc.total} points ${"★".repeat(n)}${"☆".repeat(3 - n)}${sc.sea ? " · reached the sea" : ""}\n${location.href}`;
-  try { if (navigator.share) await navigator.share({text:txt}); else { await navigator.clipboard.writeText(txt); $("share").textContent = "Copied!" } } catch (_) {} };
+// Share (LOU-288): copies a short line ("Flow Tile Daily 11-12 · 47 pts · ★★☆") and confirms with a toast.
+async function copyText(t) { try { await navigator.clipboard.writeText(t); return true } catch (_) {} try { const a = document.createElement("textarea"); a.value = t; a.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(a); a.select(); const ok = document.execCommand("copy"); a.remove(); return ok } catch (_) { return false } }
+let toastT2 = 0; function dToast(t) { const e = $("dToast"); if (!e) return; e.textContent = t; e.hidden = false; e.classList.remove("in"); void e.offsetWidth; e.classList.add("in"); clearTimeout(toastT2); toastT2 = setTimeout(() => { e.hidden = true }, 2200) }
+if ($("share")) $("share").onclick = async () => { const best = Math.max(getNum(bestKey), S.phase === "won" ? score().total : 0), n = perfStars(best), stars = "★".repeat(n) + "☆".repeat(3 - n);
+  const txt = M.daily ? `Flow Tile Daily ${M.day ? M.day.slice(5) : ""} · ${best} pts · ${stars}` : `Flow Tile · ${M.label}: ${best} points ${stars}\n${location.href}`;
+  dToast(await copyText(txt) ? "Copied. Paste it anywhere." : "Couldn't copy on this device.") };
 $("help").addEventListener("click", e => { if (e.target === $("help")) $("help").close() }); // tap backdrop to close
 $("seaptr").onclick = () => seaPeek();
 $("goals").addEventListener("click", e => { const c = e.target.closest(".goal"); if (c && !PERF && STARS[+c.dataset.i] && STARS[+c.dataset.i].type === "sea" && S.phase === "play") seaPeek(); if (c) goalPop(c.dataset.i != null ? +c.dataset.i : [...$("goals").children].indexOf(c), c) });
@@ -2109,10 +2125,11 @@ addEventListener("pointerdown", e => { if (!e.target.closest(".goal")) $("gpop")
 addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
 function loop() { if (opening) openStep(); if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
-if (!load()) { S = fresh(); guideInit() }
-openRun(); // a new run opens with the level banner and a glide to its source; a run in progress goes straight to its river (LOU-285)
+if (POSTER || !load()) { S = fresh(); guideInit() }
+if (POSTER) { document.documentElement.classList.add("poster"); if (TUT) S.obj = OBJ.length } else openRun(); // a new run opens with the level banner and a glide to its source; a run in progress goes straight to its river (LOU-285)
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
-if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
+if ("serviceWorker" in navigator && !POSTER) addEventListener("load", () => navigator.serviceWorker.register(SW_URL).catch(() => {}));
+if (M.daily && !POSTER && S.phase === "pick" && getNum(bestKey)) { winOld = true; sync() } // already played today: straight to the result, with Play again (practice)
 
 // for debugging / tests
 window.FT = {get lay() { return lay }, hint:{next:() => hintNext(), route:() => hintRoute(), use:() => useHint(), load:o => { SOL = o }, get now() { return hint }, get left() { return hintsLeft() }, get shown() { return hintShown() }}, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
