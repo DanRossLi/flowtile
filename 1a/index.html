@@ -17,31 +17,32 @@
 </head>
 <body>
 <script>
-// Map 1a · Sand: flat meadow with one sand tile near the sea. Sand blooms its neighbours but cuts flow by 1,
-// so taking it late is cheap: straight through still reaches the sea on turn 5 with 2 tiles in bloom.
+// Map 1a · Sand (Single player redo, Nov 12): a mountain wall with a sand gap, and a second sand tile near the sea.
+// Sand is free but cuts flow by 1, and water you don't spend is kept: bank your water before you cross and both sands
+// cost you nothing (sea on turn 4 with 6 tiles in bloom). Cross early and your flow drops to 1 for the rest of the run.
 // Map key: . meadow  s sand  r rock  B mountain  o spring  L lake  ~ sea  S source (2 gal/turn)  T source (3 gal/turn)
 window.MAP = {
-  id: "map-1a-sand-v2",
+  id: "map-1a-sand-v3",
   label: "Map 1a · Sand",
-  lesson: "<b>Sand</b> is free to cross and blooms the land around it, but each sand tile <b>cuts your flow by 1</b>. Decide when the blooms are worth it.",
+  lesson: "<b>Sand</b> is free to cross and blooms the land around it, but each sand tile <b>cuts your flow by 1</b>. Water you don't spend is kept, so <b>save up before you cross</b>.",
   types: [
-    "........~",
-    "........~",
-    "S.....s.~",
-    "........~",
-    "........~"],
+    "..........~",
+    "...B......~",
+    "S..s....s.~",
+    "...B......~",
+    "...B......~"],
   elev: [
-    "111111110",
-    "111111110",
-    "111111110",
-    "111111110",
-    "111111110"],
-  bloomGoal: 2,
+    "11111111110",
+    "11111111110",
+    "11111111110",
+    "11111111110",
+    "11111111110"],
+  bloomGoal: 6,
   turnGoal: 4,
   tileCost: 1,
   startHint: "Tap the spring on the left to start.",
   next: "../3/",
-  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle.", "Tap your stream's <b>end</b>, then a glowing tile to extend it. The number is its cost in gallons. Out of water? Tap <b>Next Water Cycle</b> and your flow refills it.", "The map is flat and every tile costs <b>1 gal</b>. Run the stream <b>left to right</b> to the sea.", "<b>Sand</b> (speckled tiles) is <b>free</b> to cross and <b>blooms</b> every land tile around it, but it soaks up water: your <b>flow drops by 1</b> for the rest of the run. Take it late, when you need less water.", "If your flow hits <b>0</b> you can't collect any more water."]
+  help: ["Tap the spring on the left. Its <b>flow</b> is <b>2 gal</b> per water cycle.", "Tap your stream's <b>end</b>, then a glowing tile to extend it. The number is its cost in gallons. Out of water? Tap <b>Next Water Cycle</b> and your flow refills it. Water you don't spend is kept.", "<b>Sand</b> (speckled tiles) is <b>free</b> to cross and <b>blooms</b> every land tile around it, but it soaks up water: your <b>flow drops by 1</b> for the rest of the run.", "Unspent water is <b>kept</b>. Wait at the wall with <b>Next Water Cycle</b> until you have enough to reach the sea, then cross both sands: they cost you nothing once you've saved up.", "Stars: reach the sea, <b>6 tiles</b> in bloom, and arrive by turn <b>4</b>. If your flow hits <b>0</b> you can't collect any more water."]
 };
 </script>
 <script src="../play.js"></script>

@@ -116,7 +116,7 @@
 const get = k => { try { return localStorage.getItem(k) } catch (_) { return null } };
 const num = k => +get(k) || 0;
 // Single player is River mode (LOU-265): Dan's original maps in order, with their stars.
-const MAPS = [["1","map-1-flat","Flat"],["1a","map-1a-sand-v2","Sand"],["3","map-3-lake","Lake"],["4","map-4-grass","Grass"],["4a","map-4a-trees","Trees"],["5","map-5-desert","Desert"],
+const MAPS = [["1","map-1-flat-v2","Flat"],["1a","map-1a-sand-v3","Sand"],["3","map-3-lake-v2","Lake"],["4","map-4-grass","Grass"],["4a","map-4a-trees-v2","Trees"],["5","map-5-desert","Desert"],
   ["6","map-6-tributary","Tributary"],["7","map-7-rock","Rock"],["8","map-8-grove","Grove"],["9","map-9-pollinators","Shade"],["10","map-10-mountains","Mountains"],["11","map-11-forest","Forest"],
   ["12","map-12-rain","Rain"],["15","map-15-harvest","Harvest"],["16","map-16-wildlife","Wildlife"],["17","map-17-wildfire","Wildfire"],["18","map-18-fertile","Fertile ground"],
   ["19","map-19-marsh","Marsh"],["20","map-20-alpine","Alpine"],["21","map-21-caves","Caves"],["22","map-22-rechannel","Rechannel"],["23","map-23-flood","Flood"]];
