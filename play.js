@@ -1062,7 +1062,7 @@ function tutLook() { const o = tutStep(); if (!o || view.z === null || !lay.w ||
   if (reduce) { view.cx = tgt.x; view.cy = tgt.y; tgt = null; applyView(); return false } return true }
 function tutCheck() { const t = now(), card = $("tutc"), on = !!tutStep();
   document.body.classList.toggle("guiding", on); if ($("tutSkip")) $("tutSkip").hidden = !on;
-  if (tutPend && t >= tutPend.at) { const q = tutPend; tutPend = null; tutShow(false); callout(...q.args) } // the cheer is over: the callout takes its turn
+  if (tutPend && t >= tutPend.at) { const q = tutPend; tutPend = null; callout(...q.args) } // the callout takes its turn; the card keeps its tick until the next step
   if (tutCallT && t > tutCallT) calloutOff();
   if (S.phase === "won" && (S.obj || 0) < OBJ.length) { S.obj = OBJ.length; save() }
   if (t < tutWait) { tutHand(); return }
@@ -1076,6 +1076,7 @@ function tutCheck() { const t = now(), card = $("tutc"), on = !!tutStep();
       $("hand").classList.remove("show"); return } }
   card.classList.remove("ok");
   const o = tutStep(); if (!o) { tutShow(false); $("hand").hidden = true; return }
+  if (opening || (S.phase === "pick" && tval(o.target, G) !== "source")) { tutShow(false); $("hand").hidden = true; return } // wait for the opening glide (and the automatic start)
   if (o.move && S.phase === "play") hsel = !tutShort(o);
   if (i !== objShown) { // a new step: pan first if its target is off screen, then everything fades in together
     if (tutStage !== i) { tutStage = i; $("hand").classList.remove("show"); if (tutLook()) { tutWait = t + 520; return } }
@@ -1802,7 +1803,8 @@ function draw() {
       if (!reduce) { ctx.globalAlpha = (1 - k) * .7; ctx.beginPath(); ctx.ellipse(o.x, o.y, 17 + 9 * k, 8.5 + 4.5 * k, 0, 0, 7); ink("#ffffff", 1.6); ctx.globalAlpha = 1 } } }
   if (selOn) { ringMem = flowTo; ringOn = T } const ra = selOn ? (reduce ? 1 : clamp01((T - ringOff) / 160)) : (reduce ? 0 : 1 - clamp01((T - ringOn) / 200)); if (!selOn) ringOff = T; // rings fade out over 0.2s when you let go
   if (ra > 0) ringMem.forEach((f, i) => flowRing(f, i, t, ra * (TUT && selOn ? Math.max(.25, tutK()) : 1)));
-  if (aim) { const k = (reduce ? 1 : .6 + .4 * osc(t, 1.4)) * (TUT ? tutK() : 1); for (const key of aim) { if (flowTo.some(f => f.k === key)) continue; const q = key.split(",").map(Number); ctx.globalAlpha = k; rpath(hexPts(q, R - 1), 9); ctx.save(); ctx.shadowColor = "#ffd98a"; ctx.shadowBlur = 10 * scale; ink("#ffd98a", 3.5); ctx.restore(); ctx.globalAlpha = 1 } }
+  if (aim) { const k = (reduce ? 1 : .6 + .4 * osc(t, 1.4)) * (TUT ? tutK() : 1); for (const key of aim) { const q = key.split(",").map(Number), o = iso(...q), y = o.y + (isSea(q) ? DEPTH : 0); // the step's target: a soft pulsing gold ring
+      ctx.globalAlpha = k; ctx.save(); ctx.shadowColor = "rgba(255,217,138,.9)"; ctx.shadowBlur = 11 * scale; ctx.beginPath(); ctx.ellipse(o.x, y, 32, 16.5, 0, 0, 7); ink("#ffd98a", 3); ctx.restore(); ctx.globalAlpha = 1 } }
   if (sel) { const o = iso(...sel), pu = reduce ? 1 : .78 + .22 * osc(t, 1.4), low = isSea(sel); ctx.save(); if (low) { ctx.translate(0, DEPTH) } // a sea tile is outlined at water level // the selected tile (LOU-284): a soft white glow, a crisp white line that pulses gently, a chevron above
     rpath(hexPts(sel, R - 3), 9); ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.fill(); ctx.save(); ctx.shadowColor = "rgba(255,255,255,.95)"; ctx.shadowBlur = 5 * scale; ink("rgba(255,255,255,.55)", 5); ctx.restore();
     ctx.globalAlpha = pu; rpath(hexPts(sel, R - 3), 9); ink("#ffffff", 2.6); ctx.globalAlpha = 1; chevron(o.x, o.y - 40, t); ctx.restore() }
@@ -1871,7 +1873,7 @@ const CHEV = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 7l5 5 5-5"
 function sheetSync() { const el = $("sheet"); if (!el || quiet) return; const mode = sel && sheetHtml ? "tile" : "";
   // The river strip (LOU-294): while the river is selected, a slim strip sits just above the bottom bar. The bar always stays, so
   // Next water cycle never needs anything closed first. No close button: tap the river's end again or empty space to let go.
-  const rs = $("rstrip"), river = !mode && riverSel();
+  const rs = $("rstrip"), river = !mode && riverSel() && !tutStep(); // in a guided step the card is the hint, and it stays in one place
   if (river) { const mvs = moves().size, can = affordable(); tx("rsName", TRIB && S.rivers.length > 1 ? riverName(S.active) : "Your river"); tx("rsFlow", "flow " + flowOf(S.active)); tx("rsHint", !mvs ? "Nowhere to flow" : can ? "Tap a ring" : "Out of water") }
   if (rs.hidden === river) { rs.hidden = !river; $("app").classList.toggle("striped", river) }
   const panel = mode ? sheetHtml.panel : "", acts = mode ? sheetHtml.acts : "";
@@ -1962,6 +1964,8 @@ $("fitBtn").onclick = () => zoomTo(view.z > 1.02 ? 1 : lay.zAuto); // overview <
 cv.addEventListener("pointerup", e => {
   unhold(); const wasDrag = dragged; lift(e); if (held) { held = false; return } if (wasDrag) { if (!ptrs.size) dragged = false; return }
   let p = tileAt(e.clientX, e.clientY);
+  if (riverSel() && ringMem.length) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, x = ((e.clientX - r.left) * d - off.x) / scale, y = ((e.clientY - r.top) * d - off.y) / scale; // a tap on a ring is that ring's tile, wherever it is drawn (a sea ring sits at water level)
+    const hit = ringMem.find(f => ((x - f.o.x) / 30) ** 2 + ((y - f.o.y) / 16) ** 2 <= 1); if (hit) p = hit.k.split(",").map(Number) }
   if (S.phase === "pick" && !(p && at(p).t === "source")) { // a tap near a source counts as the source (they're small on the whole-island view)
     const r = cv.getBoundingClientRect(), d = cv.width / r.width; let best = null, bd = 30;
     for (const q of sourcesOf()) { const o = iso(...q), dd = Math.hypot(r.left + (o.x * scale + off.x) / d - e.clientX, r.top + (o.y * scale + off.y) / d - e.clientY); if (dd < bd) { bd = dd; best = q } }

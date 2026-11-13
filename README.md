@@ -30,7 +30,7 @@ Since Nov 12 the game uses the painterly look (LOU-280): an isometric island of 
 
 ## Single player
 
-A 20-level campaign that starts where the tutorial ends. Each island is bigger and harder than the last, up to a 40×40 finale. Terrain the tutorial doesn't teach gets a "New:" tip the first time it appears. A level opens once you reach the sea on the one before it. The list with your stars is at https://danrossli.github.io/flowtile/river/, each level is at `/level/N/`, and its win card goes on with **Next map**. The levels list lives in `levels.js`. The original River maps (`/1/` … `/23/`) are retired and point to the list.
+A 20-level campaign. Levels 1 to 3 are short guided levels that teach the game (there is no separate tutorial). Each island is bigger and harder than the last, up to a 40×40 finale. Terrain the tutorial doesn't teach gets a "New:" tip the first time it appears. A level opens once you reach the sea on the one before it. The list with your stars is at https://danrossli.github.io/flowtile/river/, each level is at `/level/N/`, and its win card goes on with **Next map**. The levels list lives in `levels.js`. The original River maps (`/1/` … `/23/`) are retired and point to the list.
 
 | Level | Size | What's new |
 |---|---|---|
@@ -49,7 +49,6 @@ A 20-level campaign that starts where the tutorial ends. Each island is bigger a
 
 | Map | URL | Teaches |
 |---|---|---|
-| Tutorial | https://danrossli.github.io/flowtile/tutorial/ | A directed tutorial: one small island, one step at a time (LOU-281) |
 | Spring Hill | https://danrossli.github.io/flowtile/spring-hill/ | The original test map, now flat |
 | Perfection island | https://danrossli.github.io/flowtile/perfection/ | Every rule on: the best score in 20 turns |
 | Daily island | https://danrossli.github.io/flowtile/daily/ | A new generated island every day, the same for everyone; share your score |

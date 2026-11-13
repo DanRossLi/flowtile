@@ -47,10 +47,10 @@ window.MAP = {
   objectives: [
     {text: "This is your source. <b>Tap it.</b>", target: "source", lock: true, done: g => g.phase === "play"},
     {text: "<b>Tap a ring</b> to flow there.", target: [[2, 2]], lock: true, move: true, needs: 1, done: g => g.on(2, 2),
-      after: ["water", "<b>Water</b>: what you spend. That cost 1 gal."]},
+      after: ["water", "<b class=\"wtr\">Water</b>: what you spend. That cost 1 gal."]},
     {text: g => `Flow <b>2 more tiles</b> (${PATH.filter(([x, y]) => g.on(x, y)).length}/2).`, target: g => g.next(PATH), lock: true, move: true, needs: 1, done: g => PATH.every(([x, y]) => g.on(x, y))},
     {text: "Out of water. <b>Tap Next water cycle.</b>", target: "end", lock: true, done: g => g.turn >= 2,
-      after: ["flow", "<b>Flow</b>: water you get every cycle."]},
+      after: ["flow", "<b class=\"flw\">Flow</b>: water you get every cycle."]},
     {text: "Now <b>flow to the sea</b>.", move: true, done: g => g.won}
   ],
   help: []
