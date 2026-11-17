@@ -1,6 +1,6 @@
 // Flow Tile service worker: lets the game load offline after the first visit.
 // Bump VERSION whenever cached files change so old caches are dropped.
-const VERSION = "v88";
+const VERSION = "v89";
 const CACHE = `flowtile-${VERSION}`;
 const LOCAL = ["./", "./level/1/", "./level/2/", "./level/3/", "./level/4/", "./level/5/", "./level/6/", "./level/7/", "./level/8/", "./level/9/", "./level/10/", "./level/11/", "./level/12/", "./level/13/", "./level/14/", "./level/15/", "./level/16/", "./level/17/", "./level/18/", "./level/19/", "./level/20/", "./level/21/", "./level/22/", "./level/23/", "./level/24/", "./extra/fork/", "./extra/dam-builders/", "./extra/snowline/", "./extra/rain-pools/", "./extra/second-thoughts/", "./extra/dry-lightning/", "./extra/high-water/", "./extra/dunes/", "./big/40/", "./levels.js", "./solutions.js", "./settings.js", "./weather-test.config.js", "./weather-test/", "./river/", "./settings/", "./spring-hill/", "./perfection/", "./daily/", "./world/", "./custom/", "./generator/", "./tutorial/", "./big/", "./play.js", "./play.css", "./paper.css", "./fonts/fonts.css", "./fonts/mplus-rounded-500.woff2", "./fonts/mplus-rounded-700.woff2", "./fonts/mplus-rounded-800.woff2","./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 

@@ -52,9 +52,10 @@ const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits 
 // as its picture, so the picture is the game's own art. It never reads or writes a saved run.
 const POSTER = typeof location !== "undefined" && /[?&]poster(=|&|$)/.test(location.search || "");
 const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed number of turns
-// Weather test (LOU-296): an experiment behind one switch. WT is true only on a map marked weatherTest with the "Weather test"
-// switch on (the Levels page sets it). With WT false none of the weather test code runs and the game plays exactly as before.
-const WT = !!M.weatherTest && !!window.WEATHER_TEST && !POSTER && (() => { try { return localStorage.getItem("flowtile.weathertest") === "1" } catch (_) { return false } })();
+// Weather test (LOU-296): an experiment on its own standalone map (/weather-test/). WT is true only on a map marked weatherTest
+// that has loaded weather-test.config.js. On every other map WT is false, none of the weather test code runs, and the game
+// plays exactly as before.
+const WT = !!M.weatherTest && !!window.WEATHER_TEST && !POSTER;
 // the weather test's values, as the tuning panel lists them: [key in the config, name, note, kind]
 const WT_FIELDS = [["startWater", "Starting water", "gal, on restart", "int"], ["riverFlow", "River flow", "gal per cycle", "int"], ["startStorage", "Starting storage", "gal, on restart", "int"],
   ["reserve", "Starting reserve", "gal", "int"], ["reserveEvery", "Reserve growth", "+1 for every N river tiles", "int"],
@@ -1310,8 +1311,8 @@ function goals() {
     if (st === "got") c.classList.add("earn"); else if (st === "miss") c.classList.add("lose") } // a short pulse and sparkle when earned (0.4s); a missed goal greys with a thin strike
 }
 
-// ---------- Weather test (LOU-296): an experiment behind one switch. Nothing in this block runs unless WT is true, which
-// needs a map marked weatherTest and the "Weather test" switch (Levels page) turned on. It adds, and changes nothing else:
+// ---------- Weather test (LOU-296): an experiment on its own map. Nothing in this block runs unless WT is true, which
+// needs a map marked weatherTest (only /weather-test/ is). It adds, and changes nothing else:
 //   - a weather strip: each water cycle has a multiple for the river's own flow; terrain flow is added after it
 //   - a reserve level that rises as the river grows; nothing is deducted for it
 //   - right after flow arrives, each gal over storage floods one bank tile (it loses what grew there and keeps a silt
@@ -1384,7 +1385,7 @@ function wtEndTurn() { closeCard(); snapshot(); const c = wtCfg(), lim = wtLimit
 // The run log, one line per water cycle, as comma-separated text
 function wtCsv() { const v = x => x == null ? "" : x, rows = (S.wt && S.wt.log) || [];
   return ["cycle,weather,flow,level at check,reserve,storage,flooded,dried,life", ...rows.map(r => [r.cycle, r.weather, r.flow, r.level, r.reserve, r.storage, r.flooded, r.dried, r.life].map(v).join(","))].join("\n") }
-// ---- HUD (only when the switch is on). Flood is always blue, drying always amber, and each also says its word.
+// ---- HUD (only on the weather test map). Flood is always blue, drying always amber, and each also says its word.
 const WT_ICON = {normal:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.500 18h9.500a3.800 3.800 0 00.300-7.600 5.400 5.400 0 00-10.400 1.300A3.200 3.200 0 007.500 18z"/></svg>',
   flood:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.500 14h9.500a3.800 3.800 0 00.300-7.600A5.400 5.400 0 006.900 7.700 3.200 3.200 0 007.500 14z"/><path d="M8.500 17l-1 3M12.500 17l-1 3M16.500 17l-1 3"/></svg>',
   drought:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3.500v2M12 18.500v2M3.500 12h2M18.500 12h2M6 6l1.400 1.400M16.600 16.600L18 18M18 6l-1.400 1.400M7.400 16.600L6 18"/></svg>'};

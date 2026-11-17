@@ -20,46 +20,61 @@
 <body>
 <script src="../weather-test.config.js"></script>
 <script>
-// Weather test island (LOU-296): an experiment, not part of the campaign. It plays only while the "Weather test" switch on the
-// Levels page is on; with the switch off this page goes back there and the game is untouched.
-// The island has no sea: the run lasts a set number of water cycles and the score is life (what you have growing at the end).
-// Every test number is in ../weather-test.config.js. Map key: T source  _ bare ground  r rock  B mountain  o spring  L lake  s sand
-var WT_ON = false; try { WT_ON = localStorage.getItem("flowtile.weathertest") === "1" } catch (_) {}
-if (!WT_ON) location.replace("../river/#weather-test");
+// Weather test (LOU-296): one big standalone map for trying the water-level idea (Dan, Nov 16: "make it a standalone map which I
+// can test this, one big map"). It is an experiment, not part of the campaign: the weather test rules run only on this page
+// (weatherTest: true), and no other map is affected. Every test number is in ../weather-test.config.js.
+// The island has no sea: a run lasts a set number of water cycles and the score is life (what you have growing at the end).
+// Map key: T source  _ bare ground  f fertile ground  r rock  B mountain  o spring  L lake or pond  s sand  M marsh
 var WT_CFG = window.WEATHER_TEST || {}, WT_LIMIT = WT_CFG.turnLimit || 30;
 try { var WT_MINE = JSON.parse(localStorage.getItem("flowtile.weathertest.cfg") || "{}") || {}; if (WT_MINE.turnLimit > 0) WT_LIMIT = Math.round(WT_MINE.turnLimit) } catch (_) {}
 window.MAP = {
-  id: "weather-test",
+  id: "weather-test-big",
   label: "Weather test",
   intro: "Keep your water between the reserve and the rim",
   weatherTest: true,
   types: [
-    "____r___B___",
-    "____________",
-    "______LL__o_",
-    "T___________",
-    "___B_____r__",
-    "_________L__",
-    "__o____s____",
-    "____________"],
+    "_____________B__________",
+    "_____________B_______LL_",
+    "______B_ffr____L_ss_____",
+    "__L___B_______MM___B____",
+    "_______B_LL_o_______B___",
+    "____r____L______r_____o_",
+    "___o____r_____B___o_f___",
+    "_____ss______B_ff___fr__",
+    "T__________L__B_________",
+    "__ff___o_r______LL_B____",
+    "__f_LL_____ss___L___B_L_",
+    "______B__MM______r______",
+    "_______B___r___o____ss__",
+    "_o_r__B___o__B____L___r_",
+    "________L__f__B__M_B____",
+    "____________f___________"],
   elev: [
-    "111111111111",
-    "111111111111",
-    "111111001111",
-    "111111111111",
-    "111111111111",
-    "111111111011",
-    "111111111111",
-    "111111111111"],
-  waterSides: {"8,0": 4, "3,4": 0},
+    "111111111111111111111111",
+    "111111111111111111111001",
+    "111111111111111011111111",
+    "110111111111111111111111",
+    "111111111001111111111111",
+    "111111111011111111111111",
+    "111111111111111111111111",
+    "111111111111111111111111",
+    "111111111110111111111111",
+    "111111111111111100111111",
+    "111100111111111101111101",
+    "111111111111111111111111",
+    "111111111111111111111111",
+    "111111111111111111011111",
+    "111111110111111111111111",
+    "111111111111111111111111"],
+  waterSides: {"6,2": 3, "7,4": 3, "7,12": 3, "13,0": 3, "14,6": 3, "14,8": 3, "14,14": 3, "20,4": 3, "20,10": 3},
   mode: "perfection",
   turns: WT_LIMIT,
-  scoreStars: WT_CFG.stars || [15, 25, 40],
+  scoreStars: WT_CFG.stars || [40, 70, 100],
   storage: 5,
   tileCost: 1,
   help: []
 };
-if (WT_ON) document.write('<script src="../play.js"><\/script>');
 </script>
+<script src="../play.js"></script>
 </body>
 </html>

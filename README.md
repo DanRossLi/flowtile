@@ -99,12 +99,12 @@ Sounds are made in code with Web Audio (no audio files), with haptics where the 
 
 ## Weather test (experimental)
 
-A trial of one idea (LOU-296), behind a switch that is off by default. Turn on **Weather test** at the bottom of the Levels page and a **Weather test island** appears there. With the switch off, nothing in the game changes.
+A trial of one idea (LOU-296) on its own big map (24×16): https://danrossli.github.io/flowtile/weather-test/. It is also linked under Test maps on All islands. Nothing else in the game changes.
 
 - Each water cycle has weather (normal ×1, flood ×2, drought ×⅓) that multiplies the river's own flow. A strip under the top bar shows the next 5 cycles.
 - The jar has a dashed **reserve** line. Water over the rim floods bank tiles; water under the reserve dries grown tiles.
 - A run lasts 30 water cycles and the score is **life**: what you have growing at the end.
-- Every number is in `weather-test.config.js`. On the island, the menu's **Tuning** panel changes them, and copies the settings and a run log.
+- Every number is in `weather-test.config.js`. On the map, the menu's **Tuning** panel changes them, and copies the settings and a run log.
 
 ## Install on your phone
 

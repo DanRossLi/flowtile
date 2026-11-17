@@ -1,6 +1,6 @@
-// Flow Tile weather test (LOU-296): every number the test uses, in one place. The test is an experiment behind the
-// "Weather test" switch on the Levels page; with the switch off none of this is read by the game.
-// The tuning panel (menu > Tuning, on the weather test island) changes these for one device; Reset goes back to this file.
+// Flow Tile weather test (LOU-296): every number the test uses, in one place. The test is an experiment on its own map
+// (/weather-test/); no other map reads this file.
+// The tuning panel (menu > Tuning, on the weather test map) changes these for one device; Reset goes back to this file.
 window.WEATHER_TEST = {
   // As today
   startWater: 3,        // gal in the jar when the run starts (applies on restart)
@@ -24,5 +24,5 @@ window.WEATHER_TEST = {
 
   // Not in the draft: what one tile is worth in life, and the star thresholds on the result sheet. Placeholders.
   life: {grass: 1, meadow: 2, trees: 3},
-  stars: [15, 25, 40],
+  stars: [40, 70, 100],
 };
