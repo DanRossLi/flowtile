@@ -1012,3 +1012,41 @@ html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001
 @keyframes turnit{0%,20%{transform:rotate(90deg)}60%,100%{transform:none}}
 @media (orientation:landscape) and (max-height:480px) and (pointer:coarse){.turncard{display:grid}}
 .poster .turncard,.poster .uptoast{display:none!important}
+
+/* ---------- Weather test (LOU-296): an experiment behind one switch. Every rule here needs .app.wt or an element that
+   only exists when the switch is on. Flood is blue, drying is amber, and each also carries its word. */
+.app.wt .goals{display:none}
+.wtstrip{display:flex;justify-content:center;gap:5px;width:100%;margin:1px 0 0;padding:0 2px 3px;border:0;background:none;font:inherit;color:#24434a;cursor:pointer;pointer-events:auto;-webkit-tap-highlight-color:transparent}
+.wtc{flex:0 1 62px;min-width:0;display:grid;justify-items:center;gap:0;padding:3px 4px 4px;border-radius:12px;background:rgba(255,255,255,.62);box-shadow:0 3px 10px rgba(30,60,60,.1);line-height:1.1;opacity:.92}
+.wtc small{font:700 10px var(--hand);color:#4f6f70;white-space:nowrap}
+.wtc b{display:flex;align-items:center;gap:2px;font:800 13.5px var(--hand);white-space:nowrap}
+.wtc svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.wtc.flood b{color:#2c6e99}.wtc.drought b{color:#8a5200}.wtc.normal b{color:#3d5a5f}
+.wtc.next{flex-basis:70px;background:#fff;opacity:1;box-shadow:0 0 0 2px #9fb7bd,0 6px 14px rgba(30,60,60,.16)}
+.wtc.next small{color:#24434a}.wtc.next b{font-size:15px}
+.wtc.next.flood{box-shadow:0 0 0 2px #2f7fb8,0 6px 14px rgba(30,60,60,.16);background:#eaf4fb}
+.wtc.next.drought{box-shadow:0 0 0 2px #d9860a,0 6px 14px rgba(30,60,60,.16);background:#fdf3dc}
+.jamber{fill:#f3a52a;fill-opacity:.7;opacity:0;transition:transform .4s cubic-bezier(.3,1,.5,1),opacity .3s}
+.jres{opacity:0;transition:transform .4s cubic-bezier(.3,1,.5,1),opacity .3s}
+.jres path{fill:none;stroke-linecap:round}.jres .jr0{stroke:rgba(255,255,255,.9);stroke-width:3.2}.jres .jr1{stroke:#24434a;stroke-width:1.5;stroke-dasharray:3 2.6}
+.stat.jar.wtflood em .jsp{color:#2c6e99 !important}.stat.jar.wtdry em .jsp{color:#8a5200 !important}
+button.nwc .gain .wtf{color:#2c6e99}button.nwc .gain .wtd{color:#8a5200}
+.sact .scost.low{background:#fdecc8;color:#7a4a00}.sact .scost.low svg path{fill:#b9720a}
+.app.wt #shareLv{display:none}
+#rsHint.wtlow{color:#8a5200;font-weight:800}
+.app.wt .rstrip{margin-right:4px}
+.wtsheet{max-height:86dvh;overflow:auto}
+.wtsaid{margin:0 2px 8px;font:500 13px/1.3 var(--hand);color:#4f6f70}
+.wtrows{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.wtrow{display:grid;gap:3px;min-width:0;font:800 13px/1.2 var(--hand);color:#24434a}
+.wtrow.wide{grid-column:1 / -1}
+.wtrow small{display:block;font:500 11.5px/1.2 var(--hand);color:#4f6f70}
+.wtrow input,.wtrow select{width:100%;min-width:0;box-sizing:border-box;height:40px;padding:0 10px;border:1.5px solid #c3d2d4;border-radius:12px;background:#fff;color:#24434a;font:700 16px var(--hand)}
+.wtrow input:focus-visible,.wtrow select:focus-visible{outline:3px solid #2f7fb8;outline-offset:1px}
+.wtbtns{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.wtbtns button{flex:1 1 auto;min-height:44px;padding:0 14px;border:0;border-radius:999px;background:#eef5f6;color:#24434a;font:800 14px var(--hand);cursor:pointer;box-shadow:none}
+.wtbtns #wtReset{flex:0 0 auto;color:#b5562f}
+.wtout{display:block;width:100%;box-sizing:border-box;height:110px;margin-top:8px;padding:8px 10px;border:1.5px solid #c3d2d4;border-radius:12px;font:500 12px/1.35 ui-monospace,Menlo,Consolas,monospace;color:#24434a;background:#f6fafa;resize:vertical}
+.wtout[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.jamber,.jres{transition:none}}
+html.reduce .jamber,html.reduce .jres{transition:none !important}

@@ -284,3 +284,20 @@ These are the instructions Dan has given for this project, kept in one place. Th
 
 - ~~**Landscape mode** (LOU-266): both a puzzle mode and a map builder (sandbox + puzzle levels, and a finished landscape copies as a map code for River mode). Terrain is paid for with **water**. The map **shows the river's path** for the next water cycle.~~ *Deleted Nov 12 (Dan: "Delete it"): Landscape mode is gone.*
 - **Place your source anywhere** (LOU-263): use the draft defaults: bare ground, grass, meadow or sand only; at least 4 tiles from the sea; a placed source gives 3 flow; only on Big, Daily, Perfection and Custom; tutorial steps keep their fixed sources.
+
+## Weather test (experimental)
+
+LOU-296 (Dan, Nov 16: "keep the current design and just add, but do not change the core game"). This is a test of one idea: keeping the water level between a **reserve** and the **storage limit**, under changing weather. It is not a rule of the game. Nothing above this section changes because of it.
+
+- **One switch:** "Weather test" on the Levels page (`/river/`), off by default. With it off the game plays and looks exactly as before. With it on, a **Weather test island** (`/weather-test/`) can be played. Campaign, Daily, Perfection and every other map are never affected.
+- **Don't edit existing rules for it**, even with the switch on: tile rules, flow sources, storage sources and costs stay as they are. The test only adds. Every hook in `play.js` is behind the one flag (`WT`).
+- **All test numbers live in `weather-test.config.js`.** The tuning panel (menu, Tuning) changes them on one device, with Reset, Copy settings and Copy run log.
+- **The test's rules:**
+  - A weather strip gives each water cycle a multiple (normal ×1, flood ×2, drought ×⅓). It applies to the river's own flow (the source's) only; springs, groves, marsh and runoff are added after it.
+  - The reserve starts at 2 and rises by 1 for every 5 river tiles. Nothing is deducted for it, and the player may spend below it.
+  - Right after flow arrives, each gal over storage floods one bank tile (nearest the river's end first; it loses what grew there and keeps a silt mark, which does nothing), and water is set to full. Each gal under the reserve dries one grown tile by one stage (furthest from the river first).
+  - A run lasts 30 water cycles and the score is **life** (grass 1, meadow 2, trees 3, a placeholder).
+  - The older per-map weather and spill clouds are switched off on a test run.
+- **HUD, only on a test run:** a dashed reserve line on the jar with amber water below it; "+6 · 3 flood" or "+1 · 1 dry" under the number; the weather strip under the top bar (next 5 cycles, the first drawn stronger); "+6 · floods 3" or "+1 · dries 1" on Next water cycle; blue and amber outlines on the tiles that will flood or dry; amber costs and "Below reserve" when a spend goes under the reserve. Flood is always blue and drying always amber, each with its word.
+- **Check after any change to it:** `node tools/solve.mjs` must give the same result as before (switch off changes nothing), and the worked example in the LOU-296 doc must still play out with the same numbers.
+- **Open for Dan** (built with the draft's assumption): the check comes right after flow arrives; only the source's own flow changes with weather; a flooded tile loses everything that grew on it; a dried tile doesn't recover by itself.

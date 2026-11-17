@@ -52,6 +52,17 @@ const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits 
 // as its picture, so the picture is the game's own art. It never reads or writes a saved run.
 const POSTER = typeof location !== "undefined" && /[?&]poster(=|&|$)/.test(location.search || "");
 const PERF = M.mode === "perfection"; // Perfection: the best score in a fixed number of turns
+// Weather test (LOU-296): an experiment behind one switch. WT is true only on a map marked weatherTest with the "Weather test"
+// switch on (the Levels page sets it). With WT false none of the weather test code runs and the game plays exactly as before.
+const WT = !!M.weatherTest && !!window.WEATHER_TEST && !POSTER && (() => { try { return localStorage.getItem("flowtile.weathertest") === "1" } catch (_) { return false } })();
+// the weather test's values, as the tuning panel lists them: [key in the config, name, note, kind]
+const WT_FIELDS = [["startWater", "Starting water", "gal, on restart", "int"], ["riverFlow", "River flow", "gal per cycle", "int"], ["startStorage", "Starting storage", "gal, on restart", "int"],
+  ["reserve", "Starting reserve", "gal", "int"], ["reserveEvery", "Reserve growth", "+1 for every N river tiles", "int"],
+  ["weather.normal", "Normal", "× river flow", "num"], ["weather.flood", "Flood", "× river flow", "num"], ["weather.drought", "Drought", "× river flow", "num"],
+  ["schedule", "Weather schedule", "one entry per cycle, then it repeats", "text"], ["forecast", "Forecast shown", "cycles, up to 6", "int"], ["turnLimit", "Turn limit", "water cycles", "int"],
+  ["floodOrder", "A flood takes", "", [["end", "Bank tiles nearest the river's end"], ["grown", "Grown bank tiles first"]]],
+  ["dryOrder", "Drying takes", "", [["far", "Tiles furthest from the river"], ["near", "Tiles nearest the river"]]],
+  ["life.grass", "Life for grass", "", "num"], ["life.meadow", "Life for a meadow", "", "num"], ["life.trees", "Life for trees", "", "num"]];
 const TYPES = M.types, ELEV = M.elev, BLOOM_GOAL = PERF ? 0 : M.bloomGoal ?? 0, TURN_GOAL = PERF ? (M.turns || 20) : M.turnGoal ?? ((M.stars || []).find(s => s.type === "byTurn") || {}).n ?? 99;
 const ROOT = new URL("./", document.currentScript.src).href;
 // Green levels on bare ground: 0 bare, 1 grass, 2 meadow, 3 trees. Growth rebalance (LOU-279, Dan): grass is free next to your
@@ -78,7 +89,7 @@ const PLACE = !!M.placeSource, PLACE_FLOW = 3, SEA_GAP = 4; // LOU-263: place yo
 // sea first, then sand and springs 0, ground 1, rock 2), ties toward the sea, never into mountains. You reshape the land
 // with water. MAP.budget adds water at the start; MAP.noSand fails the run if the river crosses sand.
 // Ideas (Nov 10), each switched on by the map: water cycle, weather forecast
-const CYCLE = !!M.cycle, WX = M.weather || null, SPREAD = false, FLOOD = false, // spread (grass and bird seeds) and floodplain greening are removed (Dan, Nov 12: "grass and tiles are randomly spawning...get rid of that mechanic")
+const CYCLE = !!M.cycle && !WT, WX = WT ? null : M.weather || null, SPREAD = false, FLOOD = false, // spread (grass and bird seeds) and floodplain greening are removed (Dan, Nov 12: "grass and tiles are randomly spawning...get rid of that mechanic")
   _unused = [M.spread, M.floodplain], MELT = !!M.snowmelt, MOSS = !!M.moss, DEER = !!M.deer;
 const RECH = !!M.rechannel && !M.tributaries; // rechannel (LOU-238)
 const ALP = STORE > 0 && TYPES.some(r => r.includes("B")); // alpine trees (LOU-235)
@@ -112,15 +123,15 @@ document.body.innerHTML = `
     <div class="overlay top" id="top">
       <!-- Polytopia-style top bar (LOU-267): three stats straight on the map, no panels. Water shows its income in brackets. -->
       <div class="stats${PERF ? "" : " two"}">
-        ${PERF ? `<div class="stat" id="cScore"><span>Score</span><b id="hScore">0</b></div>` : ""}
-        <div class="stat" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i>${PERF ? `<small>/${TURN_GOAL}</small>` : ""}</b></div>
+        ${PERF ? `<div class="stat" id="cScore"><span>${WT ? "Life" : "Score"}</span><b id="hScore">0</b></div>` : ""}
+        <div class="stat" id="cTurn"><span>Turn</span><b><i id="hTurn">0</i>${PERF ? `<small${WT ? ' id="hLim"' : ""}>/${TURN_GOAL}</small>` : ""}</b></div>
         <!-- Water jar (LOU-278): water you have (blue), storage (jar and notches), next cycle's flow (teal) and any spill -->
         <button type="button" class="stat water jar" id="cWater"><svg class="jsvg" viewBox="0 0 40 52" aria-hidden="true">
             <defs><clipPath id="jclip"><path d="M8 7h24v31a12 12 0 01-24 0z"/></clipPath></defs>
             <path class="jglass" d="M8 7h24v31a12 12 0 01-24 0z"/>
             <g clip-path="url(#jclip)"><g class="jlvl" id="jFlow"><rect class="jteal" x="0" y="0" width="40" height="60"/></g>
-              <g class="jlvl" id="jWater"><path class="jwave" d="M-20 2q5-3 10 0t10 0t10 0t10 0t10 0t10 0t10 0v60h-70z"/></g></g>
-            <g id="jNotch"></g>
+              <g class="jlvl" id="jWater"><path class="jwave" d="M-20 2q5-3 10 0t10 0t10 0t10 0t10 0t10 0t10 0v60h-70z"/></g>${WT ? `<rect class="jlvl jamber" id="jAmber" x="0" y="0" width="40" height="60"/>` : ""}</g>
+            <g id="jNotch"></g>${WT ? `<g class="jlvl jres" id="jRes"><path class="jr0" d="M9 0h22"/><path class="jr1" d="M9 0h22"/></g>` : ""}
             <path class="jink" d="M8 7v31a12 12 0 0024 0V7"/><path class="jrim" d="M6 6.5h28"/>
             <path class="jfill" d="M20 1v30"/><g class="jpour" id="jPour"><path class="jstream" d="M32 7q5 1 5 9v10"/><circle class="jdrop d1" cx="37" cy="30" r="1.6"/><circle class="jdrop d2" cx="37" cy="30" r="1.3"/></g>
           </svg><span class="jnums"><b><svg class="jdrop" viewBox="0 0 12 15" aria-hidden="true"><path d="M6 1C6 1 1 7 1 10a5 5 0 0010 0C11 7 6 1 6 1z"/></svg><i id="hWater">0</i>${STORE ? `<small class="cap"> / <i id="hCap">0</i></small>` : ""}</b><em id="cFlow"><i class="jin"><svg class="jcyc" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 11-2.600-5.900"/><path d="M20 4v5h-5"/></svg>+<i id="hFlow">0</i><span id="jNext"> next cycle</span></i><i class="jsp" id="jSpill"></i></em></span></button>
@@ -131,6 +142,7 @@ document.body.innerHTML = `
           return `<div class="wx wind" id="cWind" aria-label="Wind from the ${["east","north-east","north-west","west","south-west","south-east"][f]}"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${deg}deg)"><path d="M3 12h15M13 6l6 6-6 6"/></svg>Wind</div>` })() : ""}
         ${CYCLE || WX ? `<div class="wx sky" id="cSky"><span id="lSky">Sky</span> <b id="hSky">Clear</b></div>` : ""}
       </div>
+      ${WT ? `<button type="button" class="wtstrip" id="wtStrip" aria-label="Weather"></button>` : ""}
       ${M.guided && M.objectives ? `<button type="button" class="tutskip" id="tutSkip" hidden>Skip guidance</button>` : ""}
       
     </div>
@@ -153,7 +165,7 @@ document.body.innerHTML = `
         <ul id="wGoals"></ul>
         ${M.share ? `<button type="button" class="dnext" id="share"><b>Share score</b><small id="nextS"></small></button>` : M.next ? `<a class="dnext" id="next" href="${M.next}"><b id="nextT">${M.nextLabel || "Next map"}</b><small id="nextS"></small></a>` : `<button type="button" class="dnext" id="again2"><b>Play again</b></button>`}
         <div class="dtoast" id="dToast" role="status" hidden></div>
-        <div class="dlinks">${M.share ? "" : `<button type="button" id="shareLv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg>Share</button>`}<button type="button" id="again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 102.600-5.900"/><path d="M4 4v5h5"/></svg><span id="againT">Replay</span></button><a href="${ROOT}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>Home</a></div>
+        <div class="dlinks">${M.share ? "" : `<button type="button" id="shareLv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg>Share</button>`}${WT ? `<button type="button" id="wtLog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16H7z"/><path d="M10 9h4M10 13h4"/></svg>Run log</button>` : ""}<button type="button" id="again"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 102.600-5.900"/><path d="M4 4v5h5"/></svg><span id="againT">Replay</span></button><a href="${ROOT}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>Home</a></div>
       </div>
     </div>
   </div>
@@ -170,12 +182,18 @@ document.body.innerHTML = `
     <button type="button" class="mrow" data-m="zoom"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></i><span><span id="mZoom">Whole island</span><small id="mZoomS">Zoom out to plan your route</small></span></button>
     <button type="button" class="mrow" data-m="guide" id="mGuide" hidden><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></i><span>Play with guidance<small>Restarts this level with the steps</small></span></button>
     <button type="button" class="mrow" data-m="settings"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></i><span>Settings<small>Sound, haptics, motion, guidance</small></span></button>
+    ${WT ? `<button type="button" class="mrow" data-m="tune"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 12h3M11 12h9M4 17h12M20 17h0"/><circle cx="16" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg></i><span>Tuning<small>Weather test values and the run log</small></span></button>` : ""}
     <label class="mrow" hidden><input type="checkbox" id="hard"></label>
     <button type="button" class="mrow rust" data-m="restart"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.500 9.500 0 00-6.700 2.800L3 8"/><path d="M3 3v5h5"/></svg></i><span>Restart level<small>Asks you to confirm</small></span></button>
     <div class="mconf" id="mConf" hidden><span>Restart this level? This run is lost.</span><button type="button" class="mgo" data-m="restartYes">Restart</button><button type="button" data-m="restartNo">Cancel</button></div>
     <a class="mrow" href="${ROOT}"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg></i><span>Home<small>Your progress is saved</small></span></a>
   </div></div>
   <div class="mwrap" id="setw" hidden><div class="msheet" role="dialog" aria-label="Settings"><i class="mgrip" aria-hidden="true"></i><div class="mhead"><b>Settings</b><button type="button" class="setx" id="setX">Done</button></div><div id="setBody"></div></div></div>
+  ${WT ? `<div class="mwrap" id="wtTune" hidden><div class="msheet wtsheet" role="dialog" aria-label="Weather test tuning"><i class="mgrip" aria-hidden="true"></i><div class="mhead"><b>Weather test tuning</b><button type="button" class="setx" id="wtDone">Done</button></div>
+    <p class="wtsaid" id="wtSaid" role="status"></p>
+    <div class="wtrows">${WT_FIELDS.map(([k, name, note, kind]) => `<label class="wtrow${kind === "text" || Array.isArray(kind) ? " wide" : ""}"><span>${name}${note ? `<small>${note}</small>` : ""}</span>${Array.isArray(kind) ? `<select id="wt_${k}">${kind.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>` : `<input id="wt_${k}" type="text" inputmode="${kind === "text" ? "text" : "decimal"}" autocomplete="off" autocapitalize="off" spellcheck="false">`}</label>`).join("")}</div>
+    <div class="wtbtns"><button type="button" id="wtReset">Reset</button><button type="button" id="wtCopyS">Copy settings</button><button type="button" id="wtCopyL">Copy run log</button></div>
+    <textarea class="wtout" id="wtOut" readonly hidden aria-label="Copied text"></textarea></div></div>` : ""}
   <div class="turncard" aria-hidden="true"><div><svg viewBox="0 0 24 24"><rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M11 18.500h2"/></svg><b>Turn your phone upright</b><span>Flow Tile plays in portrait.</span></div></div>
   <div class="uptoast" id="upToast" role="status" hidden><span>New version</span><button type="button" id="upGo">Reload</button></div>
   <div class="sheet" id="sheet" hidden><div class="spanel" id="spanel" role="group" aria-label="Selection"></div><div class="sacts" id="sacts"></div></div>
@@ -243,6 +261,7 @@ const starAim = s => STAR_DEFS[s.type].aim(s);
 // got: done. live: true so far (a "hold" goal). miss: broken. "": still open.
 function starState(s) { const d = STAR_DEFS[s.type], ok = starOk(s); if (d.hold) return !ok ? "miss" : S.phase === "won" ? "got" : "live"; return ok ? "got" : "" }
 function aims() {
+  if (WT) return [`Grow as much <b>life</b> as you can in <b>${wtLimit()} water cycles</b>`, "Keep your water between the dashed <b>reserve</b> line and the rim", "Over the rim, the river <b>floods</b> its banks. Under the reserve, land <b>dries</b>"];
   if (PERF) return [`Score as many points as you can in <b>${TURN_GOAL} turns</b>`, `Stars at <b>${(M.scoreStars || [20, 30, 40]).join(", ")}</b> points`, "Reaching the sea ends the run with a bonus"];
   return STARS.filter(s => !(s.type === "bloom" && !s.n)).map(starAim);
 }
@@ -536,6 +555,7 @@ function build(mv) {
   if (b.t === "cave" && b.mate) { const q = b.mate, k = at(q); k.river = true; k.rid = S.active; k.from = null; anim.set(q + "", now() + 500); S.head = q;
     const r2 = claimRunoff([q]); notes.push("Through the cave") }
   if (b.t === "ocean") { S.phase = "won"; sfx("sea"); wave = now(); float(mv.p, "Splash!", "#ffffff"); say("You reached the sea!"); return }
+  if (WT) { say(notes.length ? note1(notes) + "." : ""); return } // weather test: no dead end, you can always grow or wait for the next cycle
   if (TRIB && openRivers().length && (!moves().size || (S.income === 0 && !affordable()))) { notes.unshift(`This river is stuck. Switch to your ${riverName(openRivers()[0]).toLowerCase()}`); say(note1(notes) + ".", true); return }
   if (PERF && (!moves().size || (S.income === 0 && !affordable()))) { S.phase = "won"; wave = now(); say("Your river can't go on. Island scored."); return }
   if (!moves().size && RECH) { notes.unshift("Dead end. Tap your river to rechannel"); say(note1(notes) + ".", true); return }
@@ -547,11 +567,12 @@ function build(mv) {
 }
 // What the next end of turn brings: flow, weather, and any cloud raining back.
 function forecast(turn = S.turn + 1) {
+  if (WT) return {wx:null, rain:0, dry:0, gain:wtFlow(turn).gain}; // weather test: the river's own flow times the weather, plus terrain flow
   const wx = WX && WX[turn], rain = (S.clouds || []).filter(c => c.turn === turn).reduce((n, c) => n + c.gal, 0);
   const dry = (S.dry > 0 || wx === "drought") ? 1 : 0, gain = Math.max(0, S.income - dry) + (wx === "rain" ? 2 : 0);
   return {wx, rain, dry, gain};
 }
-function endTurn() { if (S.phase !== "play") return; closeCard(); snapshot();
+function endTurn() { if (S.phase !== "play") return; if (WT) return wtEndTurn(); closeCard(); snapshot();
   const f = forecast(), notes = []; S.turn++; S.clouds ||= [];
   if (S.dry > 0) S.dry--; if (f.wx === "drought") S.dry = 1;
   S.water += f.gain; bump("cWater"); wave = now(); if (f.gain > 0 && !quiet) { const j = $("cWater"); j.classList.remove("fill"); void j.offsetWidth; j.classList.add("fill") } // the jar refills with a teal pour
@@ -680,6 +701,7 @@ function start(p, placed) { const c = at(p); closeCard(); track("level_start");
   if (!placed) snapshot(); c.river = true; c.rid = 0; S.rivers = [{src:p, joined:false, head:p, grp:0, pend:0, combo:0}]; S.active = 0; S.head = p; S.income = c.yield; S.turn = 1; S.phase = "play"; syncCap(); hsel = true; S.water = STORE ? Math.min(c.yield, S.cap) : c.yield;
   anim.set(p + "", now()); wave = now(); float(p, `+${c.yield} gal per water cycle`, "#bfe4ff");
   const ro = claimRunoff([p]);
+  if (WT) wtStart();
   say("Tap a ring to flow.");
   zoomTo(lay.zAuto);
 }
@@ -736,9 +758,9 @@ function winSheet(old) { const el = $("win"), t0 = reduce || old ? 0 : 1.05, gap
   let rows, n, title = "You reached the sea", scoreLine = "";
   if (PERF) { const prev = getNum(bestKey), sc = old ? {total:prev, sea:0} : score(), st = M.scoreStars || [20, 30, 40]; n = perfStars(sc.total); if (sc.total > prev) setNum(bestKey, sc.total);
     title = old ? "Played today" : sc.sea ? "You reached the sea" : "Island scored"; const best = Math.max(prev, sc.total);
-    scoreLine = `<b>${sc.total} point${sc.total === 1 ? "" : "s"}</b>${old ? "" : sc.total > prev && prev ? ` · New best (was ${prev})` : sc.total > prev ? " · New best" : ` · Best ${prev}`}`;
+    scoreLine = `<b>${WT ? `Life ${sc.total}` : `${sc.total} point${sc.total === 1 ? "" : "s"}`}</b>${old ? "" : sc.total > prev && prev ? ` · New best (was ${prev})` : sc.total > prev ? " · New best" : ` · Best ${prev}`}`;
     if (M.daily) { const k = dailyStreak(!old); scoreLine += `<span>Best today ${best} · ${k} day${k === 1 ? "" : "s"} in a row</span>` }
-    rows = st.map(x => [sc.total >= x, `${x} points`, sc.total >= x ? `You scored ${sc.total}` : `${x - sc.total} more to go`]) }
+    rows = st.map(x => [sc.total >= x, WT ? `Life ${x}` : `${x} points`, sc.total >= x ? `You scored ${sc.total}` : `${x - sc.total} more to go`]) }
   else { rows = STARS.map(s => { const ok = starOk(s); return [ok, ...starEnd(s, ok)] }); n = rows.filter(r => r[0]).length }
   if (n > getNum(starKey)) setNum(starKey, n);
   tx("winTitle", title); const ws = $("wScore"); ws.hidden = !scoreLine; ws.innerHTML = scoreLine;
@@ -832,7 +854,7 @@ function jar() { const play = S.phase === "play", g = play ? forecast().gain : S
   [...nb.children].forEach((l, i) => { requestAnimationFrame(() => l.style.transform = `translateY(${lv(i + 1)}px)`) });
   const warn = !!S.moved; // not before your first move: you don't know what spilling is yet
   $("cWater").classList.toggle("spilling", warn && (sp > 0 || (STORE && S.water >= S.cap && g > 0)));
-  tx("jNext", sp && warn ? "" : " next cycle"); { const js = $("jSpill"), h = sp && warn ? ` · ${SPILL}${sp} spill` : ""; if (js && js.innerHTML !== h) js.innerHTML = h } }
+  tx("jNext", sp && warn ? "" : " next cycle"); { const js = $("jSpill"), h = sp && warn ? ` · ${SPILL}${sp} spill` : ""; if (js && js.innerHTML !== h) js.innerHTML = h } if (WT) wtJar() }
 const SPILL = '<svg class="spi" viewBox="0 0 16 14" aria-hidden="true"><path d="M8 1.500S5 5 5 7.300a3 3 0 006 0C11 5 8 1.500 8 1.500z"/><path class="spl" d="M1.500 8.500l2.200 1.200M14.500 8.500l-2.200 1.200M2.500 12.500h11"/></svg>'; // a drop landing with a splash: a spill is never told by colour alone (LOU-293)
 // Next water cycle (LOU-270): muted while you can still afford something, bright and pulsing once you can't.
 const nothingLeft = () => !affordable() && !canPlant();
@@ -846,6 +868,7 @@ function sync() {
   const gain = $("gain"), play = S.phase === "play"; gain.hidden = !play;
   if (play) { const f = forecast(), g = STORE ? Math.min(f.gain, Math.max(0, S.cap - S.water)) : f.gain, sp = f.gain - g;
     gain.innerHTML = `+${g} water${sp && S.moved ? `<span class="sp"> · ${SPILL}${sp} spill</span>` : ""}`; gain.classList.toggle("spill", sp > 0 && !!S.moved) }
+  if (WT) wtSync();
   { const ub = $("uBadge"), left = UNDOS - (S.undos || 0); ub.hidden = !hard(); ub.textContent = Math.max(0, left) } // hard mode: undos left
   if ($("mGuide")) $("mGuide").hidden = !TUT || !!tutStep();
   { const st = stuckNow(), el = $("stuck"); if (el.hidden === st) el.hidden = !st; $("stUndo").disabled = !history.length }
@@ -875,7 +898,7 @@ function seaAsk(p, a) { if (tutStep() || at(p).t !== "ocean") return false; cons
 function seaDone(finish) { const a = seaAct; seaAct = null; $("seaq").hidden = true; if (finish && a) runAct(a) }
 // Stuck helper (LOU-286): no affordable move or build and Next water cycle wouldn't change that, or the river's end has no tile
 // it can enter. Not on rechannel maps while you can still rechannel (there the game points at Rechannel), and not in the tutorial.
-function stuckNow() { if ((tutStep() && tutStep().lock) || !S.head) return false; if (S.phase === "stuck") return true; if (S.phase !== "play" || RECH) return false;
+function stuckNow() { if (WT) return false; if ((tutStep() && tutStep().lock) || !S.head) return false; if (S.phase === "stuck") return true; if (S.phase !== "play" || RECH) return false;
   if (TRIB && openRivers().length) return false; const mv = [...moves().values()]; if (!mv.length) return true;
   if (affordable() || canPlant() || (S.water >= PLANT_COST && ORDER.some(plantable))) return false;
   if (forecast().gain <= 0 && !(S.clouds || []).length && !WX) return true; // a water cycle brings nothing
@@ -1069,8 +1092,8 @@ function renderCard() {
   // the main choice: the next growth step (or the one thing this tile is for); it gets the mint-teal fill
   const main = cardActs.find(a => ["plant", "alpine", "melt", "collect", "src", "trib"].includes(a.k)) || (cardActs.length === 1 ? cardActs[0] : null);
   const acts = cardActs.map((a, i) => { const v = actView(a, sel), can = canDo(a) && !a.far, off = lock && a !== main; // in a locked tutorial step only the step's own button answers
-    return `<button type="button" class="sact${a === main ? " main" : ""}${can ? "" : " cant"}${off ? " off" : ""}" data-a="${i}" aria-disabled="${can && !off ? "false" : "true"}"><i class="sbtn">${v.icon}</i><b>${v.label}</b><span class="scost">${v.cost === "free" || /[a-z]/.test(v.cost) ? "" : DROP}${v.cost}</span>${v.fx ? `<small>${v.fx}</small>` : ""}${v.warn ? `<small class="swarn">${v.warn}</small>` : ""}</button>` }).join("");
-  sheetHtml = {panel:`${tileIcon(c)}<div class="stx"><div class="sttl"><b class="tnm">${tileName(c)}</b></div><small>${tileBrief(sel)}</small></div><button type="button" class="sclose" id="sclose" aria-label="Close">${CHEV}</button>`, acts, n:cardActs.length};
+    return `<button type="button" class="sact${a === main ? " main" : ""}${can ? "" : " cant"}${off ? " off" : ""}" data-a="${i}" aria-disabled="${can && !off ? "false" : "true"}"><i class="sbtn">${v.icon}</i><b>${v.label}</b><span class="scost${can && wtLow(a.cost) ? " low" : ""}">${v.cost === "free" || /[a-z]/.test(v.cost) ? "" : DROP}${v.cost}</span>${v.fx ? `<small>${v.fx}</small>` : ""}${v.warn ? `<small class="swarn">${v.warn}</small>` : ""}</button>` }).join("");
+  sheetHtml = {panel:`${tileIcon(c)}<div class="stx"><div class="sttl"><b class="tnm">${tileName(c)}</b></div><small>${tileBrief(sel)}${WT && c.silt && !c.river ? " A flood left silt here (no effect in this test)." : ""}</small></div><button type="button" class="sclose" id="sclose" aria-label="Close">${CHEV}</button>`, acts, n:cardActs.length};
 }
 function placeCard() {} // the panel sits at the bottom now; the camera makes room for the selected tile instead (see sheetSync)
 function closeCard() { if (seaAct && !sel) seaDone(false); if (!sel && !info) return; sel = null; sheetHtml = null; info = false; cardActs = []; $("tcard").hidden = true; draw() }
@@ -1080,8 +1103,8 @@ function renderInfo() {
   const el = $("tcard"), f = forecast(); let cells = "";
   if (STORE) { for (let i = 0; i < S.cap; i++) cells += `<i class="${i < S.water ? "f" : ""}"></i>`; cells = `<div class="cells big" aria-hidden="true">${cells}</div>` }
   const rv = TRIB && S.rivers.length > 1 ? `<div class="rivers">${S.rivers.map((r, i) => `<button data-r="${i}" class="${i === S.active ? "on" : ""}" ${r.joined || S.phase !== "play" ? "disabled" : ""}>${riverName(i)}<small>${r.joined ? "joined" : onMain(i) ? `+${S.income} flow` : `+${flowOf(i)} flow once joined`}</small></button>`).join("")}</div>` : "";
-  el.innerHTML = `<div class="thead"><i class="swatch" style="background:#2f9be8"></i><div class="tname"><b>Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gal</b><small>${STORE ? "Water over storage spills at the next water cycle. Plant by the river to store more." : "Every cost is paid in water."}</small></div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${cells}` +
-    `<div class="wline"><span>Flow</span><b class="flw">+${S.income} gal per water cycle</b></div>${ALP && S.tiles.flat().some(c => c.alp) ? `<div class="wline"><span>Snow</span><b>${snowTotal()} banked (tap an alpine tree to melt)</b></div>` : ""}${S.phase === "play" ? `<div class="wline"><span>Next water cycle</span><b>+${Math.min(f.gain, STORE ? Math.max(0, S.cap - S.water) : f.gain)} gal${STORE && f.gain > S.cap - S.water ? `, ${f.gain - Math.max(0, S.cap - S.water)} spills` : ""}${f.dry ? " (drought)" : ""}</b></div>` : ""}${rv}`;
+  el.innerHTML = `<div class="thead"><i class="swatch" style="background:#2f9be8"></i><div class="tname"><b>Water: ${S.water}${STORE ? ` of ${S.cap}` : ""} gal</b><small>${WT ? "Over storage, the river floods its banks. Under the reserve, land dries." : STORE ? "Water over storage spills at the next water cycle. Plant by the river to store more." : "Every cost is paid in water."}</small></div><button class="tclose" id="tclose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${cells}` +
+    `<div class="wline"><span>Flow</span><b class="flw">+${S.income} gal per water cycle</b></div>${ALP && S.tiles.flat().some(c => c.alp) ? `<div class="wline"><span>Snow</span><b>${snowTotal()} banked (tap an alpine tree to melt)</b></div>` : ""}${WT ? wtInfo() : S.phase === "play" ? `<div class="wline"><span>Next water cycle</span><b>+${Math.min(f.gain, STORE ? Math.max(0, S.cap - S.water) : f.gain)} gal${STORE && f.gain > S.cap - S.water ? `, ${f.gain - Math.max(0, S.cap - S.water)} spills` : ""}${f.dry ? " (drought)" : ""}</b></div>` : ""}${rv}`;
   el.className = "tcard"; el.style.top = ""; el.hidden = false;
 }
 $("cWater").onclick = () => { if (!tutGate("water")) return; if (info) { closeCard(); return } closeCard(); hsel = false; info = true; renderInfo(); sync() };
@@ -1253,6 +1276,7 @@ if (false) $("oSkip").onclick = () => { try { localStorage.setItem("flowtile.see
 
 // ---------- Perfection score
 function score() {
+  if (WT) return wtScore(); // weather test: the score is life
   const c = combos(), lakes = S.lakes.filter(L => L.filled).length, sea = S.tiles.flat().some(k => k.t === "ocean" && k.river);
   const part = {river:S.tiles.flat().filter(k => k.river && k.t !== "source" && k.t !== "ocean" && k.t !== "lake").length, green:bloomCount(), combos:3 * c.length, fish:fishCount(), lakes:2 * lakes, sea:sea ? 5 + Math.max(0, TURN_GOAL - S.turn) : 0};
   part.total = Object.values(part).reduce((a, b) => a + b, 0); return part;
@@ -1285,6 +1309,139 @@ function goals() {
     if (reduce) continue; const c = el.querySelector(`[data-i="${i}"]`); if (!c) continue;
     if (st === "got") c.classList.add("earn"); else if (st === "miss") c.classList.add("lose") } // a short pulse and sparkle when earned (0.4s); a missed goal greys with a thin strike
 }
+
+// ---------- Weather test (LOU-296): an experiment behind one switch. Nothing in this block runs unless WT is true, which
+// needs a map marked weatherTest and the "Weather test" switch (Levels page) turned on. It adds, and changes nothing else:
+//   - a weather strip: each water cycle has a multiple for the river's own flow; terrain flow is added after it
+//   - a reserve level that rises as the river grows; nothing is deducted for it
+//   - right after flow arrives, each gal over storage floods one bank tile (it loses what grew there and keeps a silt
+//     mark), and each gal under the reserve dries one grown tile by one stage
+//   - the score is life, counted when the turn limit is up
+// Every number comes from weather-test.config.js (window.WEATHER_TEST); the tuning panel keeps one device's changes.
+// wtPlan() is the one place that works out what a water cycle will do. The jar, the Next water cycle pill, the map
+// outlines and the cycle itself all read it, so the preview can't disagree with the result.
+const WT_KEY = "flowtile.weathertest.cfg", WT_KINDS = ["normal", "flood", "drought"], WT_NAME = {normal:"Normal", flood:"Flood", drought:"Drought"};
+const wtDefaults = () => { const d = window.WEATHER_TEST; return {...d, weather:{...d.weather}, life:{...d.life}} }; // the defaults are weather-test.config.js, and only that file
+let wtC = null, wtNow = null, wtWas = null;
+function wtCfg() { if (wtC) return wtC; const d = wtDefaults(); let o = {}; try { o = JSON.parse(localStorage.getItem(WT_KEY) || "{}") || {} } catch (_) {}
+  return wtC = {...d, ...o, weather:{...d.weather, ...(o.weather || {})}, life:{...d.life, ...(o.life || {})}} }
+function wtSet(o) { try { if (o) localStorage.setItem(WT_KEY, JSON.stringify(o)); else localStorage.removeItem(WT_KEY) } catch (_) {} wtC = null }
+// "4 normal, 1 flood, 2 normal, 2 drought" -> one kind per water cycle, starting with cycle 1; it repeats
+function wtSched(s = wtCfg().schedule) { const out = [];
+  for (const part of String(s).toLowerCase().split(/[,;]+/)) { const m = part.trim().match(/^(\d+)?\s*([a-z])/); if (!m) continue; const k = WT_KINDS.find(x => x[0] === m[2]); if (!k) continue;
+    for (let i = 0, n = Math.min(60, m[1] ? +m[1] : 1); i < n; i++) out.push(k) }
+  return out.length ? out : ["normal"] }
+const wtKind = turn => { const s = wtSched(); return s[(Math.max(1, turn) - 1) % s.length] };
+const wtMult = k => { const m = +wtCfg().weather[k]; return isFinite(m) && m >= 0 ? m : 1 };
+const wtFrac = m => { for (const [v, s] of [[1 / 3, "⅓"], [.5, "½"], [.25, "¼"], [2 / 3, "⅔"], [.75, "¾"]]) if (Math.abs(m - v) < .012) return s; return String(Math.round(m * 100) / 100) };
+const wtLimit = () => Math.max(1, Math.round(+wtCfg().turnLimit) || 30);
+// The reserve: the starting reserve, +1 for every N river tiles (the source counts; the sea doesn't)
+function wtReserve() { const c = wtCfg(), ev = +c.reserveEvery; return Math.max(0, Math.round(+c.reserve || 0) + (ev > 0 ? Math.floor(cnt(k => k.river && k.t !== "ocean") / ev) : 0)) }
+// Flow arriving at a cycle: the river's own flow (the source's) times the weather, rounded to a whole gal, plus terrain flow
+function wtFlow(turn = S.turn + 1) { const c = wtCfg(), kind = wtKind(turn), mult = wtMult(kind), rf = Math.max(0, +c.riverFlow || 0);
+  const inc = Math.max(0, S.income + (S.wt ? rf - S.wt.base : 0)), base = Math.min(rf, inc), terrain = inc - base, river = Math.round(base * mult);
+  return {kind, mult, river, terrain, gain:river + terrain} }
+// Which tiles a flood takes: bank tiles (plain or bare land beside the river), nearest the river's end first
+function wtFloodTiles(n) { if (n <= 0 || !S.head) return []; const grown = wtCfg().floodOrder === "grown", es = ends();
+  return ORDER.filter(p => { const c = at(p); return !c.river && (c.t === "bare" || c.t === "meadow") && riverBy(p) })
+    .map(p => ({p, g:at(p).g > 0 ? 0 : 1, d:Math.min(...es.map(e => hexDist(p, e)))}))
+    .sort((a, b) => (grown ? a.g - b.g : 0) || a.d - b.d || a.p[1] - b.p[1] || a.p[0] - b.p[0]).slice(0, n).map(x => x.p) }
+// Which tiles dry: grown tiles furthest from the river first (ties: furthest from the river's end). Each gal short dries one
+// tile by one stage; a tile dries twice in one check only when every grown tile has already dried once.
+function wtDryTiles(n) { if (n <= 0 || !S.head) return []; const rv = ORDER.filter(p => at(p).river && at(p).t !== "ocean"), near = wtCfg().dryOrder === "near";
+  const list = ORDER.filter(p => { const c = at(p); return !c.river && c.g > 0 && !c.alp }).map(p => ({p, d:Math.min(...rv.map(r => hexDist(p, r))), e:hexDist(p, S.head)}))
+    .sort((a, b) => (near ? a.d - b.d : b.d - a.d) || b.e - a.e || a.p[1] - b.p[1] || a.p[0] - b.p[0]);
+  const out = [], left = list.map(x => at(x.p).g); let total = left.reduce((a, b) => a + b, 0);
+  for (let i = 0; out.length < n && total > 0; i = (i + 1) % list.length) if (left[i] > 0) { left[i]--; total--; out.push(list[i].p) }
+  return out }
+function wtPlan(turn = S.turn + 1) { const f = wtFlow(turn), level = S.water + f.gain, floodN = Math.max(0, level - S.cap), dryN = Math.max(0, wtReserve() - level);
+  return {...f, turn, level, floodN, dryN, flood:wtFloodTiles(floodN), dry:wtDryTiles(dryN)} }
+const wtLife = () => { const w = wtCfg().life, k = [0, +w.grass || 0, +w.meadow || 0, +w.trees || 0]; let n = 0; for (const r of S.tiles) for (const c of r) if (!c.river && c.g > 0) n += k[Math.min(c.g, TREES)]; return n };
+function wtScore() { const total = wtLife(); return {life:total, sea:0, total} }
+const wtLow = cost => WT && !!S.wt && cost > 0 && S.water >= cost && S.water - cost < wtReserve(); // this spend takes the water below the reserve
+// A run starts with the config's water, river flow and storage (as today: 3, 3 and 5)
+function wtStart() { const c = wtCfg(), src = at(S.head), rf = Math.max(0, Math.round(+c.riverFlow || 0));
+  S.income = Math.max(0, S.income - src.yield + rf); S.cap = Math.max(1, S.cap - STORE + Math.round(+c.startStorage || STORE)); S.water = Math.min(Math.max(0, Math.round(+c.startWater || 0)), S.cap);
+  S.wt = {base:rf, log:[{cycle:1, weather:wtKind(1), flow:"", level:S.water, reserve:wtReserve(), storage:S.cap, flooded:0, dried:0, life:wtLife()}]} }
+function wtFlood(p) { const c = at(p); c.g = 0; c.bloom = false; c.wild = false; c.mine = false; c.silt = (c.silt || 0) + 1; anim.set("g:" + p, now()); float(p, "Flooded", "#bfe4ff") }
+function wtDry(p) { const c = at(p); if (!(c.g > 0)) return false; if (c.wild) { c.wild = false; c.nos = 1 } c.g--; if (!c.g) { c.bloom = false; c.mine = false } if (c.pr < 0) c.pr = 0; anim.set("g:" + p, now()); float(p, "Dried", "#ffd27a"); return true }
+// Next water cycle: flow arrives, then the level is checked, then you spend. Unspent water carries over.
+function wtEndTurn() { closeCard(); snapshot(); const c = wtCfg(), lim = wtLimit();
+  if (S.turn >= lim) { S.wt.log.push({cycle:"end", life:wtLife()}); S.phase = "won"; wave = now(); say(`${lim} water cycles: life ${wtLife()}.`); return }
+  const plan = wtPlan(), cap0 = S.cap, res0 = wtReserve(), rf = Math.max(0, +c.riverFlow || 0);
+  if (rf !== S.wt.base) { S.income = Math.max(0, S.income + rf - S.wt.base); S.wt.base = rf } // a tuned river flow starts with this cycle
+  S.turn++; S.water += plan.gain; bump("cWater"); wave = now(); sfx("cycle"); buzz(18);
+  if (plan.gain > 0 && !quiet) { const j = $("cWater"); j.classList.remove("fill"); void j.offsetWidth; j.classList.add("fill") }
+  const src = S.rivers[0] && S.rivers[0].src; if (src) float(src, `+${plan.gain} gal`, "#bfe4ff");
+  let fl = 0, dr = 0; for (const p of plan.flood) { wtFlood(p); fl++ } for (const p of plan.dry) if (wtDry(p)) dr++;
+  if (fl || dr) recombo(); // storage and groves are recounted by the game's own rules
+  if (S.water > S.cap) S.water = S.cap; // over storage: the rest went over the banks
+  if (fl) { sfx("spill"); sky = {kind:"rain", t0:now()} } else if (dr) sky = {kind:"drought", t0:now()};
+  for (const h of turnHooks) h();
+  S.wt.log.push({cycle:S.turn, weather:plan.kind, flow:plan.gain, level:plan.level, reserve:res0, storage:cap0, flooded:fl, dried:dr, life:wtLife()});
+  const head = `+${plan.gain} water${fl ? ` · ${fl} flooded` : ""}${dr ? ` · ${dr} dried` : ""}`;
+  showBanner(`Turn ${S.turn}`, head); say(head, !!(fl || dr)) }
+// The run log, one line per water cycle, as comma-separated text
+function wtCsv() { const v = x => x == null ? "" : x, rows = (S.wt && S.wt.log) || [];
+  return ["cycle,weather,flow,level at check,reserve,storage,flooded,dried,life", ...rows.map(r => [r.cycle, r.weather, r.flow, r.level, r.reserve, r.storage, r.flooded, r.dried, r.life].map(v).join(","))].join("\n") }
+// ---- HUD (only when the switch is on). Flood is always blue, drying always amber, and each also says its word.
+const WT_ICON = {normal:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.500 18h9.500a3.800 3.800 0 00.300-7.600 5.400 5.400 0 00-10.400 1.300A3.200 3.200 0 007.500 18z"/></svg>',
+  flood:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.500 14h9.500a3.800 3.800 0 00.300-7.600A5.400 5.400 0 006.900 7.700 3.200 3.200 0 007.500 14z"/><path d="M8.500 17l-1 3M12.500 17l-1 3M16.500 17l-1 3"/></svg>',
+  drought:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3.500v2M12 18.500v2M3.500 12h2M18.500 12h2M6 6l1.400 1.400M16.600 16.600L18 18M18 6l-1.400 1.400M7.400 16.600L6 18"/></svg>'};
+function wtRefresh() { wtNow = S.phase === "play" && S.wt ? wtPlan() : null }
+function wtJar() { wtRefresh(); const j = $("jRes"), a = $("jAmber"), cw = $("cWater"); if (!j || !a) return;
+  const cap = Math.max(1, S.cap), top = 7, bot = 50, lv = v => bot - (bot - top) * Math.min(1, v / cap), res = wtReserve(), on = S.phase !== "pick" && res > 0;
+  j.style.transform = `translateY(${lv(res)}px)`; j.style.opacity = on ? 1 : 0;
+  a.style.transform = `translateY(${Math.max(lv(res), lv(S.water) + 2.5)}px)`; a.style.opacity = on && S.water > 0 ? 1 : 0; // water below the reserve line is tinted amber
+  const p = wtNow, fl = p ? p.flood.length : 0, dr = p ? p.dry.length : 0; if (p) tx("hFlow", p.gain);
+  tx("jNext", fl || dr ? "" : " next cycle"); const js = $("jSpill"), h = fl ? ` · ${fl} flood` : dr ? ` · ${dr} dry` : ""; if (js && js.innerHTML !== h) js.innerHTML = h;
+  cw.classList.toggle("wtflood", fl > 0); cw.classList.toggle("wtdry", !fl && dr > 0); cw.classList.toggle("spilling", fl > 0) }
+function wtSync() { const play = S.phase === "play" && !!S.wt, p = wtNow, lim = wtLimit();
+  tx("hScore", wtLife()); tx("hLim", "/" + lim);
+  $("cWater").setAttribute("aria-label", `Water: ${S.water} of ${S.cap} gallons. Reserve: ${wtReserve()}. Tap for details`);
+  // spending below the reserve: allowed, with no dialog; the message line says so
+  if (play) { if (wtWas && wtWas.turn === S.turn && S.water < wtWas.water && S.water < wtReserve()) { S.msg = "Below reserve."; S.warn = true } wtWas = {turn:S.turn, water:S.water} } else wtWas = null;
+  const gain = $("gain"); if (play && p) { const fl = p.flood.length, dr = p.dry.length; gain.classList.remove("spill");
+    gain.innerHTML = fl ? `+${p.gain} · <span class="wtf">floods ${fl}</span>` : dr ? `+${p.gain} · <span class="wtd">dries ${dr}</span>` : `+${p.gain} water` }
+  // the weather strip: one chip for each coming cycle; the first is the next cycle and is drawn stronger
+  const st = $("wtStrip"); if (st) { const n = Math.max(1, Math.min(6, Math.round(+wtCfg().forecast) || 5)), t0 = Math.max(1, S.turn) + 1; let h = "", lab = [];
+    for (let i = 0; i < n; i++) { const k = wtKind(t0 + i), m = "×" + wtFrac(wtMult(k)); lab.push(`${WT_NAME[k]} ${m}`);
+      h += `<span class="wtc ${k}${i ? "" : " next"}"><small>${WT_NAME[k]}</small><b>${WT_ICON[k]}${m}</b></span>` }
+    if (st.dataset.k !== h) { st.dataset.k = h; st.innerHTML = h; st.setAttribute("aria-label", "Weather for the next water cycles: " + lab.join(", ")) } } }
+// Map preview: tiles that will flood at the next water cycle are outlined blue, tiles that will dry amber
+function wtDraw(t) { const p = wtNow; if (!p || S.phase !== "play") return; const pu = reduce ? 1 : .72 + .28 * osc(t, 1.6);
+  const mark = (q, col, wash, word) => { const o = iso(...q); ctx.save(); rpath(hexPts(q, R - 5), 9); ctx.fillStyle = wash; ctx.fill(); ink("rgba(255,255,255,.9)", 4.6); ctx.globalAlpha = pu; rpath(hexPts(q, R - 5), 9); ink(col, 2.8); ctx.restore(); tag(o.x, o.y + 15, word, col, 12) };
+  for (const q of p.flood) mark(q, "#2f7fb8", "rgba(47,127,184,.14)", "floods");
+  for (const k of new Set(p.dry.map(String))) mark(k.split(",").map(Number), "#b9720a", "rgba(232,160,40,.16)", "dries") }
+// A silt mark: a few pale ripples the flood left on a bare tile (no effect in this test)
+function wtSilt(o, h) { ctx.save(); ctx.globalAlpha = .8; for (let i = 0; i < 3; i++) { const y = o.y - 7 + i * 6.5, x = o.x - 17 + ((h + i * 5) % 7);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.bezierCurveTo(x + 6, y - 3, x + 12, y + 3, x + 18, y); ctx.bezierCurveTo(x + 23, y - 2.5, x + 28, y + 1.5, x + 32, y); ink("#a08a66", 1.9) } ctx.restore() }
+function wtInfo() { const p = wtNow, res = wtReserve(), ev = +wtCfg().reserveEvery;
+  return `<div class="wline"><span>Reserve</span><b>${res} gal${ev > 0 ? ` (+1 for every ${ev} river tiles)` : ""}</b></div>` + (p ? `<div class="wline"><span>Next water cycle</span><b>${WT_NAME[p.kind]} ×${wtFrac(p.mult)}: +${p.gain} gal${p.flood.length ? `, floods ${p.flood.length}` : p.dry.length ? `, dries ${p.dry.length}` : ""}</b></div>` : "") }
+// ---- Tuning panel (test only, from the menu): every test value, Reset, Copy settings and Copy run log
+const wtGet = (o, k) => k.split(".").reduce((a, b) => a == null ? a : a[b], o);
+const wtNumText = v => { for (const [x, s] of [[1 / 3, "1/3"], [2 / 3, "2/3"]]) if (Math.abs(v - x) < .005) return s; return String(Math.round(v * 1000) / 1000) };
+const wtNum = s => { const m = String(s).trim().match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/); const v = m ? +m[1] / +m[2] : parseFloat(s); return isFinite(v) && v >= 0 ? v : null };
+function wtTuneFill() { const c = wtCfg(); for (const [k, , , kind] of WT_FIELDS) { const el = $("wt_" + k); if (el) el.value = Array.isArray(kind) || kind === "text" ? wtGet(c, k) : kind === "num" ? wtNumText(+wtGet(c, k)) : String(wtGet(c, k)) } }
+function wtTuneRead() { const d = wtDefaults(), o = {weather:{...d.weather}, life:{...d.life}};
+  for (const [k, , , kind] of WT_FIELDS) { const el = $("wt_" + k); if (!el) continue; let v = el.value;
+    if (kind === "int" || kind === "num") { v = wtNum(v); if (v == null) v = wtGet(d, k); if (kind === "int") v = Math.round(v) } else if (kind === "text") v = wtSched(v).length && /[a-z]/i.test(v) ? v : d.schedule;
+    const [a, b] = k.split("."); if (b) o[a][b] = v; else o[a] = v }
+  return o }
+const wtSettingsText = () => { const c = wtCfg(); return ["Flow Tile weather test settings", ...WT_FIELDS.map(([k, name, , kind]) => `${name}: ${kind === "num" ? wtNumText(+wtGet(c, k)) : Array.isArray(kind) ? (kind.find(x => x[0] === wtGet(c, k)) || kind[0])[1] : wtGet(c, k)}`)].join("\n") };
+function wtTune(open) { const w = $("wtTune"); if (!w) return; if (!open) { w.hidden = true; return } wtTuneFill(); $("wtOut").hidden = true; tx("wtSaid", "A change applies from the next water cycle."); w.hidden = false }
+async function wtCopy(text, what) { const ok = await copyText(text), out = $("wtOut"); out.value = text; out.hidden = false; tx("wtSaid", ok ? `${what} copied.` : `Couldn't copy here. Select the text below.`) }
+function wtInit() { $("app").classList.add("wt");
+  $("wtStrip").onclick = e => { const g = $("gpop"), chip = $("wtStrip"); g.innerHTML = "<b>Weather multiplies your river's flow.</b>"; g.hidden = false;
+    const r = chip.getBoundingClientRect(), br = $("board").getBoundingClientRect(), w = g.offsetWidth, x = Math.max(8, Math.min(br.width - w - 8, r.left - br.left + r.width / 2 - w / 2));
+    g.style.left = x + "px"; g.style.top = (r.bottom - br.top + 8) + "px"; g.style.setProperty("--ax", (r.left - br.left + 34 - x) + "px"); clearTimeout(gpopT); gpopT = setTimeout(() => { g.hidden = true }, 4500); e.stopPropagation() };
+  const w = $("wtTune"); w.addEventListener("click", e => { if (e.target === w) wtTune(false) });
+  w.addEventListener("change", e => { if (!e.target.id || !e.target.id.startsWith("wt_")) return; wtSet(wtTuneRead()); wtTuneFill(); tx("wtSaid", "Saved. It applies from the next water cycle."); sync() });
+  $("wtDone").onclick = () => wtTune(false);
+  $("wtReset").onclick = () => { wtSet(null); wtTuneFill(); tx("wtSaid", "Back to the defaults."); sync() };
+  $("wtCopyS").onclick = () => wtCopy(wtSettingsText(), "Settings");
+  $("wtCopyL").onclick = () => wtCopy(wtCsv(), "Run log");
+  if ($("wtLog")) $("wtLog").onclick = async () => dToast(await copyText(wtCsv()) ? "Run log copied." : "Couldn't copy on this device.") }
 
 // ---------- persistence: keep the current run across app close/reopen
 const SAVE_KEY = "flowtile.run.v5." + M.id; // v5: growth rebalance (LOU-279)
@@ -1926,6 +2083,7 @@ function draw() {
     if (kg < 1) { ctx.globalAlpha = 1 - kg; ctx.beginPath(); ctx.ellipse(o.x, o.y, 10 + kg * 34, 5 + kg * 17, 0, 0, 7); ink("rgba(255,255,255,.9)", 2.6); ctx.globalAlpha = 1 } // the green ripple
     const s = kg < 1 ? easeBack(kg) : 1;
     if (s !== 1) { ctx.save(); ctx.translate(o.x, o.y); ctx.scale(s, s); ctx.translate(-o.x, -o.y) }
+    if (WT && c.silt && !c.river && !c.g) wtSilt(o, h);
     deco(p, c, o, t, h);
     if (s !== 1) ctx.restore();
   }
@@ -1936,7 +2094,7 @@ function draw() {
     const c = at(p), o = iso(...p), h = hsh(...p), d = () => hexPts(p, R - 4); if (!onScreen(o)) continue;
     if (wd && c.river && wd.has(p + "")) { const k = (T - wave - wd.get(p + "") * 90) / 450; if (k > 0 && k < 1) { ctx.globalAlpha = Math.sin(k * Math.PI) * .35; rpath(d(), 8); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.globalAlpha = 1 } }
     const m = selOn && (!TUT || !aim || aim.has(p + "")) ? mv.get(p + "") : null, pk = c.t === "source" && !c.river && ((S.phase === "pick" && (!M.mainSource || p + "" === M.mainSource + "")) || (TRIB && S.phase === "play"));
-    if (m) flowTo.push({k:p + "", o:c.t === "ocean" ? {x:o.x, y:o.y + DEPTH} : o, cost:m.cost, ok:S.water >= m.cost, sand:c.t === "sand", sea:c.t === "ocean"}); // a ring, drawn over everything standing on the board (LOU-283)
+    if (m) flowTo.push({k:p + "", o:c.t === "ocean" ? {x:o.x, y:o.y + DEPTH} : o, cost:m.cost, ok:S.water >= m.cost, sand:c.t === "sand", sea:c.t === "ocean", low:wtLow(m.cost)}); // a ring, drawn over everything standing on the board (LOU-283)
     else if (pk) { // a source you can start from: an amber wash with a glowing outline and its flow in a bubble
       const ok = true, pu = reduce ? 1 : .5 + .5 * osc(t, 1.6, h * .03); rpath(d(), 9); ctx.fillStyle = ok ? `rgba(255,224,150,${.3 + .12 * pu})` : "rgba(150,150,150,.22)"; ctx.fill();
       if (ok) { rpath(hexPts(p, R - 9), 8); ctx.fillStyle = "rgba(255,255,240,.22)"; ctx.fill() } // a soft lit centre
@@ -1952,6 +2110,7 @@ function draw() {
       if (!selOn) badges.push({o, plant:true, ok:S.water >= growCost(c)}); // just a small pale sprout; the tile panel explains the rest (LOU-294)
     }
   }
+  if (WT) wtDraw(t);
   // Landscape mode: the river's whole run, an inked dashed line with a number where each water cycle ends
   // groves: a golden thread through the tiles and the flow they give
   for (const k of combos()) { for (const q of k.bees) { const o = iso(...q), h = hsh(...q); bee(o.x - 9, o.y - 18, t, h * .1); bee(o.x + 11, o.y - 10, t, h * .1 + .5) }
@@ -2034,9 +2193,9 @@ function flowRing(f, i, t, a) { const {o, ok} = f, br = reduce ? .5 : .5 + .5 * 
   else ell(-3, -2, 6, 2.4, "rgba(255,255,255,.55)");
   // the cost tag: a white pill with the blue water drop and the cost ("1", "2" for rock, "free" for sand)
   const txt = f.cost ? String(f.cost) : "free"; ctx.font = `800 11.5px ${HAND}`; const tw = ctx.measureText(txt).width, w = Math.max(30, tw + 22), y = -19;
-  rrect(-w / 2, y - 7.5, w, 15, 7.5); ctx.fillStyle = ok ? "rgba(255,255,255,.94)" : "rgba(238,240,240,.9)"; ctx.fill();
-  const x0 = -w / 2 + 8.5; ctx.beginPath(); ctx.moveTo(x0, y - 4.5); ctx.bezierCurveTo(x0, y - 4.5, x0 - 3.4, y, x0 - 3.4, y + 1.9); ctx.arc(x0, y + 1.9, 3.4, Math.PI, 0, true); ctx.bezierCurveTo(x0 + 3.4, y, x0, y - 4.5, x0, y - 4.5); ctx.fillStyle = ok ? "#3f86b0" : "#9aa3a8"; ctx.fill();
-  ctx.fillStyle = ok ? "#24434a" : "#7d8589"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(txt, x0 + 3.4 + (w - 15) / 2 - 1.5, y + .5);
+  rrect(-w / 2, y - 7.5, w, 15, 7.5); ctx.fillStyle = ok ? (f.low ? "rgba(255,238,204,.96)" : "rgba(255,255,255,.94)") : "rgba(238,240,240,.9)"; ctx.fill();
+  const x0 = -w / 2 + 8.5; ctx.beginPath(); ctx.moveTo(x0, y - 4.5); ctx.bezierCurveTo(x0, y - 4.5, x0 - 3.4, y, x0 - 3.4, y + 1.9); ctx.arc(x0, y + 1.9, 3.4, Math.PI, 0, true); ctx.bezierCurveTo(x0 + 3.4, y, x0, y - 4.5, x0, y - 4.5); ctx.fillStyle = ok ? (f.low ? "#b9720a" : "#3f86b0") : "#9aa3a8"; ctx.fill();
+  ctx.fillStyle = ok ? (f.low ? "#7a4a00" : "#24434a") : "#7d8589"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(txt, x0 + 3.4 + (w - 15) / 2 - 1.5, y + .5);
   ctx.restore(); if (f.sand) { ctx.globalAlpha = a * (ok ? 1 : .6); tag(o.x + dx, o.y + 22, "−1 flow", "#1d8f78", 13); ctx.globalAlpha = 1 } }
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath() }
 // ---------- the sheet (LOU-283, LOU-284): while your river or a tile is selected, a white glass panel takes the bottom bar's place
@@ -2046,7 +2205,7 @@ function sheetSync() { const el = $("sheet"); if (!el || quiet) return; const mo
   // The river strip (LOU-294): while the river is selected, a slim strip sits just above the bottom bar. The bar always stays, so
   // Next water cycle never needs anything closed first. No close button: tap the river's end again or empty space to let go.
   const rs = $("rstrip"), river = !mode && riverSel() && !tutStep(); // in a guided step the card is the hint, and it stays in one place
-  if (river) { const mvs = moves().size, can = affordable(); tx("rsName", TRIB && S.rivers.length > 1 ? riverName(S.active) : "Your river"); tx("rsFlow", "flow " + flowOf(S.active)); tx("rsHint", !mvs ? "Nowhere to flow" : can ? "Tap a ring" : "Out of water") }
+  if (river) { const mvs = moves().size, can = affordable(); tx("rsName", TRIB && S.rivers.length > 1 ? riverName(S.active) : "Your river"); tx("rsFlow", "flow " + flowOf(S.active)); tx("rsHint", !mvs ? "Nowhere to flow" : can ? "Tap a ring" : "Out of water"); if (WT) { const low = !!S.wt && S.water < wtReserve(); if (low && mvs) tx("rsHint", "Below reserve"); $("rsHint").classList.toggle("wtlow", low && !!mvs) } }
   if (rs.hidden === river) { rs.hidden = !river; $("app").classList.toggle("striped", river) }
   const panel = mode ? sheetHtml.panel : "", acts = mode ? sheetHtml.acts : "";
   const key = mode ? mode + "|" + sel + "|" + panel + acts : "";
@@ -2160,7 +2319,7 @@ function menu(open) { const m = $("menu"); if (open) { $("mHint").hidden = !hint
 $("menuBtn").onclick = () => menu(true); $("hintBtn").onclick = useHint;
 $("menu").addEventListener("click", e => { if (e.target === $("menu")) { menu(false); return } const b = e.target.closest("[data-m]"); if (!b) return; const k = b.dataset.m;
   if (k === "restart") { $("mConf").hidden = false; return } if (k === "restartNo") { $("mConf").hidden = true; return }
-  menu(false); if (k === "hint") { useHint(); return } if (k === "settings") { openSettings(); return } if (k === "guide") { try { localStorage.setItem(GUIDE_KEY, "1") } catch (_) {} restart(); return } if (k === "restartYes") restart(); else if (k === "help") openGuide(); else if (k === "zoom") zoomTo(view.z > 1.02 ? 1 : lay.zAuto) });
+  menu(false); if (k === "hint") { useHint(); return } if (k === "settings") { openSettings(); return } if (k === "tune") { wtTune(true); return } if (k === "guide") { try { localStorage.setItem(GUIDE_KEY, "1") } catch (_) {} restart(); return } if (k === "restartYes") restart(); else if (k === "help") openGuide(); else if (k === "zoom") zoomTo(view.z > 1.02 ? 1 : lay.zAuto) });
 $("guide").addEventListener("click", e => { const b = e.target.closest(".gtile"); if (!b) return; const g = guideList[+b.dataset.g]; for (const x of $("guide").querySelectorAll(".gtile")) x.classList.toggle("on", x === b);
   $("gDet").innerHTML = `${g.icon}<div><b>${g.name}</b><span>${g.text}</span><em>${g.cost}</em></div>` });
 addEventListener("keydown", e => { if (e.key === "Escape") { if (!$("menu").hidden) { menu(false); return } hsel = false; closeCard(); draw() } });
@@ -2189,6 +2348,7 @@ addEventListener("resize", resize);
 if (window.ResizeObserver) { const ro = new ResizeObserver(resize); ro.observe($("board")); ro.observe($("top")); ro.observe($("bottom")) }
 function loop() { if (opening) openStep(); if (tgt) glide(); else draw(); if (!reduce) requestAnimationFrame(loop) }
 if (POSTER || !load()) { S = fresh(); guideInit() }
+if (WT) { if (S.phase !== "pick" && !S.wt) { S = fresh(); history = [] } wtInit() }
 if (POSTER) { document.documentElement.classList.add("poster"); if (TUT) S.obj = OBJ.length } else openRun(); // a new run opens with the level banner and a glide to its source; a run in progress goes straight to its river (LOU-285)
 sync(); document.fonts && document.fonts.ready.then(() => { lastSize = ""; resize() }); loop();
 if ("serviceWorker" in navigator && !POSTER) { const had = !!navigator.serviceWorker.controller;
@@ -2206,7 +2366,7 @@ if (/^c2-\d+$/.test(M.id) && !POSTER && window.history && window.history.pushSta
 if (M.daily && !POSTER && S.phase === "pick" && getNum(bestKey)) { winOld = true; sync() } // already played today: straight to the result, with Play again (practice)
 
 // for debugging / tests
-window.FT = {get lay() { return lay }, get tracked() { return TRACKED }, sfx, crash, frame() { const t = performance.now(); draw(); return performance.now() - t }, hint:{next:() => hintNext(), route:() => hintRoute(), use:() => useHint(), load:o => { SOL = o }, get now() { return hint }, get left() { return hintsLeft() }, get shown() { return hintShown() }}, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
+window.FT = {get lay() { return lay }, get wt() { return WT ? {cfg:wtCfg, set:wtSet, plan:wtPlan, flow:wtFlow, reserve:wtReserve, life:wtLife, csv:wtCsv, kind:wtKind, sched:wtSched, text:wtSettingsText, get now() { return wtNow }} : null }, get tracked() { return TRACKED }, sfx, crash, frame() { const t = performance.now(); draw(); return performance.now() - t }, hint:{next:() => hintNext(), route:() => hintRoute(), use:() => useHint(), load:o => { SOL = o }, get now() { return hint }, get left() { return hintsLeft() }, get shown() { return hintShown() }}, stars() { return STARS.map(s => ({type:s.type, n:s.n, ok:starOk(s), state:starState(s), aim:stripTags(starAim(s))})) }, raw:{build, plant, growCost, cutBack, forecast, riverBy:p => riverBy(p), storAt:p => storAt(p), start, autoStart}, get tut() { const o = tutStep(); return {obj:S.obj || 0, n:OBJ.length, on:!!o, shown:!!o && tutShown(), arriving:false, aim:[...(tutAim() || [])], allow:o ? (tutTiles(tval(o.allow || o.target, G)) || []).map(String) : [], ui:tutUi(), callout:!!tutCallT, text:$("tutT") ? $("tutT").textContent : ""} }, get S() { return S }, set S(v) { S = v; anim.clear(); fx.length = 0 }, set quiet(v) { quiet = v }, set noUndo(v) { noUndo = !!v }, get history() { return history }, get view() { return view }, get sel() { return sel }, moves, plantable, diamond, endTurn, restart, bloomCount, actions, combos, pick, placeSrc, placeable, score, objAim, objCheck, get obj() { return S.obj || 0 }, openInfo() { info = true }, drawMs(n = 20) { const a = now(); for (let i = 0; i < n; i++) draw(); return (now() - a) / n }, flows() { const ch = riverChains(); return chainFlows(ch).map((f, i) => [ch[i].tiles.map(String), f]) }, selectHead() { hsel = true }, scr(x, y) { const r = cv.getBoundingClientRect(), d = cv.width / r.width, o = iso(x, y); return [r.left + (o.x * scale + off.x) / d, r.top + (o.y * scale + off.y) / d] }, select(p) { sel = p },
   switchTo(i) { activate(i) },
   act(p, k) { const a = actions(p).find(a => a.k === k); if (!a || !canDo(a)) return false; a.run(); return true },
   tap(p) { const o = iso(...p), r = cv.getBoundingClientRect(), dpr = cv.width / r.width, cx = o.x, cy = o.y;

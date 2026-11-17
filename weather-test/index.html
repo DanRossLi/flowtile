@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow Tile · Weather test</title>
+<meta name="description" content="A calm river puzzle. Grow a river from its source to the sea, one tile at a time.">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flow Tile">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#cfe3ea">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<link rel="stylesheet" href="../fonts/fonts.css">
+<link rel="stylesheet" href="../play.css">
+</head>
+<body>
+<script src="../weather-test.config.js"></script>
+<script>
+// Weather test island (LOU-296): an experiment, not part of the campaign. It plays only while the "Weather test" switch on the
+// Levels page is on; with the switch off this page goes back there and the game is untouched.
+// The island has no sea: the run lasts a set number of water cycles and the score is life (what you have growing at the end).
+// Every test number is in ../weather-test.config.js. Map key: T source  _ bare ground  r rock  B mountain  o spring  L lake  s sand
+var WT_ON = false; try { WT_ON = localStorage.getItem("flowtile.weathertest") === "1" } catch (_) {}
+if (!WT_ON) location.replace("../river/#weather-test");
+var WT_CFG = window.WEATHER_TEST || {}, WT_LIMIT = WT_CFG.turnLimit || 30;
+try { var WT_MINE = JSON.parse(localStorage.getItem("flowtile.weathertest.cfg") || "{}") || {}; if (WT_MINE.turnLimit > 0) WT_LIMIT = Math.round(WT_MINE.turnLimit) } catch (_) {}
+window.MAP = {
+  id: "weather-test",
+  label: "Weather test",
+  intro: "Keep your water between the reserve and the rim",
+  weatherTest: true,
+  types: [
+    "____r___B___",
+    "____________",
+    "______LL__o_",
+    "T___________",
+    "___B_____r__",
+    "_________L__",
+    "__o____s____",
+    "____________"],
+  elev: [
+    "111111111111",
+    "111111111111",
+    "111111001111",
+    "111111111111",
+    "111111111111",
+    "111111111011",
+    "111111111111",
+    "111111111111"],
+  waterSides: {"8,0": 4, "3,4": 0},
+  mode: "perfection",
+  turns: WT_LIMIT,
+  scoreStars: WT_CFG.stars || [15, 25, 40],
+  storage: 5,
+  tileCost: 1,
+  help: []
+};
+if (WT_ON) document.write('<script src="../play.js"><\/script>');
+</script>
+</body>
+</html>

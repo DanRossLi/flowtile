@@ -14,7 +14,7 @@
     ["flowtile.guidance", null, "off", true, "Guidance", "Short guided steps when a level shows something new", I('<path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/>')],
     ["flowtile.hard", "1", "0", false, "Hard mode", "3 undos per level", I('<path d="M12 3l2.600 5.600 6 .700-4.500 4.100 1.300 6L12 16.400 6.600 19.400l1.300-6L3.400 9.300l6-.700z"/>')],
   ];
-  const KEEP = new Set(ROWS.map(r => r[0]).concat(["flowtile.campaign"])); // what Reset progress leaves alone: the settings themselves
+  const KEEP = new Set(ROWS.map(r => r[0]).concat(["flowtile.campaign", "flowtile.weathertest", "flowtile.weathertest.cfg"])); // what Reset progress leaves alone: the settings themselves
   const isOn = r => { const v = get(r[0]); return v === null ? r[3] : r[1] === null ? v !== r[2] : v === r[1] };
   const CSS = `.fs{font-family:'M PLUS Rounded 1c',Nunito,system-ui,sans-serif;color:#24434a;text-align:left}
 .fs-row{display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid rgba(36,67,74,.08);cursor:pointer}

@@ -58,6 +58,17 @@
   a.row.locked .num{background:#e6eeef;color:#8fa0a3}
   a.row.locked b{color:#8fa0a3}a.row.locked small{color:#9fb0b2}
   .lk{flex:none;width:16px;height:16px;fill:none;stroke:#a9b8ba;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  /* Weather test (LOU-296): an experiment behind this one switch, off by default */
+  .wt{margin:18px 16px 0}
+  .wt h2{margin:0 4px 8px;font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4f6f70}
+  .wtsw{display:flex;align-items:center;gap:11px;min-height:50px;margin-bottom:7px;padding:8px 12px 8px 14px;border-radius:16px;background:rgba(255,255,255,.88);cursor:pointer}
+  .wtsw input{position:absolute;opacity:0;width:1px;height:1px}
+  .wtsw i{flex:none;position:relative;width:50px;height:30px;border-radius:999px;background:#c3d2d4;transition:background .15s}
+  .wtsw i::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(30,60,60,.3);transition:transform .15s}
+  .wtsw input:checked+i{background:#3f9a86}.wtsw input:checked+i::after{transform:translateX(20px)}
+  .wtsw input:focus-visible+i{outline:3px solid #2f7fb8;outline-offset:2px}
+  .wt a.row[hidden]{display:none}
+  @media (prefers-reduced-motion:reduce){.wtsw i,.wtsw i::after{transition:none}}
   footer{margin:16px 20px 0;font-size:13px;font-weight:700;color:#4f6f70}
   footer a{color:#2f6f9e}
 </style>
@@ -70,6 +81,11 @@
     <div class="total" id="total" aria-label="Stars"></div>
   </div>
   <div class="list" id="list"></div>
+  <section class="wt" id="weather-test" aria-label="Experiments">
+    <h2>Experiment</h2>
+    <label class="wtsw"><span class="txt"><b>Weather test</b><small>A trial of reserve, weather, floods and dry land</small></span><input type="checkbox" id="wtOn"><i aria-hidden="true"></i></label>
+    <a class="row" id="wtPlay" href="../weather-test/" hidden><span class="num">W</span><span class="txt"><b>Weather test island</b><small>30 water cycles. The score is life</small></span><span class="play">Play</span></a>
+  </section>
   <footer>More to play: <a href="../world/#extra">Extra islands</a> and <a href="../world/">all islands</a>.</footer>
 </main>
 <script src="../levels.js"></script>
@@ -91,6 +107,10 @@ document.getElementById("list").innerHTML = html;
 document.getElementById("total").innerHTML = `${STAR(true)}${sum(got)} / ${LEVELS.length * 3}`;
 document.getElementById("list").addEventListener("click", e => { if (e.target.closest("a.locked")) e.preventDefault() });
 const cur = document.querySelector("a.row.now"); if (cur && cur.getBoundingClientRect().bottom > innerHeight) cur.scrollIntoView({block:"center"});
+// Weather test (LOU-296): one switch, off by default. Off: the game is exactly as it was. On: the weather test island opens.
+{ const KEY = "flowtile.weathertest", box = document.getElementById("wtOn"), play = document.getElementById("wtPlay"); let on = false; try { on = localStorage.getItem(KEY) === "1" } catch (_) {}
+  const show = () => { box.checked = on; play.hidden = !on }; show();
+  box.onchange = () => { on = box.checked; try { if (on) localStorage.setItem(KEY, "1"); else localStorage.removeItem(KEY) } catch (_) {} show() } }
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("../sw.js").catch(() => {}));
 </script>
 </body>
