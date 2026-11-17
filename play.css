@@ -991,6 +991,7 @@ button.nwc.hinted{box-shadow:0 0 0 3px #ffd98a,0 0 18px 4px rgba(255,217,138,.9)
 .dname,.dlinks a,.dlinks button{color:#2c6e99}.dlinks svg{stroke:#2c6e99}
 #wGoals li.missed b{color:#5f7579}
 .jdrop{flex:none;width:9px;height:12px;margin-right:3px;fill:#2f7fb8;vertical-align:1px}
+.jnums .jdrop{animation:none} /* the drop beside the water number is a still icon; it had picked up the jar's falling-drop animation (same class name) */
 .jcyc{width:11px;height:11px;margin-right:2px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vertical-align:-1px}
 .spi{width:13px;height:11px;margin-right:2px;fill:#b5562f;stroke:none;vertical-align:-1px}
 .spi .spl{fill:none;stroke:#b5562f;stroke-width:1.600;stroke-linecap:round}
