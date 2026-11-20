@@ -1,4 +1,4 @@
-// Flowgrow (LOU-298): every number the test uses, in one place. Flowgrow is an experiment on its own page (/flowgrow/);
+// Flowgrow (LOU-298, LOU-299): every number the test uses, in one place. Flowgrow is an experiment on its own page (/flowgrow/);
 // no other page reads this file.
 // The Tuning panel (menu > Tuning, on the Flowgrow page) changes these for one device, from the next run on. Reset goes back
 // to this file. Only the rules Dan has set are settled (see CANON.md); every value here is a placeholder to tune.
@@ -34,4 +34,12 @@ window.FLOWGROW = {
 
   // The seven levels, lowest first: how land grows back
   levelNames: ["Sprouts", "Meadow", "Thicket", "Saplings", "Grove", "Forest", "Old forest"],
+
+  // Locking (LOU-299): lock a tile to copy its neighbours into the back of your pile
+  lockEnabled: true,        // false: Flowgrow without locking
+  lockLevelCap: true,       // false: every unlocked neighbour is copied, whatever its level
+  lockCopiesGo: "back",     // "back": the end of the pile. "front": the next tiles
+  lockRivers: true,         // false: river tiles can't be locked or copied
+  lockEvery: 10,            // tiles placed per lock earned (0: locks are free and unlimited)
+  lockHold: 1,              // locks the player can hold
 };

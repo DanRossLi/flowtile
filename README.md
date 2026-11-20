@@ -115,6 +115,7 @@ A separate test (LOU-298): an ecology and nature building game on the same hex g
 - The seven levels are Sprouts, Meadow, Thicket, Saplings, Grove, Forest and Old forest. A move scores by the level it leaves on the map: 1, 3, 6, 10, 15, 21, 28.
 - A **river tile** scores nothing. Put it on empty land that touches the river to make the river longer, or on a level 1 river tile to make it wider. A wider river reaches 2 tiles out instead of 1.
 - **Discard** throws the tile in hand away. **Undo** steps back as far as you like. A run has 80 tiles, with no timer and no way to lose.
+- **Locking** (LOU-299): every 10 tiles you place earns a lock, and you can hold one. Tap **Lock**, tap a tile and confirm. Each neighbour at that tile's level or below is copied to the back of your pile, and the locked tile can't grow any more. The run ends when the pile is empty and no lock you hold would bank a copy.
 - Every number is in `flowgrow.config.js`. Add `?seed=123` to the address to replay the same pile.
 - `node tools/flowgrow-sim.mjs` plays 1,000 runs with the game's own rules, and `node tools/flowgrow-sim.mjs --test` runs the rule checks.
 

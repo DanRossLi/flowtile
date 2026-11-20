@@ -324,7 +324,7 @@ A new test, tracked in Linear under the initiative **Flowgrow**, project **Flowg
 8. "copies. copies arrive at back of pile"
 9. "river tiles can be locked and copied"
 
-Also from Dan: "take the existing hexagon and aesthetics", and "this will be a web based game". Rules 6 to 9 (locking) are not built yet: that is LOU-299.
+Also from Dan: "take the existing hexagon and aesthetics", and "this will be a web based game".
 
 ### Other instructions from Dan (Nov 19)
 
@@ -341,7 +341,27 @@ Also from Dan: "take the existing hexagon and aesthetics", and "this will be a w
 - **A run** is its seed and its moves. Undo, saving and reload all rebuild it from those, so a tile is never re-rolled. A finished run is never restored, and a run older than 12 hours starts fresh. Add `?seed=123` to the address to replay the same pile.
 - **The rules sit apart from the page:** part 1 of `flowgrow.js` is plain functions that never touch the page, and `tools/flowgrow-sim.mjs` loads that same file in Node.
 
+### Locking, as built (LOU-299)
+
+- **What can be locked:** any unlocked habitat or river tile, the source included (it counts as a level 1 river tile).
+- **What a lock copies:** each neighbour that is an unlocked habitat or river tile at or below the locked tile's level. A higher neighbour gives nothing ("it's a yes/no on copies"). Empty land, mountains and locked tiles give nothing. A copy is exact: the neighbour's kind at its full level. The original stays on the map.
+- **Where copies go:** to the back of the pile, behind every tile still to be dealt and behind copies banked earlier. They are kept as their own list, and "Tiles left" counts them.
+- **A locked tile** can't be combined onto, widened, locked again or copied. It keeps its score and still counts as the top level for dealing.
+- **Copies play like dealt tiles,** with the same rules and the same scoring. A level 2 river copy can only extend, and it reaches 2 tiles out.
+- **Screen:** a **Lock** button in the bottom bar shows the locks held and the tiles until the next one. Tapping it turns lock mode on, and tapping it again turns it off. In lock mode every lockable tile shows how many copies it would bank. Tapping one marks each copy on its neighbour, marks neighbours that are too high, and a card above the bar asks to confirm ("Lock this thicket?"). A locked habitat gets a padlock on its level pill and is painted a little muted. Under the pile, **Back of the pile** lists the banked copies in order.
+- **A lock is a move:** it can be undone, it is saved, and it has a line in the run log. The log marks each placed tile as dealt or copy. The result adds locks used and lost, and copies banked, placed and discarded, with the points from copies.
+- **The six lock values** are in `flowgrow.config.js`: `lockEnabled`, `lockLevelCap`, `lockCopiesGo`, `lockRivers`, `lockEvery`, `lockHold`. With `lockEnabled: false` the game plays exactly as it did before locking.
+
 ### Open for Dan (placeholders, not rules)
+
+- **Lock pacing:** one lock for every 10 tiles placed (planted, combined, extended or widened; discards don't count), and only one can be held. A lock earned while holding one is lost.
+- **A lock doesn't use the tile in hand.**
+- **Order of copies from one lock:** river tiles first, then habitats from the lowest level to the highest.
+- **A locked river tile** still reaches land, and the river can still be extended from it. It is marked with a padlock pill on the tile.
+- **End of a run with locking:** it no longer ends at 80 tiles. It ends when the pile is empty and no lock you hold would bank a copy, or when you tap **End run** (shown once the pile is empty).
+- **An endless pile has no back,** so with `stackSize: 0` copies become the next tiles instead.
+- **With no lock held,** the Lock button only says when the next one comes ("No lock yet. Next one in 4 tiles.").
+- **With the pile empty and a lock in hand,** lock mode turns on by itself.
 
 - **Score by level:** a move scores by the level of the habitat it leaves on the map: 1, 3, 6, 10, 15, 21, 28. So a level 1 tile put on a level 1 habitat scores 3. River tiles score nothing.
 - **Where higher levels come from:** the pile deals them. A habitat's level is rolled from 1 up to the highest level on the map at that moment, and each level is half as likely as the one below. One tile in ten is a river tile. The first three tiles are always habitat 1, habitat 1, river.
@@ -358,14 +378,14 @@ Also from Dan: "take the existing hexagon and aesthetics", and "this will be a w
 
 Left out to get a prototype quickly. None of it is a decision against the thing itself.
 
-- Locking (LOU-299).
-- The Tuning panel. Every number is still in `flowgrow.config.js`, and the simulator takes any of them (`node tools/flowgrow-sim.mjs 500 riverShare=0.15`).
+- The Tuning panel. Every number, the six lock values included, is still in `flowgrow.config.js`, and the simulator takes any of them (`node tools/flowgrow-sim.mjs 500 riverShare=0.15`, `lockEnabled=false`, `lockEvery=0`).
 - Sound, haptics and the Settings sheet.
 - The painterly extras of the river game: clouds, the smooth river bends, swaying trees, the level banner and the error card.
 - Picking from the first few tiles (`pickFrom` above 1). The rule is written and tested, but the page has no buttons for it.
+- Taps are matched to the ground tile, not to the picture standing on it. So to pick a tile behind a tall tree, tap its ground.
 
 ### Check after any change to it
 
-- `node tools/flowgrow-sim.mjs --test` passes, and `node tools/flowgrow-sim.mjs` reports that no run crashed or stalled and every run rebuilt exactly from its seed and moves.
+- `node tools/flowgrow-sim.mjs --test` passes, and `node tools/flowgrow-sim.mjs` reports that no run crashed or stalled and every run rebuilt exactly from its seed and moves. Run it with `lockEnabled=false` and `lockEvery=0` as well.
 - `node tools/solve.mjs` gives the same result as before (no other page changes).
 - One whole run plays in a browser at 390×844.

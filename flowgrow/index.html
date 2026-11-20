@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="../flowgrow.css">
 </head>
 <body>
-<!-- Flowgrow (LOU-298): an ecology and nature building game on Flow Tile's hex grid. A standalone test page: it has its own
+<!-- Flowgrow (LOU-298, LOU-299): an ecology and nature building game on Flow Tile's hex grid. A standalone test page: it has its own
      files (../flowgrow.js, ../flowgrow.css, ../flowgrow.config.js) and loads nothing of the river game except its styles. -->
 <div class="app fg" id="app">
   <div class="board" id="board">
@@ -32,7 +32,11 @@
       </div>
     </div>
     <button type="button" class="icon sq zoom" id="fitBtn" aria-label="Show the whole island"></button>
-    <div class="overlay bottom" id="bottom"><div class="msg fade" id="msg" role="status"></div></div>
+    <div class="overlay bottom" id="bottom">
+      <div class="stuck seaq" id="lockq" role="alertdialog" aria-label="Lock this tile?" hidden><span><b id="lockT"></b><small id="lockS"></small></span><div><button type="button" id="lockYes">Lock</button><button type="button" id="lockNo">Cancel</button></div></div>
+      <div class="stuck seaq" id="endq" role="status" hidden><span><b>The pile is empty</b><small>Lock a tile for more copies, or end the run.</small></span><div><button type="button" id="endYes">End run</button></div></div>
+      <div class="msg fade" id="msg" role="status"></div>
+    </div>
     <div class="lvdone" id="win" style="--t0:0s" hidden>
       <div class="dsheet" role="dialog" aria-labelledby="winTitle">
         <i class="mgrip" aria-hidden="true"></i>
@@ -48,7 +52,8 @@
   </div>
   <div class="actions" id="actions">
     <button type="button" id="menuBtn" class="bbtn" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
-    <div class="fgpile"><div class="fgq" id="queue" aria-label="Your pile"></div><span class="fgname" id="hName"></span></div>
+    <div class="fgpile"><div class="fgq" id="queue" aria-label="Your pile"></div><span class="fgname" id="hName"></span><div class="fgbank" id="bank" hidden><span>Back of the pile</span><div id="bankList"></div></div></div>
+    <button type="button" id="lockBtn" class="bbtn fglock" aria-label="Lock a tile"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.500" y="10.500" width="13" height="9.500" rx="2.200"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500"/></svg><b class="ubadge" id="lockN">0</b><small id="lockIn"></small></button>
     <button type="button" id="discardBtn" class="bbtn" aria-label="Discard this tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
     <button type="button" id="undoBtn" class="bbtn" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
   </div>
@@ -56,6 +61,7 @@
     <i class="mgrip" aria-hidden="true"></i>
     <div class="mhead"><b>Flowgrow</b><span id="mSeed"></span></div>
     <p class="fghow">Place tiles near your river. Two tiles of the same level make the next level. River tiles reach more land.</p>
+    <p class="fghow">Every 10 tiles you place earns a lock. Lock a tile to copy its neighbours, at its level or below, to the back of your pile. A locked tile can't grow any more.</p>
     <div class="fgladder" id="ladder" aria-label="The seven levels"></div>
     <button type="button" class="mrow" data-m="zoom"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></i><span>Whole island<small>Zoom out, or back in</small></span></button>
     <button type="button" class="mrow" data-m="log"><i class="mico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16H7z"/><path d="M10 9h4M10 13h4"/></svg></i><span>Copy run log<small>One line per move</small></span></button>
