@@ -302,3 +302,70 @@ LOU-296 (Dan, Nov 16: "keep the current design and just add, but do not change t
 - **HUD, only on a test run:** a dashed reserve line on the jar with amber water below it; "+6 · 3 flood" or "+1 · 1 dry" under the number; the weather strip under the top bar (next 5 cycles, the first drawn stronger); "+6 · floods 3" or "+1 · dries 1" on Next water cycle; blue and amber outlines on the tiles that will flood or dry; amber costs and "Below reserve" when a spend goes under the reserve. Flood is always blue and drying always amber, each with its word.
 - **Check after any change to it:** `node tools/solve.mjs` must give the same result as before (no other map changes), and the worked example in the LOU-296 doc must still play out with the same numbers.
 - **Open for Dan** (built with the draft's assumption): the check comes right after flow arrives; only the source's own flow changes with weather; a flooded tile loses everything that grew on it; a dried tile doesn't recover by itself.
+
+## Flowgrow (experimental)
+
+A new test, tracked in Linear under the initiative **Flowgrow**, project **Flowgrow Prototype** (LOU-297 to LOU-299). It is an ecology and nature building game on Flow Tile's hex grid. Tiles arrive in a pile, you place them near your river, two tiles of the same level combine into the next level, and river tiles grow the land you can use. It is not part of the river game, and nothing above this section changes because of it.
+
+- **Standalone:** one page at `/flowgrow/` with its own files: `flowgrow/index.html`, `flowgrow.js`, `flowgrow.css`, `flowgrow.config.js` and `tools/flowgrow-sim.mjs`. It is listed under Test maps on All islands. `/city-test/` only sends visitors to `/flowgrow/`.
+- **Don't edit the river game for it** (Dan, Nov 19: "First off we do not want remove the old stuff, this is a new test."): not `play.js`, `play.css`, `paper.css`, `settings.js`, `levels.js`, `solutions.js`, `tools/solve.mjs` or any existing map page. The only shared files it touches are `sw.js` (the `LOCAL` list and `VERSION`), `world/index.html` (the Test maps line), `README.md` and this file. `play.js` starts the river game as soon as it loads, so what the page needs from it is copied into `flowgrow.js`. The page links `play.css` for its bars and sheets.
+- **Work rule:** take the issues in Flowgrow Prototype in priority order, and don't create new issues.
+- **Rules and placeholders stay apart:** only Dan's quotes below are settled. Everything else fills a gap so the test can be played, and is listed under "Open for Dan".
+
+### Rules Dan has set (Nov 19, in his words)
+
+1. "this is going to be a hex based additive game, we're going to get tiles that need to be placed. for example dorfromantik, there will be a tile queue. players can then add tiles to the map."
+2. "Tiles can be "additive" / "combined". only if they're the same level. for example lvl 1 + lvl 1. you cannot add a tile that are different levels."
+3. ~~"we want this to be a peaceful city builder."~~ *Superseded the same day:* "just checking, it's not a city game, it's an ecology nature building game."
+4. "make the scoring +1, +3, +6, +10....as tiles are added."
+5. "Rivers also need to be placed, this expands how far out you can place your tile from your river."
+6. "you 'lock a tile', this will add all the tiles that are adjacent to your pile. but afterwards that tile becomes 'locked' and you cannot improve it. Likewise locked tiles cannot be added to your pile when you lock an adjacent tile."
+7. "a locked tile can only copy up to that level" and "it's a yes/no on copies, it's not the reduced level"
+8. "copies. copies arrive at back of pile"
+9. "river tiles can be locked and copied"
+
+Also from Dan: "take the existing hexagon and aesthetics", and "this will be a web based game". Rules 6 to 9 (locking) are not built yet: that is LOU-299.
+
+### Other instructions from Dan (Nov 19)
+
+- **No city build:** "ignore that patch, as it's using "city" design rather than our eco/nature design". The first build was a city builder, kept in a patch file. The patch was never applied and LOU-297 was canceled. Flowgrow was built from the build spec directly as a nature game. Nothing man-made is on the page: no buildings, and no city words.
+- **A quick prototype first:** "make the build faster" and "just make a quick MVP to prototype". So the page is a lean build. What it leaves out is listed under "Not built yet". Don't add polish to it unless Dan asks.
+
+### What is built (LOU-298)
+
+- **Words:** a tile is a **habitat** or a **river tile**. Putting a habitat on empty land is **planting**. Two habitats of the same level **combine**. A river tile **extends** the river or **widens** it. The **pile** is the tiles still to come, and the large one is the tile **in hand**.
+- **A turn:** tap a tile on the island and the tile in hand goes there. One tap, no confirm. A tile that can't go there gets a one-line message that says why.
+- **Screen:** Score, Tiles left and Top level at the top. Menu, the pile (the tile in hand large, the next 3 small), Discard and Undo at the bottom. Land the tile in hand can be planted on has a faint outline. A habitat it can combine with has a ring and its points ("+6"). A river tile it can widen has a ring that says "wider".
+- **The seven levels** are painted with the river game's own tree, shrub and flower painters, each bigger and taller than the one before. Every habitat carries a white pill with its level, on the island and in the pile.
+- **The land shows reach:** land within reach of the river is grass, and land outside it is bare ground.
+- **A run** is its seed and its moves. Undo, saving and reload all rebuild it from those, so a tile is never re-rolled. A finished run is never restored, and a run older than 12 hours starts fresh. Add `?seed=123` to the address to replay the same pile.
+- **The rules sit apart from the page:** part 1 of `flowgrow.js` is plain functions that never touch the page, and `tools/flowgrow-sim.mjs` loads that same file in Node.
+
+### Open for Dan (placeholders, not rules)
+
+- **Score by level:** a move scores by the level of the habitat it leaves on the map: 1, 3, 6, 10, 15, 21, 28. So a level 1 tile put on a level 1 habitat scores 3. River tiles score nothing.
+- **Where higher levels come from:** the pile deals them. A habitat's level is rolled from 1 up to the highest level on the map at that moment, and each level is half as likely as the one below. One tile in ten is a river tile. The first three tiles are always habitat 1, habitat 1, river.
+- **One kind of habitat,** levels 1 to 7: Sprouts, Meadow, Thicket, Saplings, Grove, Forest, Old forest. The names, and the words "habitat" and "plant", are placeholders.
+- **Plant and combine:** a habitat goes on any empty land within reach of the river, or on a habitat of the same level. A level 7 habitat can't be combined.
+- **River:** the source counts as a level 1 river tile, and a river tile always arrives at level 1. Extend: put it on empty land that touches the river. Branches are allowed. Widen: put it on a level 1 river tile to make it level 2, the widest. A level 1 river tile reaches 1 tile out and a level 2 river tile reaches 2. Mountains don't block reach.
+- **Discard** scores nothing and still uses up the tile. **Undo** is unlimited.
+- **A run:** 80 tiles, no timer and no way to lose. The result shows the score, the best score on the device, the top level and what was planted, combined and discarded.
+- **The island:** 13×9, all bare ground, the source in the middle and 8 mountains in three small groups. No sea tiles.
+- **Opening view:** centred on the source, with about 5 tiles across a phone.
+- **Score is called Score,** not Life as on the Weather test.
+
+### Not built yet
+
+Left out to get a prototype quickly. None of it is a decision against the thing itself.
+
+- Locking (LOU-299).
+- The Tuning panel. Every number is still in `flowgrow.config.js`, and the simulator takes any of them (`node tools/flowgrow-sim.mjs 500 riverShare=0.15`).
+- Sound, haptics and the Settings sheet.
+- The painterly extras of the river game: clouds, the smooth river bends, swaying trees, the level banner and the error card.
+- Picking from the first few tiles (`pickFrom` above 1). The rule is written and tested, but the page has no buttons for it.
+
+### Check after any change to it
+
+- `node tools/flowgrow-sim.mjs --test` passes, and `node tools/flowgrow-sim.mjs` reports that no run crashed or stalled and every run rebuilt exactly from its seed and moves.
+- `node tools/solve.mjs` gives the same result as before (no other page changes).
+- One whole run plays in a browser at 390×844.

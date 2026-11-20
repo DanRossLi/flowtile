@@ -1,0 +1,25 @@
+/* Flowgrow (LOU-298): only what play.css doesn't cover. The page links ../play.css for the board, the top bar, the menu
+   sheet and the result sheet, and this file adds the pile in the bottom bar and the list of levels in the menu. */
+.fg .stats{grid-template-columns:1fr 1fr 1fr}
+.fg .actions{gap:8px;align-items:center}
+.fg button.bbtn{width:48px;height:48px}
+
+/* the pile: the tile in hand (large) and the next tiles (small). "now", not "hand": play.css uses .hand for its pointer */
+.fgpile{flex:1;min-width:0;display:grid;gap:2px;justify-items:center}
+.fgq{display:flex;align-items:center;justify-content:center;gap:6px;min-height:60px;padding:2px 8px;border-radius:22px;background:rgba(255,255,255,.72);box-shadow:var(--soft)}
+.fgt{position:relative;flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:11px;background:rgba(255,255,255,.75)}
+.fgt canvas{position:static;display:block;border-radius:inherit}
+.fgt.now{width:56px;height:56px;border-radius:17px;background:#fff;box-shadow:0 0 0 2.5px #5fae9c,0 4px 10px rgba(30,60,60,.18)}
+.fgl{position:absolute;right:-4px;bottom:-3px;min-width:15px;height:15px;padding:0 3px;box-sizing:border-box;border-radius:999px;background:#fff;color:#24434a;font:800 10.5px/15px var(--hand);font-style:normal;text-align:center;box-shadow:0 1px 3px rgba(30,60,60,.35)}
+.fgt.now .fgl{right:-5px;bottom:-4px;min-width:20px;height:20px;font-size:13px;line-height:20px}
+.fgname{font:700 12px/1.2 var(--hand);color:#24434a;white-space:nowrap;text-shadow:0 0 6px rgba(255,255,255,.9)}
+@media (max-width:379px){.fgq{gap:4px;padding:2px 5px}.fgt{width:28px;height:28px}.fgt.now{width:50px;height:50px}.fg .actions{gap:6px}}
+
+/* the menu: how to play, and the seven levels side by side */
+.fghow{margin:0 4px 10px;font:500 14px/1.4 var(--hand);color:#24434a}
+.fgladder{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0 0 10px;padding:10px 4px 8px;border-radius:16px;background:linear-gradient(180deg,#a9d98e,#86c46f)}
+.fgladder>div{display:grid;justify-items:center;align-content:end;gap:5px;min-width:0}
+.fgladder .fgt{width:40px;height:40px;background:none}
+.fgladder small{display:block;font:700 9.5px/1.15 var(--hand);color:#173c2a;text-align:center}
+.fgladder small b{display:block;font-weight:800;font-size:11px;color:#0f3a33}
+.fg .dlinks{justify-content:space-around}
