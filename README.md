@@ -106,18 +106,9 @@ A trial of one idea (LOU-296) on its own big map (24×16): https://danrossli.git
 - A run lasts 30 water cycles and the score is **life**: what you have growing at the end.
 - Every number is in `weather-test.config.js`. On the map, the menu's **Tuning** panel changes them, and copies the settings and a run log.
 
-## Flowgrow (experimental)
+## Flowgrow
 
-A separate test (LOU-298): an ecology and nature building game on the same hex grid, at https://danrossli.github.io/flowtile/flowgrow/. It is also linked under Test maps on All islands. Nothing in the river game changes. It is a quick prototype.
-
-- Tiles arrive in a **pile**. The large tile is the one in hand, and the next 3 are shown beside it. Tap the island to place it.
-- A **habitat** is planted on empty land within reach of your river (the green land), or put on a habitat of the **same level**, which then goes up one level. A different level is never allowed.
-- The seven levels are Sprouts, Meadow, Thicket, Saplings, Grove, Forest and Old forest. A move scores by the level it leaves on the map: 1, 3, 6, 10, 15, 21, 28.
-- A **river tile** scores nothing. Put it on empty land that touches the river to make the river longer, or on a level 1 river tile to make it wider. A wider river reaches 2 tiles out instead of 1.
-- **Discard** throws the tile in hand away. **Undo** steps back as far as you like. A run has 80 tiles, with no timer and no way to lose.
-- **Locking** (LOU-299): every 10 tiles you place earns a lock, and you can hold one. Tap **Lock**, tap a tile and confirm. Each neighbour at that tile's level or below is copied to the back of your pile, and the locked tile can't grow any more. The run ends when the pile is empty and no lock you hold would bank a copy.
-- Every number is in `flowgrow.config.js`. Add `?seed=123` to the address to replay the same pile.
-- `node tools/flowgrow-sim.mjs` plays 1,000 runs with the game's own rules, and `node tools/flowgrow-sim.mjs --test` runs the rule checks.
+Flowgrow, the ecology and nature building game that began here as a test (LOU-298, LOU-299), moved to its own repo on Nov 20, 2026: https://github.com/DanRossLi/flowgrow. You play it at https://danrossli.github.io/flowgrow/. The old `/flowgrow/` and `/city-test/` addresses here point on to it. Nothing of it is in this repo any more.
 
 ## Install on your phone
 
