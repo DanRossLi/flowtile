@@ -51,11 +51,22 @@
     </div>
   </div>
   <div class="actions" id="actions">
-    <button type="button" id="menuBtn" class="bbtn" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
-    <div class="fgpile"><div class="fgq" id="queue" aria-label="Your pile"></div><span class="fgname" id="hName"></span><div class="fgbank" id="bank" hidden><span>Back of the pile</span><div id="bankList"></div></div></div>
-    <button type="button" id="lockBtn" class="bbtn fglock" aria-label="Lock a tile"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.500" y="10.500" width="13" height="9.500" rx="2.200"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500"/></svg><b class="ubadge" id="lockN">0</b><small id="lockIn"></small></button>
-    <button type="button" id="discardBtn" class="bbtn" aria-label="Discard this tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
-    <button type="button" id="undoBtn" class="bbtn" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
+    <!-- the pile, front to back: the tile in hand, the next tiles, the rest of the stack, then the copies banked by locks -->
+    <div class="fgpile" aria-label="Your pile">
+      <div class="fgcap"><b>Your pile</b><span id="hName"></span></div>
+      <div class="fgtray">
+        <div class="fgq" id="queue"></div>
+        <div class="fgstack" id="stack" hidden><b id="stackN"></b><i></i><i></i><i></i></div>
+        <div class="fgbank" id="bank" hidden><span>Back of the pile</span><div id="bankList"></div></div>
+      </div>
+    </div>
+    <div class="fgbtns">
+      <button type="button" id="menuBtn" class="fgb round" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+      <i class="fgsp"></i>
+      <button type="button" id="lockBtn" class="fgb fglock" aria-label="Lock a tile"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.500" y="10.500" width="13" height="9.500" rx="2.200"/><path d="M8.500 10.500V8a3.500 3.500 0 017 0v2.500"/></svg><span><b>Lock</b><small id="lockIn"></small></span><b class="ubadge" id="lockN">0</b></button>
+      <button type="button" id="discardBtn" class="fgb fgbw" aria-label="Discard this tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg><b class="fgw">Discard</b></button>
+      <button type="button" id="undoBtn" class="fgb fgbw" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg><b class="fgw">Undo</b></button>
+    </div>
   </div>
   <div class="mwrap" id="menu" hidden><div class="msheet" role="dialog" aria-label="Menu">
     <i class="mgrip" aria-hidden="true"></i>

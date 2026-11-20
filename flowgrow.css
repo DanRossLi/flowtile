@@ -1,35 +1,53 @@
 /* Flowgrow (LOU-298): only what play.css doesn't cover. The page links ../play.css for the board, the top bar, the menu
-   sheet and the result sheet, and this file adds the pile in the bottom bar and the list of levels in the menu. */
+   sheet and the result sheet, and this file adds the pile and its buttons at the bottom and the list of levels in the menu. */
 .fg .stats{grid-template-columns:1fr 1fr 1fr}
-.fg .actions{gap:6px;align-items:center}
-.fg button.bbtn{width:44px;height:44px}
+.fg.app .actions{flex-direction:column;align-items:stretch;gap:7px;padding:6px 4px 6px}
 
-/* the pile: the tile in hand (large) and the next tiles (small). "now", not "hand": play.css uses .hand for its pointer */
-.fgpile{flex:1;min-width:0;display:grid;gap:2px;justify-items:center}
-.fgq{display:flex;align-items:center;justify-content:center;gap:5px;min-height:58px;padding:2px 5px;border-radius:22px;background:rgba(255,255,255,.72);box-shadow:var(--soft)}
-.fgt{position:relative;flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:10px;background:rgba(255,255,255,.75)}
+/* the pile, across the bottom, front to back: the tile in hand (large, ringed), the next tiles, the rest of the stack with
+   its count, then the copies banked by locks. "now", not "hand": play.css uses .hand for its pointer */
+.fgpile{display:grid;gap:5px;min-width:0;padding:7px 10px 8px;border-radius:22px;background:rgba(255,255,255,.84);box-shadow:var(--soft)}
+.fgcap{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
+.fgcap b{flex:none;font:800 11px/1.2 var(--hand);letter-spacing:.07em;text-transform:uppercase;color:#4f6f70}
+.fgcap span{min-width:0;font:700 12.5px/1.2 var(--hand);color:#24434a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fgtray{display:flex;align-items:center;gap:9px;min-width:0;min-height:62px}
+.fgq{display:flex;align-items:center;gap:7px;flex:none}
+.fgt{position:relative;flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:#eef5f4}
 .fgt canvas{position:static;display:block;border-radius:inherit}
-.fgt.now{width:52px;height:52px;border-radius:16px;background:#fff;box-shadow:0 0 0 2.5px #5fae9c,0 4px 10px rgba(30,60,60,.18)}
+.fgt.now{width:60px;height:60px;border-radius:18px;background:#fff;box-shadow:0 0 0 2.5px #5fae9c,0 4px 10px rgba(30,60,60,.18)}
 .fgl{position:absolute;right:-4px;bottom:-3px;min-width:15px;height:15px;padding:0 3px;box-sizing:border-box;border-radius:999px;background:#fff;color:#24434a;font:800 10.5px/15px var(--hand);font-style:normal;text-align:center;box-shadow:0 1px 3px rgba(30,60,60,.35)}
 .fgt.now .fgl{right:-5px;bottom:-4px;min-width:20px;height:20px;font-size:13px;line-height:20px}
-.fgname{font:700 12px/1.2 var(--hand);color:#24434a;white-space:nowrap;text-shadow:0 0 6px rgba(255,255,255,.9)}
-.fgempty{padding:0 10px;font:800 13px var(--hand);color:#4f6f70;white-space:nowrap}
-@media (max-width:379px){.fgq{gap:3px;padding:2px 3px}.fgt{width:23px;height:23px}.fgt.now{width:46px;height:46px}}
+.fgempty{padding:0 6px;font:800 14px var(--hand);color:#4f6f70;white-space:nowrap}
+/* the rest of the stack: three tiles lying on each other, and how many more there are */
+.fgstack{position:relative;flex:none;width:56px;height:54px;text-align:center}
+.fgstack[hidden]{display:none}
+.fgstack b{display:block;font:800 10.5px/1.2 var(--hand);color:#24434a;white-space:nowrap}
+.fgstack i{position:absolute;left:10px;width:36px;height:15px;border-radius:50%;background:#fff;box-shadow:0 3px 0 #b3c4c6,0 0 0 1px rgba(36,67,74,.14)}
+.fgstack i:nth-of-type(1){top:35px}.fgstack i:nth-of-type(2){top:28px}.fgstack i:nth-of-type(3){top:21px;background:#dff0d2}
+
+/* the buttons under the pile: Menu on the left; Lock, Discard and Undo on the right, each with its word */
+.fgbtns{display:flex;align-items:center;gap:7px;min-width:0}
+.fgsp{flex:1}
+.fg button.fgb{position:relative;flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border:0;border-radius:999px;background:rgba(255,255,255,.9);color:#24434a;box-shadow:var(--soft);font:800 13.5px/1 var(--hand);white-space:nowrap}
+.fg button.fgb svg{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.fg button.fgb.round{width:44px;padding:0;justify-content:center}
+.fg button.fgb:disabled{opacity:.4}
+.fg button.fgb span{display:grid;gap:2px;justify-items:start}
+.fg button.fgb small{font:700 9.5px/1 var(--hand);color:#4f6f70}
 
 /* locking (LOU-299): the Lock button with the locks held and the tiles until the next one, a mark on copies, and the
-   banked row: the copies waiting at the back of the pile, in order (it scrolls sideways) */
-.fglock svg{margin-top:-5px}
-.fglock small{position:absolute;left:0;right:0;bottom:3px;font:800 9.5px/1 var(--hand);color:#4f6f70;text-align:center;white-space:nowrap}
+   copies waiting at the back of the pile, in order (they scroll sideways) */
 .fglock .ubadge{background:#d9a520}
-.fglock.none{color:#9aa9ab}.fglock.none .ubadge{background:#9aa9ab}
-.fglock.on{background:#fff3cf;box-shadow:0 0 0 2.5px #d9a520,var(--soft)}
+.fglock.none{color:#8b9b9d}.fglock.none .ubadge{background:#9aa9ab}
+.fg button.fglock.on{background:#fff3cf;box-shadow:0 0 0 2.5px #d9a520,var(--soft)}
 .fgt.copy::before{content:"";position:absolute;left:-2px;top:-2px;width:7px;height:7px;border-radius:50%;background:#d9a520;box-shadow:0 0 0 1.5px #fff}
-.fgbank{display:flex;align-items:center;gap:6px;max-width:100%;min-width:0;padding:1px 0 2px}
+.fgbank{flex:1;min-width:0;display:grid;gap:3px;align-content:center;padding-left:9px;border-left:1.5px dashed #c3d2d4}
 .fgbank[hidden]{display:none}
-.fgbank>span{flex:none;font:700 10px/1 var(--hand);color:#4f6f70;white-space:nowrap}
-#bankList{display:flex;gap:5px;min-width:0;overflow-x:auto;padding:3px 4px 4px 3px;scrollbar-width:none}
-#bankList .fgt{width:22px;height:22px;border-radius:7px;background:rgba(255,255,255,.8)}
+.fgbank>span{font:700 9.5px/1 var(--hand);color:#4f6f70;white-space:nowrap}
+#bankList{display:flex;gap:6px;min-width:0;overflow-x:auto;padding:2px 5px 5px 3px;scrollbar-width:none}
+#bankList .fgt{width:26px;height:26px;border-radius:8px}
 #bankList .fgl{right:-4px;bottom:-4px;min-width:13px;height:13px;font-size:9.5px;line-height:13px}
+@media (max-width:379px){.fgt{width:32px;height:32px}.fgt.now{width:54px;height:54px}.fgtray{gap:6px}.fgq{gap:5px}.fgstack{width:50px}.fgstack i{left:7px}
+  .fgw{display:none}.fg button.fgbw{width:44px;padding:0;justify-content:center}}
 
 /* the menu: how to play, and the seven levels side by side */
 .fghow{margin:0 4px 10px;font:500 14px/1.4 var(--hand);color:#24434a}

@@ -270,7 +270,8 @@ if (typeof document === "undefined" || G.FLOWGROW_SIM) return;
 // ====================================================================================================================
 // Part 2: the page. A quick prototype (Dan, Nov 19: "just make a quick MVP to prototype"): the island, the river, the pile
 // and the seven levels, in Flow Tile's hexes and colours. The projection, the land painting and the tree painters are
-// trimmed copies from play.js. Locking (LOU-299) has its button, lock mode, a confirm card and the banked row.
+// trimmed copies from play.js. The pile runs across the bottom, front to back (Dan, Nov 19: "where's the tile pile?").
+// Locking (LOU-299) has its button, lock mode, a confirm card and the banked copies at the back of the pile.
 // Not built yet: Tuning, sound, the settings sheet and the painterly extras.
 // ====================================================================================================================
 const SW_URL = new URL("sw.js", document.currentScript.src).href; // sw.js sits next to this file
@@ -478,17 +479,19 @@ function say(t, warn) { const m = $("msg"); m.textContent = t || ""; m.classList
 function tileEl(t, px, cls) { const el = document.createElement("div"); el.className = "fgt " + cls + (t.c ? " copy" : ""); el.title = tileText(CFG, t) + (t.c ? ", a copy" : ""); el.appendChild(tileIcon(t, px));
   if (t.k === "h" || t.l > 1) { const b = document.createElement("i"); b.className = "fgl"; b.textContent = t.l; el.appendChild(b) } return el }
 function drawPile() { const q = $("queue"), small = innerWidth < 380; q.textContent = "";
-  if (S.q[0]) { q.appendChild(tileEl(S.q[0], small ? 46 : 52, "now")); for (const t of S.q.slice(1, 1 + CFG.queueShown)) q.appendChild(tileEl(t, small ? 23 : 28, "")) }
+  if (S.q[0]) { q.appendChild(tileEl(S.q[0], small ? 54 : 60, "now")); for (const t of S.q.slice(1, 1 + CFG.queueShown)) q.appendChild(tileEl(t, small ? 32 : 36, "")) }
   else { const e = document.createElement("span"); e.className = "fgempty"; e.textContent = S.over ? "Run over" : "Pile empty"; q.appendChild(e) }
-  tx("hName", S.q[0] ? tileText(CFG, S.q[0]) + (S.q[0].c ? " · copy" : "") : "");
-  const list = $("bankList"); $("bank").hidden = !S.bank.length; list.textContent = ""; for (const t of S.bank) list.appendChild(tileEl(t, 22, "")) } // the copies waiting at the back, in order
+  tx("hName", S.q[0] ? "In hand: " + tileText(CFG, S.q[0]) + (S.q[0].c ? ", a copy" : "") : "");
+  const more = CFG.stackSize === 0 ? Infinity : CFG.stackSize - S.dealt + Math.max(0, S.q.length - 1 - CFG.queueShown); // the rest of the stack, behind the tiles shown
+  $("stack").hidden = !(more > 0); tx("stackN", more === Infinity ? "many more" : "+" + more + " more");
+  const list = $("bankList"); $("bank").hidden = !S.bank.length; list.textContent = ""; for (const t of S.bank) list.appendChild(tileEl(t, 26, "")) } // the copies waiting at the back, in order
 function sync() { opts = options(S, 0); landSig = [...reachOf(S)].join(";");
   const waiting = !S.q.length && !S.over; // the pile is empty but a lock would still bank a copy: lock, or end the run
   if (S.over || !hasLock(S)) { lockMode = false; lockSel = null } else if (waiting) lockMode = true;
   lockList = lockMode ? [...Object.keys(S.h), ...Object.keys(S.r)].map(k => GRID.at[k]).filter(p => lockable(S, p)).map(p => ({p, n:copiesOf(S, p).copies.length})) : [];
   tx("hScore", S.score); tx("hLeft", left(S) === Infinity ? "∞" : left(S)); tx("hTop", S.top || "–");
   $("undoBtn").disabled = !S.moves.length; $("discardBtn").disabled = S.over || !S.q.length; drawPile();
-  { const lb = $("lockBtn"); lb.hidden = !CFG.lockEnabled; lb.classList.toggle("on", lockMode); lb.classList.toggle("none", !hasLock(S)); tx("lockN", CFG.lockEvery === 0 ? "∞" : S.locks); tx("lockIn", CFG.lockEvery > 0 ? "in " + (CFG.lockEvery - S.toLock) : "") }
+  { const lb = $("lockBtn"); lb.hidden = !CFG.lockEnabled; lb.classList.toggle("on", lockMode); lb.classList.toggle("none", !hasLock(S)); tx("lockN", CFG.lockEvery === 0 ? "∞" : S.locks); tx("lockIn", CFG.lockEvery > 0 ? "next in " + (CFG.lockEvery - S.toLock) : "") }
   $("endq").hidden = !waiting || !!lockSel; $("lockq").hidden = !lockSel; if (lockSel) lockCard();
   if (S.over && !wonShown) result(); if (!S.over) wonShown = false; $("win").hidden = !S.over; $("app").classList.toggle("won", S.over);
   mem.set("run.v2", S.over ? null : JSON.stringify({seed:S.seed, moves:S.moves, at:Date.now()})); draw() }
@@ -501,13 +504,13 @@ function result() { wonShown = true; const best = +mem.get("best") || 0; if (S.s
 
 // ---------- a run: new, saved after every move, rebuilt from its seed and moves on reload (a finished or day-old run starts fresh)
 const urlSeed = new URLSearchParams(location.search).get("seed");
-function newRun() { S = fresh(CFG, urlSeed != null && urlSeed !== "" ? urlSeed : Math.floor(Math.random() * 1e9)); for (const k in pops) delete pops[k]; fx.length = 0; lockMode = false; lockSel = null; say("Tap the green land to plant."); sync() }
+function newRun() { S = fresh(CFG, urlSeed != null && urlSeed !== "" ? urlSeed : Math.floor(Math.random() * 1e9)); for (const k in pops) delete pops[k]; fx.length = 0; lockMode = false; lockSel = null; say("Tap green land to place the tile in hand."); sync() }
 function load() { try { const d = JSON.parse(mem.get("run.v2") || "null"); if (!d || !Array.isArray(d.moves) || Date.now() - d.at > 12 * 3600e3) return false; S = replay(CFG, d.seed, d.moves); return !S.over } catch (_) { return false } }
 function tap(p) { if (!S || S.over || !p) return;
   if (lockMode) { if (!lockable(S, p)) { say(key(p) in S.lk ? "That tile is locked." : "Pick a habitat or a river tile.", true); return } lockSel = p; say(""); sync(); return }
-  const res = place(S, 0, p);
+  const had = S.locks, res = place(S, 0, p);
   if (!res) { say(why(S, 0, p), true); return }
-  pops[key(p)] = now(); if (res.pts) fx.push({p, text:"+" + res.pts, t0:now(), up:TALL[Math.min(res.l, 7)]}); say(""); sync() }
+  pops[key(p)] = now(); if (res.pts) fx.push({p, text:"+" + res.pts, t0:now(), up:TALL[Math.min(res.l, 7)]}); say(S.locks > had ? "You earned a lock. Tap Lock to use it." : ""); sync() }
 function undo() { if (!S.moves.length) return; S = replay(CFG, S.seed, S.moves.slice(0, -1)); lockMode = false; lockSel = null; say("Stepped back."); sync() }
 async function copyText(t) { try { await navigator.clipboard.writeText(t); return true } catch (_) {} try { const a = document.createElement("textarea"); a.value = t; a.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(a); a.select(); const ok = document.execCommand("copy"); a.remove(); return ok } catch (_) { return false } }
 
